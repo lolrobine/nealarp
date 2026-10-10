@@ -110,12 +110,7 @@ export default function DeepSeaPage() {
       {/* Main Content - Zone title */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
         <div className="text-center pointer-events-none">
-          <motion.div
-            key={currentZone.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4"
-          >
+          <div className="mb-4">
             <h2
               className="text-xl md:text-2xl font-bold"
               style={{
@@ -130,7 +125,7 @@ export default function DeepSeaPage() {
             {currentDepth < 100 && isMounted && (
               <p className="text-sm text-white/60 mt-2">Scroll down to dive deeper ↓</p>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -169,11 +164,7 @@ export default function DeepSeaPage() {
 
       {/* Title overlay (shown at start) */}
       {currentDepth < 50 && isMounted && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 flex items-center justify-center pointer-events-none"
-        >
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
               🌊 The Deep Sea
@@ -187,23 +178,19 @@ export default function DeepSeaPage() {
               ↓
             </motion.p>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Bottom message */}
       {currentDepth > MAX_DEPTH - 100 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 flex items-center justify-center pointer-events-none"
-        >
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-white/90 mb-2">
               🏆 Challenger Deep
             </h2>
             <p className="text-white/60">11,034 meters — The deepest point on Earth</p>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

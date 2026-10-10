@@ -8,10 +8,9 @@ import { useState } from "react";
 
 interface ItemCardProps {
   item: ShopItem;
-  index: number;
 }
 
-export function ItemCard({ item, index }: ItemCardProps) {
+export function ItemCard({ item }: ItemCardProps) {
   const { purchases, spent, totalMoney, buy, sell, setQuantity } =
     useSpendMoneyStore();
   const quantity = purchases[item.id] || 0;
@@ -44,10 +43,7 @@ export function ItemCard({ item, index }: ItemCardProps) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.03 }}
+    <div
       className={`relative bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 transition-all duration-200 ${
         !canAfford && quantity === 0
           ? "opacity-50"
@@ -125,11 +121,7 @@ export function ItemCard({ item, index }: ItemCardProps) {
 
       {/* Custom Quantity Input */}
       {showInput && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          className="mt-2 flex gap-1"
-        >
+        <div className="mt-2 flex gap-1">
           <input
             type="number"
             value={customQty}
@@ -145,8 +137,8 @@ export function ItemCard({ item, index }: ItemCardProps) {
           >
             Go
           </button>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

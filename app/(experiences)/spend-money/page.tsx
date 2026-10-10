@@ -33,18 +33,14 @@ export default function SpendMoneyPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">
             💰 Spend $1 Trillion
           </h1>
           <p className="text-[var(--muted-foreground)]">
             You have one trillion dollars. Try to spend it all.
           </p>
-        </motion.div>
+        </div>
 
         {/* Categories */}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
@@ -79,8 +75,8 @@ export default function SpendMoneyPage() {
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredItems.map((item, index) => (
-            <ItemCard key={item.id} item={item} index={index} />
+          {filteredItems.map((item) => (
+            <ItemCard key={item.id} item={item} />
           ))}
         </div>
 
@@ -97,11 +93,7 @@ export default function SpendMoneyPage() {
             </motion.button>
 
             {showReceipt && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                className="absolute bottom-14 right-0 w-80 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl p-4 max-h-96 overflow-y-auto"
-              >
+              <div className="absolute bottom-14 right-0 w-80 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl p-4 max-h-96 overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-lg">Your Receipt</h3>
                   <button
@@ -132,7 +124,7 @@ export default function SpendMoneyPage() {
                     Reset Everything
                   </button>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         )}

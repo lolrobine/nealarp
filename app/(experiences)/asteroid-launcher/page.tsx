@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import { calculateImpact, presets } from "./data";
 
 export default function AsteroidLauncherPage() {
@@ -25,24 +24,15 @@ export default function AsteroidLauncherPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">☄️ Asteroid Launcher</h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Launch asteroids at Earth and see the devastation
           </p>
-        </motion.div>
+        </div>
 
         {/* Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Sliders */}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 space-y-6">
             <div>
@@ -129,15 +119,10 @@ export default function AsteroidLauncherPage() {
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Results */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 mb-8"
-        >
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 mb-8">
           <h2 className="text-2xl font-bold mb-6 text-center">Impact Results</h2>
 
           {/* Energy */}
@@ -211,17 +196,12 @@ export default function AsteroidLauncherPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center text-sm text-[var(--muted-foreground)]"
-        >
+        <div className="text-center text-sm text-[var(--muted-foreground)]">
           <p>Adjust the sliders or select a preset to see different impact scenarios!</p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

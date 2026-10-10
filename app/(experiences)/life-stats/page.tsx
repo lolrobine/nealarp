@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { lifeStats, statCategories } from "./calculator";
 
 function AnimatedNumber({ value, format }: { value: number; format: (v: number) => string }) {
@@ -63,24 +63,15 @@ export default function LifeStatsPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">📊 Life Stats</h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Enter your birthday and discover mind-blowing statistics
           </p>
-        </motion.div>
+        </div>
 
         {/* Input */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-12"
-        >
+        <div className="mb-12">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8">
             <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-4">
               When were you born?
@@ -107,85 +98,71 @@ export default function LifeStatsPage() {
               </motion.button>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Categories */}
-        <AnimatePresence>
-          {showStats && (
-            <>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-2 mb-6 overflow-x-auto pb-2"
+        {showStats && (
+          <>
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              <button
+                onClick={() => setActiveCategory("all")}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeCategory === "all"
+                    ? "bg-[var(--primary)] text-white"
+                    : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                }`}
               >
+                🌟 All
+              </button>
+              {statCategories.map((cat) => (
                 <button
-                  onClick={() => setActiveCategory("all")}
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    activeCategory === "all"
+                    activeCategory === cat.id
                       ? "bg-[var(--primary)] text-white"
                       : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                   }`}
                 >
-                  🌟 All
+                  {cat.emoji} {cat.name}
                 </button>
-                {statCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                      activeCategory === cat.id
-                        ? "bg-[var(--primary)] text-white"
-                        : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                    }`}
-                  >
-                    {cat.emoji} {cat.name}
-                  </button>
-                ))}
-              </motion.div>
+              ))}
+            </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredStats.map((stat, index) => (
-                  <motion.div
-                    key={stat.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-[var(--primary)]/50 transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-3xl">{stat.emoji}</span>
-                      <div className="flex-1">
-                        <p className="text-sm text-[var(--muted-foreground)] mb-1">
-                          {stat.label}
-                        </p>
-                        <p className="text-2xl font-bold text-[var(--primary)]">
-                          <AnimatedNumber
-                            value={stat.getValue(ageMs)}
-                            format={stat.format}
-                          />
-                        </p>
-                      </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredStats.map((stat) => (
+                <div
+                  key={stat.id}
+                  className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-[var(--primary)]/50 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl">{stat.emoji}</span>
+                    <div className="flex-1">
+                      <p className="text-sm text-[var(--muted-foreground)] mb-1">
+                        {stat.label}
+                      </p>
+                      <p className="text-2xl font-bold text-[var(--primary)]">
+                        <AnimatedNumber
+                          value={stat.getValue(ageMs)}
+                          format={stat.format}
+                        />
+                      </p>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-              {/* Live indicator */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="mt-8 text-center text-sm text-[var(--muted-foreground)]"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Numbers update in real-time
-                </span>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+            {/* Live indicator */}
+            <div className="mt-8 text-center text-sm text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Numbers update in real-time
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
