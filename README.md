@@ -1,3 +1,4 @@
+Made with ai
 # Neal.fun V2
 
 An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences.
