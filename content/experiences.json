@@ -1,0 +1,35 @@
+[
+  {
+    "id": "spend-money",
+    "title": "Spend Money",
+    "description": "Spend a trillion dollars buying everything from yachts to social media platforms",
+    "category": "game",
+    "icon": "/experiences/spend-money/icon.svg",
+    "thumbnail": "/experiences/spend-money/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["simulation", "money", "fun"]
+  },
+  {
+    "id": "password-game",
+    "title": "The Password Game",
+    "description": "Create a password that satisfies increasingly absurd rules",
+    "category": "game",
+    "icon": "/experiences/password-game/icon.svg",
+    "thumbnail": "/experiences/password-game/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["puzzle", "challenge", "absurd"]
+  },
+  {
+    "id": "deep-sea",
+    "title": "The Deep Sea",
+    "description": "Scroll down through the ocean and discover creatures at each depth",
+    "category": "visualization",
+    "icon": "/experiences/deep-sea/icon.svg",
+    "thumbnail": "/experiences/deep-sea/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["educational", "scroll", "ocean"]
+  }
+]
