@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { spaceObjects, categories, formatSize } from "./data";
 
 export default function SizeOfSpacePage() {
@@ -30,7 +31,13 @@ export default function SizeOfSpacePage() {
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">🌌 Size of Space</h1>
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-5xl md:text-6xl font-bold mb-4">
+            <GameIcon
+              src="/experiences/size-of-space/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            Size of Space
+          </h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Explore the incredible scale of the universe
           </p>
@@ -136,7 +143,7 @@ export default function SizeOfSpacePage() {
                     {/* Size Bar */}
                     <div className="relative h-3 bg-[var(--secondary)] rounded-full overflow-hidden">
                       <motion.div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--primary)] to-purple-500 rounded-full"
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full"
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.max(widthPercent, 0.5)}%` }}
                         transition={{ duration: 0.5, delay: index * 0.02 }}

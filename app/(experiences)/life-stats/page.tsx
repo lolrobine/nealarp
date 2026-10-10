@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { lifeStats, statCategories } from "./calculator";
 
 function AnimatedNumber({ value, format }: { value: number; format: (v: number) => string }) {
@@ -64,7 +65,13 @@ export default function LifeStatsPage() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">📊 Life Stats</h1>
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-5xl md:text-6xl font-bold mb-4">
+            <GameIcon
+              src="/experiences/life-stats/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            Life Stats
+          </h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Enter your birthday and discover mind-blowing statistics
           </p>

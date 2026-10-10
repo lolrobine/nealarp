@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { DepthIndicator } from "./DepthIndicator";
 import { CreatureCard } from "./CreatureCard";
 import { sortedCreatures, MAX_DEPTH, getBackgroundColor, getZone } from "./data";
@@ -166,8 +167,12 @@ export default function DeepSeaPage() {
       {currentDepth < 50 && isMounted && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
-              🌊 The Deep Sea
+            <h1 className="flex flex-wrap items-center justify-center gap-4 text-5xl md:text-7xl font-bold text-white mb-4">
+              <GameIcon
+                src="/experiences/deep-sea/icon.webp"
+                className="h-12 w-12 rounded-xl border border-white/30 object-cover md:h-16 md:w-16"
+              />
+              The Deep Sea
             </h1>
             <p className="text-xl text-white/70">Scroll to explore the ocean depths</p>
             <motion.p

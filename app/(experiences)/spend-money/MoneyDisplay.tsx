@@ -39,7 +39,7 @@ export function MoneyDisplay({ remaining, spent, total }: MoneyDisplayProps) {
           </div>
           <div className="h-2 bg-[var(--secondary)] rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-[var(--primary)] to-purple-500 rounded-full"
+              className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full"
               animate={{ width: `${Math.max(percentage, 0.1)}%` }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
             />
