@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 type GameState = "idle" | "drawing" | "scored";
 
@@ -203,24 +203,15 @@ export default function PerfectCirclePage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 py-12 max-w-2xl">
         {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">⭕ Perfect Circle</h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Try to draw a perfect circle
           </p>
-        </motion.div>
+        </div>
 
         {/* Canvas */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="flex justify-center mb-6"
-        >
+        <div className="flex justify-center mb-6">
           <canvas
             ref={canvasRef}
             width={canvasSize.width}
@@ -234,28 +225,18 @@ export default function PerfectCirclePage() {
             onTouchMove={handleMove}
             onTouchEnd={handleEnd}
           />
-        </motion.div>
+        </div>
 
         {/* Instructions */}
         {gameState === "idle" && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-[var(--muted-foreground)] mb-6"
-          >
+          <p className="text-center text-[var(--muted-foreground)] mb-6">
             Draw a circle on the canvas above ↑
-          </motion.p>
+          </p>
         )}
 
         {/* Score */}
-        <AnimatePresence>
-          {gameState === "scored" && score !== null && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center mb-6"
-            >
+        {gameState === "scored" && score !== null && (
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center mb-6">
               <div className="text-6xl font-bold mb-4">
                 <span
                   className={
@@ -278,17 +259,12 @@ export default function PerfectCirclePage() {
                   🏆 Best: {bestScore}%
                 </p>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
         {/* Reset Button */}
         {gameState === "scored" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center"
-          >
+          <div className="text-center">
             <motion.button
               onClick={handleReset}
               className="px-8 py-3 bg-[var(--primary)] text-white rounded-xl font-medium"
@@ -297,21 +273,17 @@ export default function PerfectCirclePage() {
             >
               Try Again
             </motion.button>
-          </motion.div>
+          </div>
         )}
 
         {/* Drawing indicator */}
         {gameState === "drawing" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-[var(--muted-foreground)] mt-4"
-          >
+          <div className="text-center text-[var(--muted-foreground)] mt-4">
             <span className="inline-flex items-center gap-2">
               <span className="w-2 h-2 bg-[var(--primary)] rounded-full animate-pulse" />
               Drawing... ({points.length} points)
             </span>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

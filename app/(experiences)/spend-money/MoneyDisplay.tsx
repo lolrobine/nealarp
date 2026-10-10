@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { formatMoneyFull } from "./utils";
 
 interface MoneyDisplayProps {
@@ -27,17 +27,7 @@ export function MoneyDisplay({ remaining, spent, total }: MoneyDisplayProps) {
             Remaining
           </span>
           <div className="text-3xl md:text-4xl font-bold text-[var(--primary)]">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={remaining}
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 10, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {formatMoneyFull(remaining)}
-              </motion.span>
-            </AnimatePresence>
+            <span>{formatMoneyFull(remaining)}</span>
           </div>
         </motion.div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { spaceObjects, categories, formatSize } from "./data";
 
 export default function SizeOfSpacePage() {
@@ -29,24 +29,15 @@ export default function SizeOfSpacePage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">🌌 Size of Space</h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Explore the incredible scale of the universe
           </p>
-        </motion.div>
+        </div>
 
         {/* Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8 bg-[var(--card)] border border-[var(--border)] rounded-xl p-6"
-        >
+        <div className="mb-8 bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <label className="flex items-center gap-2">
               <input
@@ -78,7 +69,7 @@ export default function SizeOfSpacePage() {
               Shows how many times larger each object is compared to {baseObject}
             </p>
           )}
-        </motion.div>
+        </div>
 
         {/* Categories */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
@@ -109,8 +100,7 @@ export default function SizeOfSpacePage() {
 
         {/* Objects List */}
         <div className="space-y-3">
-          <AnimatePresence mode="popLayout">
-            {filteredObjects.map((obj, index) => {
+          {filteredObjects.map((obj, index) => {
               const widthPercent = comparisonMode
                 ? Math.min(((obj.size / baseSize) / (maxSize / baseSize)) * 100, 100)
                 : ((obj.size - minSize) / (maxSize - minSize)) * 100;
@@ -118,13 +108,8 @@ export default function SizeOfSpacePage() {
               const isSelected = selectedItem === obj.name;
 
               return (
-                <motion.div
+                <div
                   key={obj.name}
-                  layout
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 50 }}
-                  transition={{ duration: 0.3, delay: index * 0.02 }}
                   onClick={() => setSelectedItem(isSelected ? null : obj.name)}
                   className="cursor-pointer"
                 >
@@ -159,36 +144,23 @@ export default function SizeOfSpacePage() {
                     </div>
 
                     {/* Description */}
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="mt-3 pt-3 border-t border-[var(--border)]"
-                        >
-                          <p className="text-sm text-[var(--muted-foreground)]">
-                            {obj.description}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {isSelected && (
+                      <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                        <p className="text-sm text-[var(--muted-foreground)]">
+                          {obj.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-          </AnimatePresence>
         </div>
 
         {/* Info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="mt-12 text-center text-sm text-[var(--muted-foreground)]"
-        >
+        <div className="mt-12 text-center text-sm text-[var(--muted-foreground)]">
           <p>Click on any object to learn more! Toggle comparison mode to see relative sizes.</p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
