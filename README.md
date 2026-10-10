@@ -47,7 +47,7 @@ Your site will be live at: `https://<username>.github.io/nealarp/`
 
 ### Vercel
 1. Import this repo on [vercel.com](https://vercel.com)
-2. Remove `basePath` and `output` from `next.config.ts`
+2. Keep the default Next.js build settings; the config automatically disables the GitHub Pages base path and static export on Vercel
 3. Deploy!
 
 ## 🛠️ Tech Stack

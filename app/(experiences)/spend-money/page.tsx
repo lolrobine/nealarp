@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { useSpendMoneyStore } from "./store";
 import { MoneyDisplay } from "./MoneyDisplay";
 import { ItemCard } from "./ItemCard";
@@ -34,8 +35,12 @@ export default function SpendMoneyPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">
-            💰 Spend $1 Trillion
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-bold mb-2">
+            <GameIcon
+              src="/experiences/spend-money/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            Spend $1 Trillion
           </h1>
           <p className="text-[var(--muted-foreground)]">
             You have one trillion dollars. Try to spend it all.

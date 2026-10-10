@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 
 type GameState = "idle" | "drawing" | "scored";
 
@@ -204,7 +205,13 @@ export default function PerfectCirclePage() {
       <div className="container mx-auto px-4 py-12 max-w-2xl">
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">⭕ Perfect Circle</h1>
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-5xl md:text-6xl font-bold mb-4">
+            <GameIcon
+              src="/experiences/perfect-circle/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            Perfect Circle
+          </h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Try to draw a perfect circle
           </p>

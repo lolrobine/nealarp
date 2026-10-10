@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { rules } from "./rules";
 
 export default function PasswordGamePage() {
@@ -39,8 +40,12 @@ export default function PasswordGamePage() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
-            🔐 The Password Game
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-bold mb-3">
+            <GameIcon
+              src="/experiences/password-game/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            The Password Game
           </h1>
           <p className="text-[var(--muted-foreground)] text-lg">
             Choose a password that follows all the rules

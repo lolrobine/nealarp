@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { GameIcon } from "@/lib/components/GameIcon";
 import { calculateImpact, presets } from "./data";
 
 export default function AsteroidLauncherPage() {
@@ -25,7 +26,13 @@ export default function AsteroidLauncherPage() {
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">☄️ Asteroid Launcher</h1>
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-5xl md:text-6xl font-bold mb-4">
+            <GameIcon
+              src="/experiences/asteroid-launcher/icon.webp"
+              className="h-10 w-10 rounded-lg object-cover md:h-12 md:w-12"
+            />
+            Asteroid Launcher
+          </h1>
           <p className="text-xl text-[var(--muted-foreground)]">
             Launch asteroids at Earth and see the devastation
           </p>
