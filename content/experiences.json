@@ -31,5 +31,60 @@
     "featured": true,
     "status": "live",
     "tags": ["educational", "scroll", "ocean"]
+  },
+  {
+    "id": "speed",
+    "title": "Speed",
+    "description": "Compare the speed of everything from snails to light",
+    "category": "visualization",
+    "icon": "/experiences/speed/icon.svg",
+    "thumbnail": "/experiences/speed/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["educational", "comparison", "interactive"]
+  },
+  {
+    "id": "life-stats",
+    "title": "Life Stats",
+    "description": "Enter your birthday and discover mind-blowing statistics about your life",
+    "category": "calculator",
+    "icon": "/experiences/life-stats/icon.svg",
+    "thumbnail": "/experiences/life-stats/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["calculator", "personal", "stats"]
+  },
+  {
+    "id": "perfect-circle",
+    "title": "Perfect Circle",
+    "description": "Try to draw a perfect circle and get scored on your accuracy",
+    "category": "game",
+    "icon": "/experiences/perfect-circle/icon.svg",
+    "thumbnail": "/experiences/perfect-circle/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["drawing", "challenge", "skill"]
+  },
+  {
+    "id": "size-of-space",
+    "title": "Size of Space",
+    "description": "Explore the incredible scale of the universe from humans to galaxies",
+    "category": "visualization",
+    "icon": "/experiences/size-of-space/icon.svg",
+    "thumbnail": "/experiences/size-of-space/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["educational", "space", "scale"]
+  },
+  {
+    "id": "asteroid-launcher",
+    "title": "Asteroid Launcher",
+    "description": "Launch asteroids at Earth and see the devastating impact",
+    "category": "simulation",
+    "icon": "/experiences/asteroid-launcher/icon.svg",
+    "thumbnail": "/experiences/asteroid-launcher/thumbnail.png",
+    "featured": true,
+    "status": "live",
+    "tags": ["physics", "simulation", "destruction"]
   }
 ]
