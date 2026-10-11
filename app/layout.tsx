@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PasswordGate } from "@/lib/components/PasswordGate";
 import { ThemeProvider } from "@/lib/components/ThemeProvider";
 
 export const metadata: Metadata = {
@@ -16,7 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {/* Site-wide password screen: keeps every route (and the 404 page)
+              hidden until the visitor enters the password. See
+              lib/auth/sitePassword.ts to change the password. */}
+          <PasswordGate>{children}</PasswordGate>
+        </ThemeProvider>
       </body>
     </html>
   );

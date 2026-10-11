@@ -16,6 +16,29 @@ An open-source reimagining of [neal.fun](https://neal.fun) — a collection of q
 | 7 | 🌌 **Size of Space** | Cosmic scale visualization |
 | 8 | ☄️ **Asteroid Launcher** | Launch asteroids and see the devastation |
 
+## 🔒 Site Password
+
+The whole site (every experience, plus the 404 page) sits behind a password screen. The password is **`nealarp`** unless you change it.
+
+- The password is only stored as a digest in `lib/auth/sitePassword.ts` — the plaintext is never in the code or the bundle.
+- Once entered, the unlock is remembered in `localStorage`, so visitors are asked only once per browser. The small lock button in the bottom-right corner locks the site again.
+
+### Changing the password
+
+```bash
+pnpm password:hash "my new password"
+```
+
+Paste the two digests it prints into `DEFAULT_PASSWORD_SHA256` / `DEFAULT_PASSWORD_FNV1A` in `lib/auth/sitePassword.ts`.
+
+Alternatively, set `NEXT_PUBLIC_SITE_PASSWORD` at build time (this value is embedded verbatim in the bundle):
+
+```bash
+NEXT_PUBLIC_SITE_PASSWORD="my new password" pnpm build
+```
+
+> **Note:** GitHub Pages serves this site as a static export, so the gate runs in the browser. It keeps casual visitors out, but the page markup is still part of the published bundle — it is not server-side access control. On a host with a server (Vercel, `next start`), you can add a `middleware.ts` to enforce the password before any HTML is served.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -92,9 +115,13 @@ nealarp/
 ├── content/
 │   └── experiences.json         # Experience registry
 ├── lib/
-│   ├── components/              # Shared UI
+│   ├── auth/
+│   │   └── sitePassword.ts      # 🔒 Site password digests & unlock storage
+│   ├── components/              # Shared UI (incl. PasswordGate)
 │   ├── store/                   # Zustand stores
 │   └── utils/
+├── scripts/
+│   └── password-hash.mjs        # pnpm password:hash
 └── .github/workflows/
     └── deploy.yml               # GitHub Pages deploy
 ```

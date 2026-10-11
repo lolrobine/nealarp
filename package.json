@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "password:hash": "node scripts/password-hash.mjs"
   },
   "dependencies": {
     "next": "^15.1.0",
