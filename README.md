@@ -35,6 +35,21 @@ Open [http://localhost:3000](http://localhost:3000)
 pnpm build
 ```
 
+## 📦 Adding large files (e.g. 160MB)
+
+This repository is configured to use Git LFS for large binary files.
+
+1. Install Git LFS once:
+   ```bash
+   git lfs install
+   ```
+2. Put large files in `public/large-files/` (or use tracked extensions like `.mp4`, `.mov`, `.zip`, `.pdf`)
+3. Add and commit as normal:
+   ```bash
+   git add <your-file>
+   git commit -m "Add large file with Git LFS"
+   ```
+
 ## 🌐 Deployment
 
 ### GitHub Pages (Recommended)
