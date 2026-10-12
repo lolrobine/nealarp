@@ -347,6 +347,9 @@ export default function Home() {
 
       <footer className="mt-24 text-center text-[var(--muted-foreground)]">
         <p>
+          <span className="font-bold">Nealarp</span> — Interactive web experiences
+        </p>
+        <p className="text-xs mt-1">
           Inspired by{" "}
           <a
             href="https://neal.fun"

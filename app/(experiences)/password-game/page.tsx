@@ -162,45 +162,64 @@ export default function PasswordGamePage() {
           </div>
         </motion.div>
 
-        {/* Rules */}
+        {/* Rules — incomplete but discovered on top */}
+        <div className="mb-2 flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+          <span>
+            Failed on top • {ruleResults.slice(0, unlockedRules).filter((r) => !r.passed).length} to
+            fix
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-red-500" /> Failed
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-green-500" /> Passed
+            </span>
+          </span>
+        </div>
         <div className="space-y-3" aria-live="polite" aria-atomic="false">
-          {ruleResults.slice(0, unlockedRules).map((rule) => (
-            <div
-              key={rule.id}
-              className={`border rounded-xl p-4 transition-all duration-300 ${
-                rule.passed
-                  ? "border-green-500/30 bg-green-500/5"
-                  : "border-red-500/30 bg-red-500/5"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                    rule.passed ? "bg-green-500 text-white" : "bg-red-500/20 text-red-400"
-                  }`}
-                >
-                  {rule.passed ? "✓" : "✗"}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-[var(--muted-foreground)] font-mono">
-                      Rule {rule.id}
-                    </span>
-                  </div>
-                  <p
-                    className={`text-sm font-medium ${
-                      rule.passed ? "text-green-400" : "text-[var(--foreground)]"
+          {[...ruleResults.slice(0, unlockedRules)]
+            .sort((a, b) => {
+              if (a.passed === b.passed) return a.id - b.id;
+              return a.passed ? 1 : -1; // failed first
+            })
+            .map((rule) => (
+              <div
+                key={rule.id}
+                className={`border rounded-xl p-4 transition-all duration-300 ${
+                  rule.passed
+                    ? "border-green-500/30 bg-green-500/5"
+                    : "border-red-500/30 bg-red-500/5"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                      rule.passed ? "bg-green-500 text-white" : "bg-red-500/20 text-red-400"
                     }`}
                   >
-                    {rule.text}
-                  </p>
-                  {!rule.passed && rule.hint && (
-                    <p className="text-xs text-[var(--muted-foreground)] mt-1">💡 {rule.hint}</p>
-                  )}
+                    {rule.passed ? "✓" : "✗"}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-[var(--muted-foreground)] font-mono">
+                        Rule {rule.id}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-sm font-medium ${
+                        rule.passed ? "text-green-400" : "text-[var(--foreground)]"
+                      }`}
+                    >
+                      {rule.text}
+                    </p>
+                    {!rule.passed && rule.hint && (
+                      <p className="text-xs text-[var(--muted-foreground)] mt-1">💡 {rule.hint}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* Completion */}

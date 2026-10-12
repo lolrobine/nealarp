@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const dynamic = "force-static";
-export const alt = "Neal.fun V2 - Interactive Web Experiences";
+export const alt = "Nealarp - Interactive Web Experiences";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,7 +30,7 @@ export default async function Image() {
           color: "transparent",
         }}
       >
-        neal.fun v2
+        Nealarp
       </div>
       <div style={{ fontSize: 28, marginTop: 20, color: "#a3a3a3" }}>
         Interactive web experiences

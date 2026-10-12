@@ -194,10 +194,9 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       <div className="relative flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-lg">
-            <span className="text-[15px] font-bold">n</span>
+            <span className="text-[15px] font-bold">N</span>
           </div>
-          <span className="font-bold tracking-tight">neal.fun</span>
-          <span className="rounded-full bg-[var(--secondary)] px-2 py-0.5 text-[10px]">v2</span>
+          <span className="font-bold tracking-tight">Nealarp</span>
         </div>
         {/* ONE dark mode button */}
         <motion.button

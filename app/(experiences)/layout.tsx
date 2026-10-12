@@ -48,10 +48,7 @@ export default function ExperiencesLayout({ children }: { children: React.ReactN
               href="/"
               className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded"
             >
-              <span className="text-xl font-bold">neal.fun</span>
-              <span className="text-xs text-[var(--muted-foreground)] bg-[var(--secondary)] px-2 py-0.5 rounded">
-                v2
-              </span>
+              <span className="text-xl font-bold">Nealarp</span>
             </Link>
           </div>
           <ExperienceHeaderActions />
