@@ -22,9 +22,9 @@ export type ShakeEvent = { id: string; magnitude: number; energy: number } | nul
 
 interface Props {
   impacts: MapImpact[];
-  onMapClick: (lat: number, lng: number, xPct: number, yPct: number) => void;
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
+  onMapClick: (lat: number, lng: number) => void;
+  selectedIds: string[];
+  onSelect: (id: string) => void;
   shakeEvent: ShakeEvent;
 }
 
@@ -34,15 +34,37 @@ function pctToLatLng(xPct: number, yPct: number) {
   return { lat, lng };
 }
 
-type Explosion = {
-  id: string;
-  x: number;
-  y: number;
-  color: string;
-  magnitude: number;
-};
+type Explosion = { id: string; x: number; y: number; color: string; magnitude: number };
 
-export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent }: Props) {
+function getVibratePattern(magnitude: number): number[] {
+  // Faster vibration for bigger asteroids: gap decreases as magnitude increases
+  if (magnitude < 2) return [25];
+  if (magnitude < 3) return [35, 18, 45];
+  if (magnitude < 4) return [45, 12, 65, 12, 85];
+  if (magnitude < 5) return [55, 8, 75, 8, 95, 8, 110];
+  if (magnitude < 6) return [65, 6, 85, 6, 105, 6, 125, 6, 145];
+  if (magnitude < 7) return [75, 5, 95, 5, 115, 5, 135, 5, 155, 5, 175];
+  if (magnitude < 8) return [85, 4, 105, 4, 125, 4, 145, 4, 165, 4, 185, 4, 205];
+  if (magnitude < 9) return [95, 3, 115, 3, 135, 3, 155, 3, 175, 3, 195, 3, 215, 3, 235];
+  return [110, 2, 130, 2, 150, 2, 170, 2, 190, 2, 210, 2, 230, 2, 250, 2, 270];
+}
+
+function generateShakePattern(intensity: number, magnitude: number) {
+  const oscillations = Math.round(3 + magnitude * 1.8); // M2=>6, M10=>21 - more oscillations = faster for bigger
+  const x: number[] = [0];
+  const y: number[] = [0];
+  for (let i = 0; i < oscillations; i++) {
+    const decay = 1 - (i / oscillations) * 0.5;
+    const sign = i % 2 === 0 ? -1 : 1;
+    x.push(sign * intensity * decay);
+    y.push(sign * intensity * 0.35 * decay * (i % 3 === 0 ? 1 : -0.7));
+  }
+  x.push(0);
+  y.push(0);
+  return { x, y, oscillations };
+}
+
+export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEvent }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapContentRef = useRef<HTMLDivElement>(null);
   const [hoverPos, setHoverPos] = useState<{
@@ -59,35 +81,18 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const shakeControls = useAnimationControls();
-
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 6;
 
-  // Shake based on asteroid strength - strength = earthquake magnitude
   useEffect(() => {
     if (!shakeEvent) return;
     const magnitude = shakeEvent.magnitude;
-    // Intensity: magnitude 0-12 => 2px to 45px, based on strength
-    const intensity = Math.min(45, Math.max(2, magnitude * 3.8));
-    const duration = Math.min(2, Math.max(0.3, magnitude * 0.18));
-    const vertical = intensity * 0.35;
+    const intensity = Math.min(50, Math.max(2, magnitude * 4));
+    const duration = Math.min(1.2, Math.max(0.25, 0.3 + magnitude * 0.05)); // bigger = slightly longer but much more oscillations = faster
+    const { x, y } = generateShakePattern(intensity, magnitude);
 
-    shakeControls.start({
-      x: [
-        0,
-        -intensity,
-        intensity,
-        -intensity * 0.85,
-        intensity * 0.85,
-        -intensity * 0.5,
-        intensity * 0.5,
-        0,
-      ],
-      y: [0, vertical, -vertical, vertical * 0.7, -vertical * 0.7, 0],
-      transition: { duration, ease: "easeOut" },
-    });
+    shakeControls.start({ x, y, transition: { duration, ease: "easeOut" } });
 
-    // Explosion for world map - find impact that matches shakeEvent id
     const latest = impacts.find((i) => i.id === shakeEvent.id);
     if (latest) {
       setExplosions((prev) => [
@@ -95,24 +100,14 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
         { id: latest.id, x: latest.x, y: latest.y, color: latest.color, magnitude },
       ]);
       setTimeout(
-        () => {
-          setExplosions((prev) => prev.filter((ex) => ex.id !== latest.id));
-        },
+        () => setExplosions((prev) => prev.filter((ex) => ex.id !== latest.id)),
         1200 + magnitude * 120
       );
     }
 
     try {
-      // Haptic strength based on magnitude
-      const vib =
-        magnitude < 3
-          ? [20]
-          : magnitude < 5
-            ? [40, 20, 60]
-            : magnitude < 7
-              ? [80, 40, 120]
-              : [120, 60, 200, 40, 250];
-      navigator.vibrate?.(vib);
+      const pattern = getVibratePattern(magnitude);
+      navigator.vibrate?.(pattern);
     } catch {}
   }, [shakeEvent, impacts, shakeControls]);
 
@@ -124,9 +119,10 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
         const mouseX = centerX - rect.left;
         const mouseY = centerY - rect.top;
         const zoomRatio = clamped / zoom;
-        const newPanX = mouseX - zoomRatio * (mouseX - pan.x);
-        const newPanY = mouseY - zoomRatio * (mouseY - pan.y);
-        setPan({ x: newPanX, y: newPanY });
+        setPan({
+          x: mouseX - zoomRatio * (mouseX - pan.x),
+          y: mouseY - zoomRatio * (mouseY - pan.y),
+        });
       }
       setZoom(clamped);
       if (clamped === 1) setPan({ x: 0, y: 0 });
@@ -138,9 +134,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
     (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) return;
       e.preventDefault();
-      const delta = -e.deltaY;
-      const zoomFactor = delta > 0 ? 1.1 : 0.9;
-      handleZoom(zoom * zoomFactor, e.clientX, e.clientY);
+      handleZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9), e.clientX, e.clientY);
     },
     [zoom, handleZoom]
   );
@@ -164,18 +158,17 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
   const handleMouseMoveContainer = useCallback(
     (e: React.MouseEvent) => {
       if (isDragging && zoom > 1) {
-        const dx = e.clientX - dragStart.x;
-        const dy = e.clientY - dragStart.y;
-        setPan({ x: dragStart.panX + dx, y: dragStart.panY + dy });
+        setPan({
+          x: dragStart.panX + (e.clientX - dragStart.x),
+          y: dragStart.panY + (e.clientY - dragStart.y),
+        });
       }
       if (!containerRef.current || !mapContentRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const xInContainer = e.clientX - rect.left;
       const yInContainer = e.clientY - rect.top;
-      const xInContent = (xInContainer - pan.x) / zoom;
-      const yInContent = (yInContainer - pan.y) / zoom;
-      const xPct = (xInContent / rect.width) * 100;
-      const yPct = (yInContent / rect.height) * 100;
+      const xPct = ((xInContainer - pan.x) / zoom / rect.width) * 100;
+      const yPct = ((yInContainer - pan.y) / zoom / rect.height) * 100;
       if (xPct >= 0 && xPct <= 100 && yPct >= 0 && yPct <= 100) {
         const { lat, lng } = pctToLatLng(xPct, yPct);
         setHoverPos({ x: xPct, y: yPct, lat, lng });
@@ -184,32 +177,10 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
     [isDragging, dragStart, pan, zoom]
   );
 
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (isDragging) return;
-      if (!containerRef.current || !mapContentRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const xInContainer = e.clientX - rect.left;
-      const yInContainer = e.clientY - rect.top;
-      const xInContent = (xInContainer - pan.x) / zoom;
-      const yInContent = (yInContainer - pan.y) / zoom;
-      const xPct = (xInContent / rect.width) * 100;
-      const yPct = (yInContent / rect.height) * 100;
-      if (xPct < 0 || xPct > 100 || yPct < 0 || yPct > 100) return;
-      const { lat, lng } = pctToLatLng(xPct, yPct);
-      onMapClick(lat, lng, xPct, yPct);
-    },
-    [onMapClick, isDragging, pan, zoom]
-  );
-
   const getImpactSize = (result: ImpactResult, type: "crater" | "blast") => {
     const km = type === "crater" ? result.craterDiameter / 2 : result.blastWaveDistance;
-    const degrees = km / 111;
-    const pct = (degrees / 360) * 100;
-    const minSize = type === "crater" ? 0.6 : 1.2;
-    return Math.max(minSize, Math.min(pct * 2, type === "crater" ? 3 : 15));
+    const pct = (km / 111 / 360) * 100;
+    return Math.max(type === "crater" ? 0.6 : 1.2, Math.min(pct * 2, type === "crater" ? 3 : 15));
   };
 
   return (
@@ -218,11 +189,11 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">🌍 World Map</span>
           <span className="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
-            Click to fire • Scroll to zoom
+            Click to fire • Multi-select enabled
           </span>
           {zoom > 1 && (
             <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-400 rounded-full">
-              {zoom.toFixed(1)}x • Drag
+              {zoom.toFixed(1)}x
             </span>
           )}
         </div>
@@ -232,7 +203,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
               onClick={() => handleZoom(zoom * 0.8)}
               disabled={zoom <= MIN_ZOOM}
               className="px-2.5 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-30"
-              aria-label="Zoom out"
             >
               −
             </button>
@@ -243,7 +213,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
               onClick={() => handleZoom(zoom * 1.25)}
               disabled={zoom >= MAX_ZOOM}
               className="px-2.5 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-30"
-              aria-label="Zoom in"
             >
               +
             </button>
@@ -260,7 +229,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
             </button>
           )}
           <span className="text-[10px] text-[var(--muted-foreground)] ml-1">
-            {impacts.length} impacts
+            {impacts.length} impacts • {selectedIds.length} selected
           </span>
         </div>
       </div>
@@ -271,15 +240,13 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
         className={`relative w-full aspect-[2/1] bg-[#0a1628] overflow-hidden select-none ${zoom > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-crosshair"}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMoveContainer}
-        onMouseUp={handleMouseUp}
+        onMouseUp={() => setIsDragging(false)}
         onMouseLeave={() => {
           setIsDragging(false);
           setIsHovering(false);
           setHoverPos(null);
         }}
         onMouseEnter={() => setIsHovering(true)}
-        role="application"
-        aria-label="World map - click to launch, scroll to zoom, drag to pan"
       >
         <div
           ref={mapContentRef}
@@ -292,10 +259,9 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getAssetUrl("/experiences/asteroid-launcher/world-map-4k.jpg")}
-            alt="World map high resolution"
+            alt="World map 4K"
             className="absolute inset-0 w-full h-full object-cover"
             draggable={false}
-            style={{ imageRendering: "auto" as const }}
           />
           <div className="absolute inset-0 bg-blue-900/10 pointer-events-none" />
           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
@@ -317,28 +283,10 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
               strokeWidth="0.5"
               strokeDasharray="4 4"
             />
-            <line
-              x1="0"
-              y1="38%"
-              x2="100%"
-              y2="38%"
-              stroke="white"
-              strokeWidth="0.3"
-              opacity="0.5"
-            />
-            <line
-              x1="0"
-              y1="62%"
-              x2="100%"
-              y2="62%"
-              stroke="white"
-              strokeWidth="0.3"
-              opacity="0.5"
-            />
           </svg>
 
           {impacts.map((impact, idx) => {
-            const isSelected = selectedId === impact.id;
+            const isSelected = selectedIds.includes(impact.id);
             const blastSize = getImpactSize(impact.result, "blast");
             const craterSize = getImpactSize(impact.result, "crater");
             return (
@@ -349,11 +297,11 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                   left: `${impact.x}%`,
                   top: `${impact.y}%`,
                   transform: "translate(-50%, -50%)",
-                  zIndex: isSelected ? 20 : 10 + idx,
+                  zIndex: isSelected ? 30 : 10 + idx,
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelect(isSelected ? null : impact.id);
+                  onSelect(impact.id);
                 }}
               >
                 <div
@@ -366,18 +314,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                     transform: "translate(-50%, -50%)",
                     background: `radial-gradient(circle, ${impact.color}40 0%, ${impact.color}15 40%, transparent 70%)`,
                     border: `1px solid ${impact.color}60`,
-                    boxShadow: `0 0 20px ${impact.color}40`,
-                  }}
-                />
-                <div
-                  className="absolute rounded-full pointer-events-none"
-                  style={{
-                    width: `${blastSize * 1.2}em`,
-                    height: `${blastSize * 1.2}em`,
-                    left: "50%",
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    background: `radial-gradient(circle, ${impact.color}60 0%, ${impact.color}20 60%, transparent 80%)`,
                   }}
                 />
                 <div
@@ -387,18 +323,17 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                     height: `${Math.max(1.2, craterSize)}em`,
                     backgroundColor: "#000",
                     borderColor: impact.color,
-                    boxShadow: `0 0 10px ${impact.color}, inset 0 0 6px ${impact.color}80`,
+                    boxShadow: `0 0 10px ${impact.color}`,
                   }}
-                  title={`${impact.result.equivalentTNT} at ${impact.lat.toFixed(1)}, ${impact.lng.toFixed(1)}`}
                 >
-                  {impacts.length <= 12 ? idx + 1 : ""}
+                  {impacts.length <= 20 ? idx + 1 : ""}
                 </div>
                 {isSelected && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black/90 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none z-30 border border-white/20">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black/90 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-30 border border-white/20">
                     <div className="font-bold">{impact.result.equivalentTNT}</div>
                     <div className="text-white/70">
-                      {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • {impact.diameter}m • M
-                      {impact.result.earthquakeMagnitude.toFixed(1)}
+                      {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • M
+                      {impact.result.earthquakeMagnitude.toFixed(1)} • {impact.diameter}m
                     </div>
                   </div>
                 )}
@@ -417,14 +352,14 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                 <motion.div
                   initial={{ scale: 0, opacity: 1 }}
                   animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.35 }}
                   className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
                   style={{ left: "50%", top: "50%" }}
                 />
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
-                  transition={{ duration: 0.6, delay: 0.05 }}
+                  transition={{ duration: 0.5, delay: 0.05 }}
                   className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
                   style={{
                     left: "50%",
@@ -435,33 +370,20 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                 <motion.div
                   initial={{ scale: 0, opacity: 0.8 }}
                   animate={{ scale: [0, 4 * scale, 8 * scale], opacity: [0.8, 0.4, 0] }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ duration: 0.6 }}
                   className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    borderColor: ex.color,
-                    boxShadow: `0 0 20px ${ex.color}`,
-                  }}
-                />
-                <motion.div
-                  initial={{ scale: 0, opacity: 0.6 }}
-                  animate={{ scale: [0, 6 * scale, 12 * scale], opacity: [0.6, 0.2, 0] }}
-                  transition={{ duration: 1, delay: 0.1 }}
-                  className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border"
-                  style={{ left: "50%", top: "50%", borderColor: `${ex.color}80` }}
+                  style={{ left: "50%", top: "50%", borderColor: ex.color }}
                 />
                 {Array.from({ length: Math.round(8 + ex.magnitude) }).map((_, i) => (
                   <motion.div
                     key={i}
-                    initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                    initial={{ x: 0, y: 0, opacity: 1 }}
                     animate={{
                       x: Math.cos((i / 8) * Math.PI * 2) * (20 + ex.magnitude * 6),
                       y: Math.sin((i / 8) * Math.PI * 2) * (20 + ex.magnitude * 6),
                       opacity: 0,
-                      scale: 0,
                     }}
-                    transition={{ duration: 0.7, delay: 0.1 + i * 0.02 }}
+                    transition={{ duration: 0.6, delay: 0.05 }}
                     className="absolute w-1.5 h-1.5 rounded-full"
                     style={{
                       left: "50%",
@@ -470,17 +392,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
                     }}
                   />
                 ))}
-                <motion.div
-                  initial={{ scale: 0, opacity: 0.5, y: 0 }}
-                  animate={{
-                    scale: [0, 2 * scale, 3 * scale],
-                    opacity: [0.5, 0.3, 0],
-                    y: [0, -10, -20],
-                  }}
-                  transition={{ duration: 1.2, delay: 0.2 }}
-                  className="absolute w-16 h-16 -translate-x-1/2 rounded-full blur-xl"
-                  style={{ left: "50%", top: "50%", backgroundColor: "rgba(100,100,100,0.5)" }}
-                />
               </div>
             );
           })}
@@ -507,16 +418,26 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
             </>
           )}
         </div>
-
-        <div className="absolute inset-0 z-10" onClick={handleClick} aria-hidden />
-
+        <div
+          className="absolute inset-0 z-10"
+          onClick={(e) => {
+            if (isDragging) return;
+            const rect = containerRef.current!.getBoundingClientRect();
+            const xPct = ((e.clientX - rect.left - pan.x) / zoom / rect.width) * 100;
+            const yPct = ((e.clientY - rect.top - pan.y) / zoom / rect.height) * 100;
+            if (xPct < 0 || xPct > 100 || yPct < 0 || yPct > 100) return;
+            const { lat, lng } = pctToLatLng(xPct, yPct);
+            onMapClick(lat, lng);
+          }}
+          aria-hidden
+        />
         {impacts.length === 0 && !isHovering && zoom === 1 && (
           <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
             <div className="bg-black/70 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-4 text-center">
               <div className="text-2xl mb-2">☄️</div>
               <div className="text-white font-bold text-sm">Click anywhere to launch</div>
               <div className="text-white/60 text-xs mt-1">
-                Scroll to zoom • Drag to pan • Shake scales with power
+                Multi-select: click craters • Faster shake for bigger asteroids
               </div>
             </div>
           </div>
@@ -524,20 +445,12 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent
       </motion.div>
 
       <div className="px-3 py-2 bg-[var(--card)] border-t border-[var(--border)] flex flex-wrap gap-3 text-[10px] text-[var(--muted-foreground)]">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-black border border-red-500 inline-block" />{" "}
-          Crater
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-orange-500/30 border border-orange-500/60 inline-block" />{" "}
-          Fireball
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40 border-dashed inline-block" />{" "}
-          Blast
+        <span>
+          4K map • {zoom.toFixed(1)}x • Multi-select enabled • Shake faster when bigger (M×4px,{" "}
+          {selectedIds.length} selected)
         </span>
         <span className="ml-auto">
-          4K • Zoom {zoom.toFixed(1)}x • Shake = M × 3.8px • No X on map (use list)
+          No X on map — use list below • Vibration gap ↓ as magnitude ↑
         </span>
       </div>
     </div>

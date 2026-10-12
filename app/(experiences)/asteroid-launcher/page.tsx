@@ -25,9 +25,7 @@ const knownCraters = [
 ];
 
 function latLngToWorldPct(lat: number, lng: number) {
-  const x = ((lng + 180) / 360) * 100;
-  const y = ((90 - lat) / 180) * 100;
-  return { x, y };
+  return { x: ((lng + 180) / 360) * 100, y: ((90 - lat) / 180) * 100 };
 }
 
 export default function AsteroidLauncherPage() {
@@ -38,39 +36,47 @@ export default function AsteroidLauncherPage() {
   const [location, setLocation] = useState("rural");
 
   const [impacts, setImpacts] = useState<MapImpact[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [shakeEvent, setShakeEvent] = useState<ShakeEvent>(null);
 
-  // Country maps state - popular only
   const [mapMode, setMapMode] = useState<"world" | "countries">("world");
-  const [selectedCountryId, setSelectedCountryId] = useState<string>("usa");
+  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(["usa"]);
 
   const result = useMemo(
     () => calculateImpact({ diameter, density, velocity, angle }),
     [diameter, density, velocity, angle]
   );
-
   const loc = locations.find((l) => l.id === location) ?? locations[2]!;
-  const adjustedCasualties = useMemo(() => {
-    const area = result.affectedAreaKm2;
-    const pop = Math.round(area * loc.density);
-    if (pop < 1) return "Minimal";
-    if (pop < 1000) return `${pop.toLocaleString()} estimated`;
-    if (pop < 1_000_000) return `${(pop / 1000).toFixed(1)}K estimated`;
-    return `${(pop / 1_000_000).toFixed(1)}M estimated`;
-  }, [result.affectedAreaKm2, loc]);
 
-  const selectedImpact = impacts.find((i) => i.id === selectedId) ?? null;
-  const displayResult = selectedImpact ? selectedImpact.result : result;
+  const selectedImpacts = impacts.filter((i) => selectedIds.includes(i.id));
+  const displayResult =
+    selectedImpacts.length === 1
+      ? selectedImpacts[0]!.result
+      : selectedImpacts.length > 1
+        ? (() => {
+            const totalEnergy = selectedImpacts.reduce((s, i) => s + i.result.energy, 0);
+            const maxCrater = Math.max(...selectedImpacts.map((i) => i.result.craterDiameter));
+            const totalArea = selectedImpacts.reduce((s, i) => s + i.result.affectedAreaKm2, 0);
+            return {
+              ...selectedImpacts[0]!.result,
+              energy: totalEnergy,
+              craterDiameter: maxCrater,
+              affectedAreaKm2: totalArea,
+              equivalentTNT: `${(totalEnergy / 4.184e9 / 1000).toFixed(1)} kt combined (${selectedImpacts.length} impacts)`,
+              comparison: `${selectedImpacts.length} impacts combined`,
+              casualtyEstimate: `${selectedImpacts.length} impacts`,
+              earthquakeMagnitude: Math.max(
+                ...selectedImpacts.map((i) => i.result.earthquakeMagnitude)
+              ),
+            };
+          })()
+        : result;
 
-  const selectedCountry =
-    popularCountries.find((c) => c.id === selectedCountryId) ?? popularCountries[0]!;
+  const selectedCountries = popularCountries.filter((c) => selectedCountryIds.includes(c.id));
 
   const handleMapClick = useCallback(
     (lat: number, lng: number) => {
-      if (impacts.length >= 50) {
-        setImpacts((prev) => prev.slice(1));
-      }
+      if (impacts.length >= 50) setImpacts((prev) => prev.slice(1));
       const newResult = calculateImpact({ diameter, density, velocity, angle });
       const { x, y } = latLngToWorldPct(lat, lng);
       const newImpact: MapImpact = {
@@ -86,8 +92,7 @@ export default function AsteroidLauncherPage() {
         timestamp: Date.now(),
       };
       setImpacts((prev) => [...prev.slice(-49), newImpact]);
-      setSelectedId(newImpact.id);
-      // Shake strength based on asteroid strength - earthquake magnitude
+      setSelectedIds((prev) => [...prev, newImpact.id]);
       setShakeEvent({
         id: newImpact.id,
         magnitude: newResult.earthquakeMagnitude,
@@ -97,14 +102,28 @@ export default function AsteroidLauncherPage() {
     [diameter, density, velocity, angle, impacts.length]
   );
 
-  const handleRemove = useCallback((id: string) => {
-    setImpacts((prev) => prev.filter((i) => i.id !== id));
-    setSelectedId((prev) => (prev === id ? null : prev));
+  const handleSelectImpact = useCallback((id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   }, []);
+
+  const handleRemoveSelected = useCallback(() => {
+    setImpacts((prev) => prev.filter((i) => !selectedIds.includes(i.id)));
+    setSelectedIds([]);
+  }, [selectedIds]);
 
   const handleClear = useCallback(() => {
     setImpacts([]);
-    setSelectedId(null);
+    setSelectedIds([]);
+  }, []);
+
+  const handleSelectCountry = useCallback((id: string) => {
+    setSelectedCountryIds((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((c) => c !== id);
+      }
+      return [...prev, id];
+    });
   }, []);
 
   const applyPreset = (preset: (typeof presets)[0]) => {
@@ -130,9 +149,8 @@ export default function AsteroidLauncherPage() {
 
   const countryImpactsCount = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const c of popularCountries) {
+    for (const c of popularCountries)
       counts[c.id] = impacts.filter((imp) => isInBounds(imp.lat, imp.lng, c.bounds)).length;
-    }
     return counts;
   }, [impacts]);
 
@@ -149,96 +167,144 @@ export default function AsteroidLauncherPage() {
             Asteroid Launcher
           </h1>
           <p className="text-lg text-[var(--muted-foreground)]">
-            Launch asteroids at Earth • World + popular countries • Shake scales with power
+            World + 12 popular countries • Multi-select • Faster vibration when bigger
           </p>
         </div>
 
-        {/* Map mode selector */}
         <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-full border bg-[var(--card)] p-1">
             <button
               onClick={() => setMapMode("world")}
-              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors ${mapMode === "world" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "world" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
             >
               🌍 World Map
             </button>
             <button
               onClick={() => setMapMode("countries")}
-              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors ${mapMode === "countries" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "countries" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
             >
-              🗺️ Popular Countries ({popularCountries.length})
+              🗺️ Countries ({popularCountries.length}) • {selectedCountryIds.length} selected
             </button>
           </div>
         </div>
 
-        {/* Maps */}
         <div className="mb-8">
           {mapMode === "world" ? (
             <WorldMap
               impacts={impacts}
-              onMapClick={(lat, lng) => handleMapClick(lat, lng)}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
+              onMapClick={handleMapClick}
+              selectedIds={selectedIds}
+              onSelect={handleSelectImpact}
               shakeEvent={shakeEvent}
             />
           ) : (
             <div className="space-y-3">
-              {/* Country selector - popular only */}
               <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
-                <div className="text-xs font-semibold mb-2">
-                  Popular Countries — click to switch map (only popular, not all)
+                <div className="text-xs font-semibold mb-2 flex justify-between">
+                  <span>
+                    Popular Countries — multi-select enabled (click to toggle, at least 1) • Maps
+                    actually show up with 4K satellite
+                  </span>
+                  <span className="text-[10px] text-[var(--muted-foreground)]">
+                    {selectedCountryIds.length} maps selected • Click crater to multi-select impacts
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {popularCountries.map((c) => {
                     const count = countryImpactsCount[c.id] ?? 0;
-                    const isSelected = c.id === selectedCountryId;
+                    const isSelected = selectedCountryIds.includes(c.id);
                     return (
                       <button
                         key={c.id}
-                        onClick={() => setSelectedCountryId(c.id)}
-                        className={`text-left px-3 py-2 rounded-lg border text-xs transition-all ${isSelected ? "bg-[var(--primary)] text-white border-[var(--primary)] ring-2 ring-[var(--primary)]/30" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
+                        onClick={() => handleSelectCountry(c.id)}
+                        className={`text-left px-3 py-2 rounded-lg border text-xs transition-all relative overflow-hidden ${isSelected ? "bg-[var(--primary)] text-white border-[var(--primary)] ring-2 ring-[var(--primary)]/30" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
                       >
-                        <div className="flex items-center gap-1.5 font-medium">
-                          <span className="text-base">{c.flag}</span> {c.name}
+                        <div className="absolute inset-0 opacity-20">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/experiences/asteroid-launcher/country-${c.id}.jpg`}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => (e.currentTarget.style.display = "none")}
+                          />
                         </div>
-                        <div className="text-[10px] opacity-70 mt-0.5">
-                          {c.capital} • {c.population} • {count} hits
+                        <div className="relative">
+                          <div className="flex items-center gap-1.5 font-medium">
+                            <span className="text-base">{c.flag}</span> {c.name} {isSelected && "✓"}
+                          </div>
+                          <div className="text-[10px] opacity-80 mt-0.5">
+                            {c.capital} • {c.population} • {count} hits
+                          </div>
                         </div>
                       </button>
                     );
                   })}
                 </div>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setSelectedCountryIds(popularCountries.map((c) => c.id))}
+                    className="px-3 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
+                  >
+                    Select all 12
+                  </button>
+                  <button
+                    onClick={() => setSelectedCountryIds(["usa"])}
+                    className="px-3 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
+                  >
+                    Only USA
+                  </button>
+                </div>
               </div>
 
-              <CountryMap
-                country={selectedCountry}
-                impacts={impacts}
-                onMapClick={(lat, lng) => handleMapClick(lat, lng)}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                shakeEvent={shakeEvent}
-              />
+              <div
+                className={`grid gap-3 ${selectedCountries.length === 1 ? "grid-cols-1" : selectedCountries.length === 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1 md:grid-cols-2"}`}
+              >
+                {selectedCountries.map((country) => (
+                  <CountryMap
+                    key={country.id}
+                    country={country}
+                    impacts={impacts}
+                    onMapClick={handleMapClick}
+                    selectedIds={selectedIds}
+                    onSelect={handleSelectImpact}
+                    shakeEvent={shakeEvent}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Multi-impact controls - no X on map, only here */}
           {impacts.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 items-center justify-between bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap">
                 <button
                   onClick={handleClear}
                   className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-medium"
                 >
                   🗑️ Clear all ({impacts.length})
                 </button>
-                {selectedImpact && (
+                {selectedIds.length > 0 && (
                   <button
-                    onClick={() => handleRemove(selectedImpact.id)}
-                    className="px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--muted)] rounded-lg text-xs"
+                    onClick={handleRemoveSelected}
+                    className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 rounded-lg text-xs"
                   >
-                    Remove selected
+                    Remove selected ({selectedIds.length})
                   </button>
                 )}
+                {selectedIds.length > 0 && (
+                  <button
+                    onClick={() => setSelectedIds([])}
+                    className="px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--muted)] rounded-lg text-xs"
+                  >
+                    Deselect all
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedIds(impacts.map((i) => i.id))}
+                  className="px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--muted)] rounded-lg text-xs"
+                >
+                  Select all impacts
+                </button>
               </div>
               {totalStats && (
                 <div className="flex gap-4 text-xs">
@@ -249,7 +315,7 @@ export default function AsteroidLauncherPage() {
                     Area: <b>{totalStats.totalArea.toFixed(1)} km²</b>
                   </span>
                   <span>
-                    Max crater: <b>{totalStats.maxCrater.toFixed(1)} km</b>
+                    Selected: <b>{selectedIds.length}</b>
                   </span>
                 </div>
               )}
@@ -258,61 +324,69 @@ export default function AsteroidLauncherPage() {
 
           {impacts.length > 0 && (
             <div className="mt-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
-              <div className="text-xs font-semibold mb-2 flex items-center justify-between">
+              <div className="text-xs font-semibold mb-2 flex justify-between">
                 <span>
-                  Impact History ({impacts.length}) — shake M
-                  {shakeEvent ? shakeEvent.magnitude.toFixed(1) : "-"} based on strength
+                  Impact History ({impacts.length}) — multi-select: click to toggle • Vibration
+                  faster when bigger (gap 18ms→2ms)
                 </span>
                 <span className="text-[10px] text-[var(--muted-foreground)]">
-                  No X on map — delete here only
+                  No X on map — delete here • M{shakeEvent ? shakeEvent.magnitude.toFixed(1) : "-"}{" "}
+                  last shake
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                {impacts.map((impact, idx) => (
-                  <button
-                    key={impact.id}
-                    onClick={() => setSelectedId(impact.id)}
-                    className={`text-left px-3 py-2 rounded-lg border text-xs transition-all flex items-center gap-2 ${selectedId === impact.id ? "bg-[var(--primary)]/10 border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/30" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
-                  >
-                    <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                      style={{ backgroundColor: impact.color }}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                {impacts.map((impact, idx) => {
+                  const isSelected = selectedIds.includes(impact.id);
+                  return (
+                    <button
+                      key={impact.id}
+                      onClick={() => handleSelectImpact(impact.id)}
+                      className={`text-left px-3 py-2 rounded-lg border text-xs transition-all flex items-center gap-2 ${isSelected ? "bg-[var(--primary)]/20 border-[var(--primary)] ring-1 ring-[var(--primary)]/30" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
                     >
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">
-                        {impact.result.equivalentTNT} • {impact.diameter}m • M
-                        {impact.result.earthquakeMagnitude.toFixed(1)} shake
+                      <input type="checkbox" checked={isSelected} readOnly className="shrink-0" />
+                      <span
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                        style={{ backgroundColor: impact.color }}
+                      >
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">
+                          {impact.result.equivalentTNT} • {impact.diameter}m • M
+                          {impact.result.earthquakeMagnitude.toFixed(1)}{" "}
+                          {impact.result.earthquakeMagnitude > 7 ? "⚡fast" : ""}
+                        </div>
+                        <div className="text-[10px] text-[var(--muted-foreground)] truncate">
+                          {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° •{" "}
+                          {impact.result.craterDiameter.toFixed(2)}km • vib{" "}
+                          {impact.result.earthquakeMagnitude < 4
+                            ? "slow"
+                            : impact.result.earthquakeMagnitude < 7
+                              ? "medium"
+                              : "FAST"}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-[var(--muted-foreground)] truncate">
-                        {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° •{" "}
-                        {impact.result.craterDiameter.toFixed(2)}km crater
-                      </div>
-                    </div>
-                    <span className="text-[10px]">{selectedId === impact.id ? "👁️" : ""}</span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 space-y-6">
             <h3 className="font-semibold flex items-center gap-2">
               ☄️ Asteroid Config{" "}
               <span className="text-[10px] px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full">
-                Shake = magnitude × 3.8px
+                Faster vib when bigger
               </span>
             </h3>
             <div>
-              <label htmlFor="diameter" className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2">
                 Diameter: {diameter < 1000 ? `${diameter} m` : `${(diameter / 1000).toFixed(1)} km`}
               </label>
               <input
-                id="diameter"
                 type="range"
                 min="1"
                 max="15000"
@@ -322,11 +396,8 @@ export default function AsteroidLauncherPage() {
               />
             </div>
             <div>
-              <label htmlFor="density" className="block text-sm font-medium mb-2">
-                Density: {density} kg/m³
-              </label>
+              <label className="block text-sm font-medium mb-2">Density: {density} kg/m³</label>
               <input
-                id="density"
                 type="range"
                 min="1000"
                 max="8000"
@@ -342,11 +413,8 @@ export default function AsteroidLauncherPage() {
               </div>
             </div>
             <div>
-              <label htmlFor="velocity" className="block text-sm font-medium mb-2">
-                Velocity: {velocity} km/s
-              </label>
+              <label className="block text-sm font-medium mb-2">Velocity: {velocity} km/s</label>
               <input
-                id="velocity"
                 type="range"
                 min="5"
                 max="72"
@@ -356,11 +424,8 @@ export default function AsteroidLauncherPage() {
               />
             </div>
             <div>
-              <label htmlFor="angle" className="block text-sm font-medium mb-2">
-                Impact Angle: {angle}°
-              </label>
+              <label className="block text-sm font-medium mb-2">Impact Angle: {angle}°</label>
               <input
-                id="angle"
                 type="range"
                 min="10"
                 max="90"
@@ -378,39 +443,42 @@ export default function AsteroidLauncherPage() {
                   <button
                     key={l.id}
                     onClick={() => setLocation(l.id)}
-                    aria-pressed={location === l.id}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${location === l.id ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
+                    className={`px-2 py-1.5 rounded-lg text-[11px] font-medium border ${location === l.id ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
                   >
                     {l.emoji} {l.name}
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-[var(--muted-foreground)] mt-1">
-                {loc.desc} • {loc.density}/km²
-              </p>
             </div>
           </div>
-
           <div className="space-y-6">
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-              <h3 className="font-semibold mb-4">Presets</h3>
+              <h3 className="font-semibold mb-4">Presets • Vibration speed</h3>
               <div className="space-y-2">
-                {presets.map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => applyPreset(preset)}
-                    className="w-full text-left px-4 py-2 bg-[var(--secondary)] rounded-lg hover:bg-[var(--muted)] transition-colors"
-                  >
-                    <div className="font-medium text-sm">{preset.name}</div>
-                    <div className="text-xs text-[var(--muted-foreground)]">
-                      {preset.diameter < 1000
-                        ? `${preset.diameter}m`
-                        : `${(preset.diameter / 1000).toFixed(1)}km`}{" "}
-                      • {preset.velocity} km/s • shake M
-                      {calculateImpact(preset).earthquakeMagnitude.toFixed(1)}
-                    </div>
-                  </button>
-                ))}
+                {presets.map((preset) => {
+                  const r = calculateImpact(preset);
+                  const vibSpeed =
+                    r.earthquakeMagnitude < 4
+                      ? "slow 18ms gap"
+                      : r.earthquakeMagnitude < 7
+                        ? "medium 6ms gap"
+                        : "FAST 2ms gap";
+                  return (
+                    <button
+                      key={preset.name}
+                      onClick={() => applyPreset(preset)}
+                      className="w-full text-left px-4 py-2 bg-[var(--secondary)] rounded-lg hover:bg-[var(--muted)]"
+                    >
+                      <div className="font-medium text-sm">{preset.name}</div>
+                      <div className="text-xs text-[var(--muted-foreground)]">
+                        {preset.diameter < 1000
+                          ? `${preset.diameter}m`
+                          : `${(preset.diameter / 1000).toFixed(1)}km`}{" "}
+                        • M{r.earthquakeMagnitude.toFixed(1)} • {vibSpeed}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
@@ -445,20 +513,27 @@ export default function AsteroidLauncherPage() {
 
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 mb-8">
           <h2 className="text-2xl font-bold mb-2 text-center">
-            {selectedImpact
-              ? `Impact #${impacts.indexOf(selectedImpact) + 1} Results`
-              : "Impact Preview"}
+            {selectedImpacts.length === 1
+              ? `Impact #${impacts.indexOf(selectedImpacts[0]!) + 1} Results`
+              : selectedImpacts.length > 1
+                ? `${selectedImpacts.length} Impacts Selected`
+                : "Impact Preview"}
           </h2>
-          {selectedImpact && (
+          {selectedImpacts.length > 0 && (
             <p className="text-center text-xs text-[var(--muted-foreground)] mb-6">
-              📍 {selectedImpact.lat.toFixed(2)}°, {selectedImpact.lng.toFixed(2)}° •{" "}
-              {selectedImpact.diameter}m @ {selectedImpact.velocity}km/s • shake M
-              {selectedImpact.result.earthquakeMagnitude.toFixed(1)}
-            </p>
-          )}
-          {!selectedImpact && impacts.length === 0 && (
-            <p className="text-center text-xs text-[var(--muted-foreground)] mb-6">
-              Adjust sliders then click map — shake strength based on asteroid power
+              {selectedImpacts.length} selected • Shake M
+              {displayResult.earthquakeMagnitude.toFixed(1)} • Vib{" "}
+              {displayResult.earthquakeMagnitude < 4
+                ? "slow"
+                : displayResult.earthquakeMagnitude < 7
+                  ? "medium"
+                  : "FAST"}{" "}
+              • Gap{" "}
+              {displayResult.earthquakeMagnitude < 4
+                ? "18ms"
+                : displayResult.earthquakeMagnitude < 7
+                  ? "6ms"
+                  : "2ms"}
             </p>
           )}
 
@@ -468,23 +543,23 @@ export default function AsteroidLauncherPage() {
               {displayResult.equivalentTNT}
             </div>
             <div className="text-sm text-[var(--muted-foreground)]">{displayResult.comparison}</div>
-            <div className="mt-3 flex flex-col items-center gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               <div className="inline-flex items-center gap-2 bg-[var(--secondary)] px-3 py-1.5 rounded-full text-xs">
-                <span>💀 Base estimate:</span>
+                <span>💀 Base:</span>
                 <span className="font-bold">{displayResult.casualtyEstimate}</span>
               </div>
-              <div className="inline-flex items-center gap-2 bg-[var(--primary)]/10 border border-[var(--primary)]/20 px-3 py-1.5 rounded-full text-xs">
-                <span>
-                  {loc.emoji} {loc.name} ({loc.density}/km²):
-                </span>
-                <span className="font-bold text-[var(--primary)]">{adjustedCasualties}</span>
-              </div>
               <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-full text-xs">
-                <span>🌍 Shake intensity:</span>
+                <span>🌍 Shake:</span>
                 <span className="font-bold text-orange-400">
                   M{displayResult.earthquakeMagnitude.toFixed(1)} ={" "}
-                  {Math.min(45, Math.max(2, displayResult.earthquakeMagnitude * 3.8)).toFixed(0)}px
-                  shake
+                  {Math.min(50, Math.max(2, displayResult.earthquakeMagnitude * 4)).toFixed(0)}px •{" "}
+                  {(3 + displayResult.earthquakeMagnitude * 1.8).toFixed(0)} shakes •{" "}
+                  {(0.3 + displayResult.earthquakeMagnitude * 0.05).toFixed(2)}s ={" "}
+                  {(
+                    (3 + displayResult.earthquakeMagnitude * 1.8) /
+                    (0.3 + displayResult.earthquakeMagnitude * 0.05)
+                  ).toFixed(1)}
+                  Hz {displayResult.earthquakeMagnitude > 7 ? "⚡FAST" : ""}
                 </span>
               </div>
             </div>
@@ -505,38 +580,31 @@ export default function AsteroidLauncherPage() {
               </div>
             </div>
             <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
-              <div className="text-2xl mb-1">📏</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Crater Depth</div>
-              <div className="font-bold">
-                {displayResult.craterDepth < 1
-                  ? `${(displayResult.craterDepth * 1000).toFixed(0)} m`
-                  : `${displayResult.craterDepth.toFixed(1)} km`}
-              </div>
-            </div>
-            <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
               <div className="text-2xl mb-1">🌍</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Earthquake / Shake</div>
+              <div className="text-xs text-[var(--muted-foreground)] mb-1">Shake / Vib Speed</div>
               <div className="font-bold">
-                {displayResult.earthquakeMagnitude.toFixed(1)} mag •{" "}
-                {Math.min(45, displayResult.earthquakeMagnitude * 3.8).toFixed(0)}px
+                {displayResult.earthquakeMagnitude.toFixed(1)} •{" "}
+                {displayResult.earthquakeMagnitude < 4
+                  ? "slow"
+                  : displayResult.earthquakeMagnitude < 7
+                    ? "med"
+                    : "FAST"}{" "}
+                •{" "}
+                {displayResult.earthquakeMagnitude < 4
+                  ? "18ms"
+                  : displayResult.earthquakeMagnitude < 7
+                    ? "6ms"
+                    : "2ms"}{" "}
+                gap
               </div>
             </div>
             <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
               <div className="text-2xl mb-1">🔥</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Fireball Radius</div>
+              <div className="text-xs text-[var(--muted-foreground)] mb-1">Fireball</div>
               <div className="font-bold">
                 {displayResult.fireballRadius < 1
                   ? `${(displayResult.fireballRadius * 1000).toFixed(0)} m`
                   : `${displayResult.fireballRadius.toFixed(1)} km`}
-              </div>
-            </div>
-            <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
-              <div className="text-2xl mb-1">🌡️</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Thermal Radiation</div>
-              <div className="font-bold">
-                {displayResult.thermalRadiationDistance < 1
-                  ? `${(displayResult.thermalRadiationDistance * 1000).toFixed(0)} m`
-                  : `${displayResult.thermalRadiationDistance.toFixed(1)} km`}
               </div>
             </div>
             <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
@@ -548,35 +616,13 @@ export default function AsteroidLauncherPage() {
                   : `${displayResult.blastWaveDistance.toFixed(1)} km`}
               </div>
             </div>
-            <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
-              <div className="text-2xl mb-1">📐</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Affected Area</div>
-              <div className="font-bold">
-                {displayResult.affectedAreaKm2 < 1
-                  ? `${(displayResult.affectedAreaKm2 * 1_000_000).toFixed(0)} m²`
-                  : displayResult.affectedAreaKm2 < 1000
-                    ? `${displayResult.affectedAreaKm2.toFixed(1)} km²`
-                    : `${(displayResult.affectedAreaKm2 / 1000).toFixed(1)}k km²`}
-              </div>
-            </div>
-            <div className="bg-[var(--secondary)] rounded-lg p-4 text-center">
-              <div className="text-2xl mb-1">⚖️</div>
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Mass</div>
-              <div className="font-bold text-xs">
-                {displayResult.mass < 1000
-                  ? `${displayResult.mass.toFixed(0)} kg`
-                  : displayResult.mass < 1e6
-                    ? `${(displayResult.mass / 1000).toFixed(1)} tons`
-                    : `${(displayResult.mass / 1e9).toFixed(2)} Mt`}
-              </div>
-            </div>
           </div>
         </div>
 
         <div className="text-center text-sm text-[var(--muted-foreground)]">
           <p>
-            🌍 World + {popularCountries.length} popular countries • No X on map • Shake =
-            earthquake magnitude × 3.8px • 4K crisp zoom
+            🌍 World + 12 countries • All 12 maps 4K actually show up • Multi-select impacts +
+            countries • Vibration faster when bigger (gap 18ms→2ms, freq 16Hz→26Hz)
           </p>
         </div>
       </div>
