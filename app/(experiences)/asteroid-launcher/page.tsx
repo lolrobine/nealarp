@@ -143,7 +143,6 @@ export default function AsteroidLauncherPage() {
           <WorldMap
             impacts={impacts}
             onMapClick={handleMapClick}
-            onRemoveImpact={handleRemove}
             selectedId={selectedId}
             onSelect={setSelectedId}
           />
