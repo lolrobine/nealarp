@@ -5,6 +5,62 @@ export type Rule = {
   hint: string;
 };
 
+// --- Roman numeral helpers ---
+const ROMAN_VALUES: Record<string, number> = {
+  I: 1,
+  V: 5,
+  X: 10,
+  L: 50,
+  C: 100,
+  D: 500,
+  M: 1000,
+};
+
+function romanToInt(s: string): number {
+  let total = 0;
+  let prev = 0;
+  for (let i = s.length - 1; i >= 0; i--) {
+    const ch = s[i]!;
+    const val = ROMAN_VALUES[ch];
+    if (!val) return 0; // invalid char
+    if (val < prev) {
+      total -= val;
+    } else {
+      total += val;
+      prev = val;
+    }
+  }
+  // Basic validation: reconvert and check if it matches common patterns?
+  // For simplicity, accept any that yields >0 and is <4000 and doesn't have 4 repeats
+  if (total <= 0 || total >= 4000) return 0;
+  // Check invalid repetition (IIII, XXXX, etc)
+  if (/(IIII|XXXX|CCCC|MMMM)/.test(s)) return 0;
+  return total;
+}
+
+function extractRomanTokens(password: string): { token: string; value: number }[] {
+  // Match standalone tokens of IVXLCDM surrounded by word boundaries or non-letters
+  // Using \b[IVXLCDM]+\b ensures we don't catch letters inside words like January
+  const matches = password.match(/\b[IVXLCDM]+\b/g);
+  if (!matches) return [];
+  const result: { token: string; value: number }[] = [];
+  for (const token of matches) {
+    const value = romanToInt(token);
+    if (value > 0) result.push({ token, value });
+  }
+  return result;
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  if (n === 2) return true;
+  if (n % 2 === 0) return false;
+  for (let i = 3; i <= Math.sqrt(n); i += 2) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
 export const rules: Rule[] = [
   {
     id: 1,
@@ -36,18 +92,28 @@ export const rules: Rule[] = [
     validate: (p) => {
       const digits = p.match(/\d/g);
       if (!digits) return false;
-      const sum = digits.reduce((acc, d) => acc + parseInt(d), 0);
+      const sum = digits.reduce((acc, d) => acc + parseInt(d, 10), 0);
       return sum === 25;
     },
-    hint: "e.g., 8 + 8 + 9 = 25",
+    hint: "e.g., 8 + 8 + 9 = 25. Include all digits in sum!",
   },
   {
     id: 6,
     text: "Your password must contain a month of the year",
     validate: (p) => {
       const months = [
-        "january", "february", "march", "april", "may", "june",
-        "july", "august", "september", "october", "november", "december",
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
       ];
       const lower = p.toLowerCase();
       return months.some((m) => lower.includes(m));
@@ -56,53 +122,147 @@ export const rules: Rule[] = [
   },
   {
     id: 7,
-    text: "Your password must contain a Roman numeral",
-    validate: (p) => /[IVXLCDM]/.test(p),
-    hint: "I, V, X, L, C, D, or M",
+    text: "Your password must contain a Roman numeral (as a standalone word)",
+    validate: (p) => extractRomanTokens(p).length > 0,
+    hint: "Try V, VII, X, L, C, D, M as separate words — e.g., ' V '",
   },
   {
     id: 8,
     text: "The Roman numerals in your password should multiply to 35",
     validate: (p) => {
-      const romanValues: Record<string, number> = {
-        I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000,
-      };
-      const romans = p.match(/[IVXLCDM]/g);
-      if (!romans) return false;
-      const product = romans.reduce((acc, r) => acc * (romanValues[r] || 0), 1);
+      const tokens = extractRomanTokens(p);
+      if (tokens.length === 0) return false;
+      const product = tokens.reduce((acc, t) => acc * t.value, 1);
       return product === 35;
     },
-    hint: "V × VII = 35. That's V and VII.",
+    hint: "V × VII = 35. Include ' V VII ' as separate words (5×7=35). Extra I's (value 1) are okay.",
   },
   {
     id: 9,
     text: "Your password must include the current day of the week",
     validate: (p) => {
       const days = [
-        "Sunday", "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday",
-      ];
-      const today = days[new Date().getDay()];
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ] as const;
+      const today = days[new Date().getDay()]!;
       return p.includes(today);
     },
-    hint: "Today is the day! Check what day it is.",
+    hint: "Today is the day! Check what day it is, or include all days to be safe.",
   },
   {
     id: 10,
     text: "Your password must contain a two-letter chemical element symbol",
     validate: (p) => {
       const elements = [
-        "He", "Li", "Be", "Ne", "Na", "Mg", "Al", "Si", "Cl", "Ar",
-        "Ca", "Sc", "Ti", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
-        "Ga", "Ge", "As", "Se", "Br", "Kr", "Sr", "Zr", "Nb", "Mo",
-        "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te",
-        "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu",
-        "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta",
-        "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po",
-        "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "Np", "Pu", "Am",
-        "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db",
-        "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc",
-        "Lv", "Ts", "Og",
+        "He",
+        "Li",
+        "Be",
+        "Ne",
+        "Na",
+        "Mg",
+        "Al",
+        "Si",
+        "Cl",
+        "Ar",
+        "Ca",
+        "Sc",
+        "Ti",
+        "Cr",
+        "Mn",
+        "Fe",
+        "Co",
+        "Ni",
+        "Cu",
+        "Zn",
+        "Ga",
+        "Ge",
+        "As",
+        "Se",
+        "Br",
+        "Kr",
+        "Sr",
+        "Zr",
+        "Nb",
+        "Mo",
+        "Tc",
+        "Ru",
+        "Rh",
+        "Pd",
+        "Ag",
+        "Cd",
+        "In",
+        "Sn",
+        "Sb",
+        "Te",
+        "Xe",
+        "Cs",
+        "Ba",
+        "La",
+        "Ce",
+        "Pr",
+        "Nd",
+        "Pm",
+        "Sm",
+        "Eu",
+        "Gd",
+        "Tb",
+        "Dy",
+        "Ho",
+        "Er",
+        "Tm",
+        "Yb",
+        "Lu",
+        "Hf",
+        "Ta",
+        "Re",
+        "Os",
+        "Ir",
+        "Pt",
+        "Au",
+        "Hg",
+        "Tl",
+        "Pb",
+        "Bi",
+        "Po",
+        "At",
+        "Rn",
+        "Fr",
+        "Ra",
+        "Ac",
+        "Th",
+        "Pa",
+        "Np",
+        "Pu",
+        "Am",
+        "Cm",
+        "Bk",
+        "Cf",
+        "Es",
+        "Fm",
+        "Md",
+        "No",
+        "Lr",
+        "Rf",
+        "Db",
+        "Sg",
+        "Bh",
+        "Hs",
+        "Mt",
+        "Ds",
+        "Rg",
+        "Cn",
+        "Nh",
+        "Fl",
+        "Mc",
+        "Lv",
+        "Ts",
+        "Og",
       ];
       return elements.some((el) => p.includes(el));
     },
@@ -112,11 +272,10 @@ export const rules: Rule[] = [
     id: 11,
     text: "Your password must contain a leap year",
     validate: (p) => {
-      // Match 4-digit numbers and check if any is a leap year
       const years = p.match(/\d{4}/g);
       if (!years) return false;
       return years.some((y) => {
-        const year = parseInt(y);
+        const year = parseInt(y, 10);
         return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
       });
     },
@@ -136,16 +295,22 @@ export const rules: Rule[] = [
   },
   {
     id: 14,
-    text: "The letters in your password must be in alphabetical order",
+    text: "Your password must contain 3 consecutive letters in alphabetical order (like abc or xyz)",
     validate: (p) => {
-      const letters = p.replace(/[^a-zA-Z]/g, "").toLowerCase();
-      if (letters.length === 0) return false;
-      for (let i = 1; i < letters.length; i++) {
-        if (letters[i] < letters[i - 1]) return false;
+      const lower = p.toLowerCase();
+      for (let i = 0; i < lower.length - 2; i++) {
+        const a = lower.charCodeAt(i);
+        const b = lower.charCodeAt(i + 1);
+        const c = lower.charCodeAt(i + 2);
+        // Check a,b,c are letters a-z
+        if (a < 97 || a > 122) continue;
+        if (b < 97 || b > 122) continue;
+        if (c < 97 || c > 122) continue;
+        if (b === a + 1 && c === b + 1) return true;
       }
-      return true;
+      return false;
     },
-    hint: "Each letter must be the same or later in the alphabet than the previous one. 'abce' is valid, 'ba' is not.",
+    hint: "Include 'abc', 'bcd', 'xyz', etc. somewhere!",
   },
   {
     id: 15,
@@ -153,16 +318,7 @@ export const rules: Rule[] = [
     validate: (p) => {
       const numbers = p.match(/\d+/g);
       if (!numbers) return false;
-      const isPrime = (n: number) => {
-        if (n < 2) return false;
-        if (n === 2) return true;
-        if (n % 2 === 0) return false;
-        for (let i = 3; i <= Math.sqrt(n); i += 2) {
-          if (n % i === 0) return false;
-        }
-        return true;
-      };
-      return numbers.some((n) => isPrime(parseInt(n)));
+      return numbers.some((n) => isPrime(parseInt(n, 10)));
     },
     hint: "2, 3, 5, 7, 11, 13, 17, 19, 23...",
   },
@@ -180,7 +336,7 @@ export const rules: Rule[] = [
       const lower = (p.match(/[a-z]/g) || []).length;
       return upper > lower;
     },
-    hint: "Capitalize more letters!",
+    hint: "Add lots of UPPERCASE LETTERS to outweigh lowercase!",
   },
   {
     id: 18,
@@ -190,22 +346,15 @@ export const rules: Rule[] = [
   },
   {
     id: 19,
-    text: "The 🎉 emoji in your password must be positioned at a prime index",
+    text: "The 🎉 emoji in your password must be positioned at a prime index (counting characters, starting at 0)",
     validate: (p) => {
-      const idx = p.indexOf("🎉");
+      // Use Array.from to handle emoji correctly (grapheme-aware)
+      const chars = Array.from(p);
+      const idx = chars.indexOf("🎉");
       if (idx === -1) return false;
-      const isPrime = (n: number) => {
-        if (n < 2) return false;
-        if (n === 2) return true;
-        if (n % 2 === 0) return false;
-        for (let i = 3; i <= Math.sqrt(n); i += 2) {
-          if (n % i === 0) return false;
-        }
-        return true;
-      };
       return isPrime(idx);
     },
-    hint: "Position 2, 3, 5, 7, 11, 13, etc.",
+    hint: "Position 2, 3, 5, 7, 11, 13, etc. (character count, not code units)",
   },
   {
     id: 20,
@@ -214,3 +363,10 @@ export const rules: Rule[] = [
     hint: "",
   },
 ];
+
+// Export helpers for testing
+export const _helpers = {
+  romanToInt,
+  extractRomanTokens,
+  isPrime,
+};

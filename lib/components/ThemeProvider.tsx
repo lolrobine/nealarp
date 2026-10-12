@@ -1,41 +1,33 @@
 "use client";
 
 import { useEffect } from "react";
-import { useThemeStore } from "@/lib/store/theme";
+import { useThemeStore, resolveTheme, getSystemTheme } from "@/lib/store/theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme } = useThemeStore();
+  const theme = useThemeStore((s) => s.theme);
 
+  // Apply theme class to document
   useEffect(() => {
-    // Initialize theme on mount
-    const stored = localStorage.getItem("theme-storage");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.state?.theme) {
-          setTheme(parsed.state.theme);
-          return;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    // Default to system preference
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setTheme(systemDark ? "dark" : "light");
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (theme === "system") {
-        setTheme("system");
+    const apply = (t: "light" | "dark") => {
+      if (t === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
       }
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    apply(resolveTheme(theme));
+
+    // Listen for system changes when in system mode
+    if (theme === "system") {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = () => {
+        apply(getSystemTheme());
+      };
+      media.addEventListener("change", handleChange);
+      return () => media.removeEventListener("change", handleChange);
+    }
+  }, [theme]);
 
   return <>{children}</>;
 }

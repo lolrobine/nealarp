@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
-import {
-  forgetUnlock,
-  isUnlocked,
-  rememberUnlock,
-  verifyPassword,
-} from "@/lib/auth/sitePassword";
+import { forgetUnlock, isUnlocked, rememberUnlock, verifyPassword } from "@/lib/auth/sitePassword";
 
 type Status = "checking" | "locked" | "unlocked";
 
@@ -64,17 +59,13 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
   );
 }
 
-function UnlockScreen({
-  checking,
-  onUnlocked,
-}: {
-  checking: boolean;
-  onUnlocked: () => void;
-}) {
+function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked: () => void }) {
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const shake = useAnimationControls();
 
@@ -82,9 +73,16 @@ function UnlockScreen({
     if (!checking) inputRef.current?.focus();
   }, [checking]);
 
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (checking || submitting || !password.trim()) return;
+    if (checking || submitting || cooldown > 0 || !password.trim()) return;
 
     setSubmitting(true);
     setError(null);
@@ -95,9 +93,18 @@ function UnlockScreen({
       return;
     }
 
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
     setSubmitting(false);
     setPassword("");
-    setError("That password is not right. Please try again.");
+    // Exponential backoff after 3 fails
+    if (newAttempts >= 3) {
+      const delay = Math.min(30, Math.pow(2, newAttempts - 3)); // 1,2,4,8,16,30
+      setCooldown(delay);
+      setError(`Wrong password. Try again in ${delay}s. (${newAttempts} failed attempts)`);
+    } else {
+      setError("That password is not right. Please try again.");
+    }
     shake.start({ x: [0, -10, 10, -7, 7, 0], transition: { duration: 0.4 } });
     inputRef.current?.focus();
   }
@@ -121,9 +128,7 @@ function UnlockScreen({
               </div>
             </div>
 
-            <h1 className="mt-5 text-center text-xl font-bold">
-              This site is password protected
-            </h1>
+            <h1 className="mt-5 text-center text-xl font-bold">This site is password protected</h1>
             <p className="mt-2 text-center text-sm text-[var(--muted-foreground)]">
               Enter the password to continue to the experiences.
             </p>
@@ -156,7 +161,8 @@ function UnlockScreen({
                   type="button"
                   onClick={() => setRevealed((value) => !value)}
                   aria-label={revealed ? "Hide password" : "Show password"}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                  aria-pressed={revealed}
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
                 >
                   {revealed ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -175,10 +181,10 @@ function UnlockScreen({
 
             <button
               type="submit"
-              disabled={checking || submitting || password.length === 0}
+              disabled={checking || submitting || cooldown > 0 || password.length === 0}
               className="mt-5 w-full rounded-lg bg-[var(--primary)] px-4 py-3 font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? "Checking…" : "Unlock"}
+              {cooldown > 0 ? `Wait ${cooldown}s...` : submitting ? "Checking…" : "Unlock"}
             </button>
 
             <p className="mt-4 text-center text-xs text-[var(--muted-foreground)]">
@@ -202,7 +208,7 @@ function LockButton({ onLock }: { onLock: () => void }) {
       onClick={onLock}
       title="Lock this site"
       aria-label="Lock this site"
-      className="fixed bottom-4 right-4 z-[90] flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--secondary)] text-[var(--muted-foreground)] opacity-40 transition-opacity hover:text-[var(--foreground)] hover:opacity-100"
+      className="fixed bottom-4 left-4 z-[90] flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--secondary)] text-[var(--muted-foreground)] opacity-40 transition-opacity hover:text-[var(--foreground)] hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
     >
       <LockIcon className="h-4 w-4" />
     </button>
@@ -217,20 +223,8 @@ function Spinner() {
       fill="none"
       aria-hidden="true"
     >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="opacity-25"
-      />
-      <path
-        d="M21 12a9 9 0 0 0-9-9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" className="opacity-25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
