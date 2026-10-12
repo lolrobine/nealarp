@@ -13,7 +13,9 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    isUnlocked().then((unlocked) => {
+    // Minimum checking time to prevent flash/disappear perception
+    const minDelay = new Promise((r) => setTimeout(r, 400));
+    Promise.all([isUnlocked(), minDelay]).then(([unlocked]) => {
       if (!cancelled) setStatus(unlocked ? "unlocked" : "locked");
     });
     return () => {
@@ -29,7 +31,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AnimatePresence initial={false} mode="wait">
+      <AnimatePresence initial={false}>
         {status !== "unlocked" && (
           <UnlockScreen
             key="site-lock"
@@ -48,14 +50,6 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
   );
 }
 
-const funMessages = [
-  "Psst... the magic word is hidden in plain sight ✨",
-  "Hint: it's the name of this project 😉",
-  "Think short, think fun, think neal...",
-  "You got this! One more try? 💪",
-  "The password is literally the site name 🤫",
-];
-
 function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked: () => void }) {
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -66,16 +60,19 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
   const [capsLock, setCapsLock] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [konamiProgress, setKonamiProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const shake = useAnimationControls();
 
-  // Theme handling for prominent toggle
+  // Single dark mode button — respects browser settings via system theme
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const [resolved, setResolved] = useState<"light" | "dark">("dark");
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    setResolved(resolveTheme(theme));
+    setMounted(true);
+    const update = () => setResolved(resolveTheme(theme));
+    update();
     if (theme === "system" && typeof window !== "undefined") {
       const media = window.matchMedia("(prefers-color-scheme: dark)");
       const handler = () => setResolved(media.matches ? "dark" : "light");
@@ -84,14 +81,12 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     }
   }, [theme]);
 
-  const funMessage = funMessages[Math.min(attempts, funMessages.length - 1)];
-
   useEffect(() => {
-    if (!checking) {
+    if (!checking && mounted) {
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [checking]);
+  }, [checking, mounted]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -104,37 +99,6 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       setError(`Wrong password. Try again in ${cooldown}s • ${attempts} failed`);
     }
   }, [cooldown, attempts]);
-
-  useEffect(() => {
-    const konami = [
-      "ArrowUp",
-      "ArrowUp",
-      "ArrowDown",
-      "ArrowDown",
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowLeft",
-      "ArrowRight",
-      "b",
-      "a",
-    ];
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === konami[konamiProgress]) {
-        const next = konamiProgress + 1;
-        if (next === konami.length) {
-          setPassword("nealarp");
-          setShowHint(true);
-          setKonamiProgress(0);
-        } else {
-          setKonamiProgress(next);
-        }
-      } else {
-        setKonamiProgress(0);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [konamiProgress]);
 
   const trimmed = password.trim();
   const isDisabled = checking || submitting || cooldown > 0;
@@ -189,6 +153,22 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
 
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
 
+  // Prevent flash/disappear: keep screen mounted during checking, show explicit loading
+  if (checking) {
+    return (
+      <div className="fixed inset-0 z-[100] flex flex-col bg-[var(--background)]">
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg">
+              <Spinner className="h-7 w-7 text-white" />
+            </div>
+            <p className="mt-4 text-sm text-[var(--muted-foreground)]">Loading…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-[var(--background)]"
@@ -196,383 +176,237 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.2 } }}
     >
-      {/* Confetti above everything */}
       <div className="pointer-events-none fixed inset-0 z-[110]">
         <Confetti active={success} />
       </div>
 
-      {/* Animated background */}
+      {/* Background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute -top-1/2 left-1/2 h-[120%] w-[180%] -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/15 via-cyan-500/10 to-transparent blur-3xl dark:from-violet-500/10 dark:via-cyan-500/5"
-          animate={{ scale: [1, 1.1, 1], rotate: [0, 3, 0] }}
+          animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute -bottom-1/2 left-1/4 h-[80%] w-[100%] rounded-full bg-gradient-to-t from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl dark:from-emerald-500/5"
-          animate={{ scale: [1, 1.15, 1], x: [0, 30, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        <motion.div
-          className="absolute left-[15%] top-[20%] h-32 w-32 rounded-full bg-gradient-to-br from-violet-400/20 to-cyan-400/20 blur-2xl dark:from-violet-400/10 dark:to-cyan-400/10"
-          animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute right-[20%] top-[60%] h-40 w-40 rounded-full bg-gradient-to-br from-emerald-400/15 to-sky-400/15 blur-2xl dark:from-emerald-400/5 dark:to-sky-400/5"
-          animate={{ y: [0, 15, 0], x: [0, -15, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)]" />
       </div>
 
-      {/* Top bar with prominent dark mode */}
+      {/* Single dark mode button — top right, respects browser */}
       <div className="relative flex h-16 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2.5 text-sm">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/20">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-lg">
             <span className="text-[15px] font-bold">n</span>
           </div>
-          <div className="flex flex-col leading-none">
-            <span className="font-bold tracking-tight">neal.fun</span>
-            <span className="text-[10px] text-[var(--muted-foreground)]">interactive • v2</span>
-          </div>
+          <span className="font-bold tracking-tight">neal.fun</span>
+          <span className="rounded-full bg-[var(--secondary)] px-2 py-0.5 text-[10px]">v2</span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Prominent dark mode toggle */}
-          <motion.button
-            onClick={toggleTheme}
-            whileTap={{ scale: 0.92 }}
-            whileHover={{ scale: 1.05 }}
-            className="flex h-10 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3.5 text-sm font-medium shadow-sm transition-colors hover:bg-[var(--secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
-            aria-label={`Switch to ${resolved === "dark" ? "light" : "dark"} mode`}
-          >
-            <span className="text-base">{resolved === "dark" ? "🌙" : "☀️"}</span>
-            <span className="hidden sm:inline">{resolved === "dark" ? "Dark" : "Light"}</span>
-          </motion.button>
-          <a
-            href="https://github.com/lolrobine/nealarp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] shadow-sm hover:text-[var(--foreground)] transition-colors"
-            aria-label="GitHub"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-          </a>
-        </div>
+        {/* ONE dark mode button */}
+        <motion.button
+          onClick={toggleTheme}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.05 }}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] shadow-sm transition-colors hover:bg-[var(--secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+          aria-label={`Switch to ${resolved === "dark" ? "light" : "dark"} mode`}
+          title={`${resolved === "dark" ? "Light" : "Dark"} mode (browser: ${theme})`}
+        >
+          <span className="text-lg">{mounted ? (resolved === "dark" ? "☀️" : "🌙") : "🌙"}</span>
+        </motion.button>
       </div>
 
-      {/* Main */}
+      {/* Main card */}
       <div className="relative flex flex-1 items-center justify-center px-4 py-6">
         <motion.div
-          animate={shake}
           className="w-full max-w-[380px]"
           initial={{ y: 12, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
+          animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          <form
-            onSubmit={handleSubmit}
-            className="relative overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--card)]/80 p-7 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:p-8"
-            noValidate
-          >
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent dark:from-white/[0.04]" />
-
-            <div className="relative">
-              <div className="flex justify-center">
-                <motion.div
-                  className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg transition-colors ${
-                    success
-                      ? "bg-emerald-500 text-white shadow-emerald-500/25"
-                      : error
-                        ? "bg-red-500/10 text-red-500 border border-red-500/20"
-                        : "bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-violet-500/20"
-                  }`}
-                  animate={success ? { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] } : {}}
-                  transition={{ duration: 0.6 }}
-                >
-                  {checking ? (
-                    <Spinner />
-                  ) : success ? (
-                    <CheckIcon className="h-8 w-8" />
-                  ) : error ? (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-2xl"
-                      aria-hidden
-                    >
-                      {attempts >= 3 ? "😵" : "🔒"}
-                    </motion.span>
-                  ) : (
-                    <LockIcon className="h-7 w-7" />
-                  )}
-                </motion.div>
-              </div>
-
-              <h1 className="mt-5 text-center text-[22px] font-bold tracking-tight">
-                {success ? "Unlocked! 🎉" : checking ? "Checking..." : "Protected Site"}
-              </h1>
-              <p className="mt-1.5 text-center text-sm leading-5 text-[var(--muted-foreground)]">
-                {success
-                  ? "Welcome back — opening the fun…"
-                  : checking
-                    ? "Verifying your browser…"
-                    : "Enter the password to explore 8 interactive experiences."}
-              </p>
-
-              <AnimatePresence>
-                {attempts > 0 && !success && (
+          <motion.div animate={shake}>
+            <form
+              onSubmit={handleSubmit}
+              className="relative overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--card)]/80 p-7 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:p-8"
+              noValidate
+            >
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent dark:from-white/[0.04]" />
+              <div className="relative">
+                <div className="flex justify-center">
                   <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="mt-4 flex items-center justify-center gap-2"
+                    className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ${
+                      success
+                        ? "bg-emerald-500 text-white"
+                        : error
+                          ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                          : "bg-gradient-to-br from-violet-500 to-cyan-500 text-white"
+                    }`}
+                    animate={success ? { scale: [1, 1.15, 1] } : {}}
+                    transition={{ duration: 0.5 }}
                   >
-                    <div className="flex gap-1.5">
-                      {Array.from({ length: Math.min(attempts, 5) }).map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="h-2 w-2 rounded-full bg-red-400"
-                          style={{ opacity: 1 - i * 0.15 }}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-[11px] text-[var(--muted-foreground)]">
-                      {attempts} failed • {funMessage}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="mt-6">
-                <label htmlFor="site-password" className="sr-only">
-                  Site password
-                </label>
-                <div className="group relative">
-                  <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
-                    <span className="text-sm">🔑</span>
-                  </div>
-                  <input
-                    id="site-password"
-                    ref={inputRef}
-                    type={revealed ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (error && !e.target.value.includes("Try again")) setError(null);
-                    }}
-                    onKeyDown={onKeyDown}
-                    onKeyUp={onKeyUp}
-                    placeholder="Enter password"
-                    autoComplete="current-password"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    disabled={isDisabled}
-                    aria-invalid={!!error}
-                    aria-describedby={
-                      error ? "site-password-error" : capsLock ? "caps-lock-warning" : undefined
-                    }
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-3.5 pl-10 pr-[88px] text-[15px] font-medium outline-none transition-all placeholder:text-[var(--muted-foreground)]/60 focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                  <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                    {password.length > 0 && !isDisabled && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPassword("");
-                          setError(null);
-                          inputRef.current?.focus();
-                        }}
-                        aria-label="Clear password"
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-                      >
-                        ✕
-                      </button>
+                    {success ? (
+                      <CheckIcon className="h-8 w-8" />
+                    ) : error ? (
+                      <span className="text-2xl">🔒</span>
+                    ) : (
+                      <LockIcon className="h-7 w-7" />
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setRevealed((v) => !v)}
-                      aria-label={revealed ? "Hide password" : "Show password"}
-                      aria-pressed={revealed}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
-                    >
-                      {revealed ? <EyeOffIcon /> : <EyeIcon />}
-                    </button>
-                  </div>
+                  </motion.div>
                 </div>
 
-                <AnimatePresence>
+                <h1 className="mt-5 text-center text-[22px] font-bold tracking-tight">
+                  {success ? "Unlocked! 🎉" : "Protected Site"}
+                </h1>
+                <p className="mt-1.5 text-center text-sm text-[var(--muted-foreground)]">
+                  {success ? "Opening the fun…" : "Enter the password to continue."}
+                </p>
+
+                {attempts > 0 && !success && (
+                  <div className="mt-4 flex justify-center gap-1.5">
+                    {Array.from({ length: Math.min(attempts, 5) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-2 w-2 rounded-full bg-red-400"
+                        style={{ opacity: 1 - i * 0.15 }}
+                      />
+                    ))}
+                    <span className="ml-1 text-[11px] text-[var(--muted-foreground)]">
+                      {attempts} failed
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-6">
+                  <label htmlFor="site-password" className="sr-only">
+                    Site password
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
+                      🔑
+                    </div>
+                    <input
+                      id="site-password"
+                      ref={inputRef}
+                      type={revealed ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error && !e.target.value.includes("Try again")) setError(null);
+                      }}
+                      onKeyDown={onKeyDown}
+                      onKeyUp={onKeyUp}
+                      placeholder="Enter password"
+                      autoComplete="current-password"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      disabled={isDisabled}
+                      aria-invalid={!!error}
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-3.5 pl-10 pr-[88px] text-[15px] font-medium outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/10 disabled:opacity-60"
+                    />
+                    <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                      {password.length > 0 && !isDisabled && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPassword("");
+                            setError(null);
+                            inputRef.current?.focus();
+                          }}
+                          aria-label="Clear"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setRevealed((v) => !v)}
+                        aria-label={revealed ? "Hide" : "Show"}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      >
+                        {revealed ? <EyeOffIcon /> : <EyeIcon />}
+                      </button>
+                    </div>
+                  </div>
+
                   {capsLock && !isDisabled && (
+                    <p className="mt-2 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                      ⚠️ Caps Lock is on
+                    </p>
+                  )}
+
+                  {cooldown > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-1 flex justify-between text-[11px] text-[var(--muted-foreground)]">
+                        <span>Cooldown</span>
+                        <span className="font-mono">{cooldown}s</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
+                        <motion.div
+                          className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                          initial={{ width: "100%" }}
+                          animate={{ width: "0%" }}
+                          transition={{ duration: cooldown, ease: "linear" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {error && (
                     <motion.p
-                      id="caps-lock-warning"
-                      initial={{ opacity: 0, y: -4, height: 0 }}
-                      animate={{ opacity: 1, y: 0, height: "auto" }}
-                      exit={{ opacity: 0, y: -4, height: 0 }}
-                      className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400"
+                      role="alert"
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-3 text-[13px] text-red-600 dark:text-red-400"
                     >
-                      <span>⚠️</span> Caps Lock is on
+                      {error}
                     </motion.p>
                   )}
                 </AnimatePresence>
 
-                {cooldown > 0 && (
-                  <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
-                      <span>Cooldown</span>
-                      <span className="font-mono">{cooldown}s</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
-                      <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
-                        initial={{ width: "100%" }}
-                        animate={{ width: "0%" }}
-                        transition={{ duration: cooldown, ease: "linear" }}
-                      />
-                    </div>
+                {showHint && !success && (
+                  <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-3 text-[13px] text-amber-700 dark:text-amber-300">
+                    💡 Think about the project name… it&apos;s short and fun.
                   </div>
                 )}
-              </div>
 
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.div
-                    id="site-password-error"
-                    role="alert"
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    className="mt-4 flex gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-3 text-[13px] leading-5 text-red-600 dark:text-red-400"
-                  >
-                    <span className="mt-0.5 shrink-0">⚠️</span>
-                    <span className="font-medium">{error}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <AnimatePresence>
-                {showHint && !success && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-3"
-                  >
-                    <div className="flex gap-2.5">
-                      <span className="text-sm">💡</span>
-                      <div className="text-[13px] leading-5">
-                        <p className="font-semibold text-amber-700 dark:text-amber-300">
-                          Need a hint?
-                        </p>
-                        <p className="mt-0.5 text-amber-700/80 dark:text-amber-300/80">
-                          Think about the project name… it&apos;s short and fun. Try the Konami code
-                          ↑↑↓↓←→←→BA for a surprise.
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <motion.button
-                type="submit"
-                disabled={isButtonDisabled}
-                whileTap={{ scale: isButtonDisabled ? 1 : 0.98 }}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 px-4 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(124,58,237,0.5)] transition-all hover:shadow-[0_12px_24px_-10px_rgba(124,58,237,0.6)] hover:from-violet-600 hover:to-cyan-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-500/30"
-              >
-                {cooldown > 0 ? (
-                  <>
-                    <span>⏳</span> Wait {cooldown}s
-                  </>
-                ) : submitting || success ? (
-                  <>
-                    <Spinner className="h-4 w-4 text-white" />
-                    {success ? "Unlocked — entering..." : "Checking…"}
-                  </>
-                ) : (
-                  <>
-                    Unlock <span aria-hidden>→</span>
-                  </>
-                )}
-              </motion.button>
-
-              {/* Dark mode toggle inside card — prominent */}
-              <div className="mt-5 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--secondary)] px-3 py-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                <motion.button
+                  type="submit"
+                  disabled={isButtonDisabled}
+                  whileTap={{ scale: isButtonDisabled ? 1 : 0.98 }}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 px-4 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(124,58,237,0.5)] disabled:opacity-50"
                 >
-                  <span>{resolved === "dark" ? "☀️" : "🌙"}</span>
-                  {resolved === "dark" ? "Light mode" : "Dark mode"}
-                </button>
-                <div className="flex items-center gap-2 text-[11px] text-[var(--muted-foreground)]">
-                  <span className="hidden sm:inline-flex items-center gap-1">
-                    <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
-                      ↵
-                    </kbd>{" "}
-                    unlock
-                  </span>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="inline-flex items-center gap-1">
-                    <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
-                      Esc
-                    </kbd>{" "}
-                    clear
-                  </span>
-                </div>
+                  {cooldown > 0 ? (
+                    <>⏳ Wait {cooldown}s</>
+                  ) : submitting || success ? (
+                    <>
+                      <Spinner className="h-4 w-4 text-white" />
+                      {success ? "Unlocked" : "Checking…"}
+                    </>
+                  ) : (
+                    <>Unlock →</>
+                  )}
+                </motion.button>
+
+                <p className="mt-3 text-center text-[11px] text-[var(--muted-foreground)]">
+                  Press Enter to unlock • Esc to clear • Once per browser
+                </p>
               </div>
-
-              <p className="mt-3 text-center text-[11px] text-[var(--muted-foreground)]">
-                Once per browser • Encrypted locally
-              </p>
-            </div>
-          </form>
-
-          <div className="mt-6 flex items-center justify-center gap-3 text-[11px] text-[var(--muted-foreground)]">
-            <span className="h-px w-8 bg-[var(--border)]" />
-            <span>8 experiences • Next.js 15 • PWA ready</span>
-            <span className="h-px w-8 bg-[var(--border)]" />
-          </div>
+            </form>
+          </motion.div>
         </motion.div>
       </div>
 
-      {/* Bottom floating dark mode — extra prominent */}
-      <div className="pointer-events-none fixed bottom-4 right-4 z-20 flex gap-2">
-        <div className="pointer-events-auto">
-          <motion.button
-            onClick={toggleTheme}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] shadow-xl backdrop-blur-md transition-colors hover:bg-[var(--secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            <span className="text-xl">{resolved === "dark" ? "☀️" : "🌙"}</span>
-          </motion.button>
-        </div>
-      </div>
-
-      <div className="relative pb-5 text-center">
-        <p className="text-[10px] leading-4 text-[var(--muted-foreground)]/70">
-          Client-side gate for static export • Not real auth •{" "}
-          <a
-            href="https://github.com/lolrobine/nealarp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
-          >
-            Open source
-          </a>
-          {konamiProgress > 0 && (
-            <span className="ml-2 font-mono text-violet-500">Konami {konamiProgress}/10</span>
-          )}
-        </p>
+      <div className="pb-5 text-center text-[10px] text-[var(--muted-foreground)]/70">
+        Client-side gate • Respects browser light/dark •{" "}
+        <a
+          href="https://github.com/lolrobine/nealarp"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-dotted"
+        >
+          Open source
+        </a>
       </div>
     </motion.div>
   );
@@ -586,16 +420,14 @@ function LockButton({ onLock }: { onLock: () => void }) {
     return () => clearTimeout(t);
   }, [confirm]);
   return (
-    <div className="fixed bottom-4 left-4 z-[90] flex items-center gap-2">
+    <div className="fixed bottom-4 left-4 z-[90]">
       <button
         type="button"
         onClick={() => (confirm ? onLock() : setConfirm(true))}
-        title={confirm ? "Click again to lock" : "Lock this site"}
-        aria-label={confirm ? "Confirm lock" : "Lock this site"}
-        className={`flex h-9 items-center justify-center gap-1.5 rounded-full border bg-[var(--card)] px-3 text-xs font-medium shadow-lg transition-all hover:scale-105 ${
+        className={`flex h-9 items-center gap-1.5 rounded-full border bg-[var(--card)] px-3 text-xs shadow-lg ${
           confirm
             ? "border-red-500/50 bg-red-500 text-white"
-            : "border-[var(--border)] text-[var(--muted-foreground)] opacity-70 hover:opacity-100 hover:text-[var(--foreground)]"
+            : "border-[var(--border)] opacity-70 hover:opacity-100"
         }`}
       >
         <LockIcon className="h-4 w-4" />
@@ -621,7 +453,6 @@ function Spinner({ className }: { className?: string }) {
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -638,7 +469,6 @@ function CheckIcon({ className }: { className?: string }) {
 function LockIcon({ className }: { className?: string }) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -656,7 +486,6 @@ function LockIcon({ className }: { className?: string }) {
 function EyeIcon() {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       width="18"
       height="18"
       viewBox="0 0 24 24"
@@ -675,7 +504,6 @@ function EyeIcon() {
 function EyeOffIcon() {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       width="18"
       height="18"
       viewBox="0 0 24 24"

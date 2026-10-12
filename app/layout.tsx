@@ -21,6 +21,32 @@ export const metadata: Metadata = {
   },
 };
 
+function ThemeScript() {
+  // Inline script to apply theme before hydration, respects browser settings
+  // Reads zustand persist storage (theme-storage) and falls back to prefers-color-scheme
+  const code = `
+(function() {
+  try {
+    var stored = localStorage.getItem('theme-storage');
+    var theme = 'system';
+    if (stored) {
+      try {
+        var parsed = JSON.parse(stored);
+        theme = (parsed && parsed.state && parsed.state.theme) || 'system';
+      } catch {}
+    }
+    var resolved = theme;
+    if (theme === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    if (resolved === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  } catch {}
+})();
+`;
+  return <script dangerouslySetInnerHTML={{ __html: code }} />;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,6 +54,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className="font-sans">
         <ThemeProvider>
           <PasswordGate>{children}</PasswordGate>
