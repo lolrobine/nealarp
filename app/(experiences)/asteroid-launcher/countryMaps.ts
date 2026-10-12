@@ -9,7 +9,7 @@ export type CountryMapDef = {
   population: string;
 };
 
-export const popularCountries: CountryMapDef[] = [
+export const countries: CountryMapDef[] = [
   {
     id: "usa",
     name: "USA",
@@ -130,7 +130,6 @@ export const popularCountries: CountryMapDef[] = [
     image: "/experiences/asteroid-launcher/country-mexico.jpg",
     population: "128M",
   },
-  // New maps - more popular countries
   {
     id: "italy",
     name: "Italy",
@@ -231,7 +230,141 @@ export const popularCountries: CountryMapDef[] = [
     image: "/experiences/asteroid-launcher/country-thailand.jpg",
     population: "70M",
   },
+  // More countries
+  {
+    id: "poland",
+    name: "Poland",
+    flag: "🇵🇱",
+    capital: "Warsaw",
+    bounds: { north: 54.8, south: 49, west: 14, east: 24.1 },
+    center: { lat: 51.9, lng: 19.1 },
+    image: "/experiences/asteroid-launcher/country-poland.jpg",
+    population: "38M",
+  },
+  {
+    id: "ukraine",
+    name: "Ukraine",
+    flag: "🇺🇦",
+    capital: "Kyiv",
+    bounds: { north: 52.3, south: 44.3, west: 22.1, east: 40.2 },
+    center: { lat: 48.3, lng: 31.1 },
+    image: "/experiences/asteroid-launcher/country-ukraine.jpg",
+    population: "41M",
+  },
+  {
+    id: "netherlands",
+    name: "Netherlands",
+    flag: "🇳🇱",
+    capital: "Amsterdam",
+    bounds: { north: 53.6, south: 50.7, west: 3.3, east: 7.2 },
+    center: { lat: 52.1, lng: 5.2 },
+    image: "/experiences/asteroid-launcher/country-netherlands.jpg",
+    population: "17M",
+  },
+  {
+    id: "sweden",
+    name: "Sweden",
+    flag: "🇸🇪",
+    capital: "Stockholm",
+    bounds: { north: 69, south: 55.3, west: 11, east: 24 },
+    center: { lat: 60.1, lng: 18.6 },
+    image: "/experiences/asteroid-launcher/country-sweden.jpg",
+    population: "10M",
+  },
+  {
+    id: "norway",
+    name: "Norway",
+    flag: "🇳🇴",
+    capital: "Oslo",
+    bounds: { north: 71.1, south: 57.9, west: 4.6, east: 31 },
+    center: { lat: 60.4, lng: 8.4 },
+    image: "/experiences/asteroid-launcher/country-norway.jpg",
+    population: "5M",
+  },
+  {
+    id: "greece",
+    name: "Greece",
+    flag: "🇬🇷",
+    capital: "Athens",
+    bounds: { north: 41.7, south: 34.8, west: 19.3, east: 28.3 },
+    center: { lat: 39, lng: 21.8 },
+    image: "/experiences/asteroid-launcher/country-greece.jpg",
+    population: "10M",
+  },
+  {
+    id: "portugal",
+    name: "Portugal",
+    flag: "🇵🇹",
+    capital: "Lisbon",
+    bounds: { north: 42.1, south: 36.9, west: -9.5, east: -6.1 },
+    center: { lat: 39.3, lng: -8.2 },
+    image: "/experiences/asteroid-launcher/country-portugal.jpg",
+    population: "10M",
+  },
+  {
+    id: "chile",
+    name: "Chile",
+    flag: "🇨🇱",
+    capital: "Santiago",
+    bounds: { north: -17.5, south: -56, west: -75.6, east: -66.9 },
+    center: { lat: -35.6, lng: -71.5 },
+    image: "/experiences/asteroid-launcher/country-chile.jpg",
+    population: "19M",
+  },
+  {
+    id: "colombia",
+    name: "Colombia",
+    flag: "🇨🇴",
+    capital: "Bogotá",
+    bounds: { north: 12.4, south: -4.2, west: -79, east: -66.8 },
+    center: { lat: 4, lng: -72 },
+    image: "/experiences/asteroid-launcher/country-colombia.jpg",
+    population: "51M",
+  },
+  {
+    id: "peru",
+    name: "Peru",
+    flag: "🇵🇪",
+    capital: "Lima",
+    bounds: { north: -0.03, south: -18.3, west: -81.3, east: -68.6 },
+    center: { lat: -9.1, lng: -75 },
+    image: "/experiences/asteroid-launcher/country-peru.jpg",
+    population: "33M",
+  },
+  {
+    id: "venezuela",
+    name: "Venezuela",
+    flag: "🇻🇪",
+    capital: "Caracas",
+    bounds: { north: 12.1, south: 0.6, west: -73.3, east: -59.7 },
+    center: { lat: 6.4, lng: -66.5 },
+    image: "/experiences/asteroid-launcher/country-venezuela.jpg",
+    population: "28M",
+  },
+  {
+    id: "philippines",
+    name: "Philippines",
+    flag: "🇵🇭",
+    capital: "Manila",
+    bounds: { north: 21, south: 4.6, west: 116.9, east: 126.6 },
+    center: { lat: 12.8, lng: 121.7 },
+    image: "/experiences/asteroid-launcher/country-philippines.jpg",
+    population: "109M",
+  },
+  {
+    id: "vietnam",
+    name: "Vietnam",
+    flag: "🇻🇳",
+    capital: "Hanoi",
+    bounds: { north: 23.3, south: 8.5, west: 102.1, east: 109.4 },
+    center: { lat: 14, lng: 108 },
+    image: "/experiences/asteroid-launcher/country-vietnam.jpg",
+    population: "98M",
+  },
 ];
+
+// Keep alias for backward compat
+export const popularCountries = countries;
 
 export function latLngToPct(lat: number, lng: number, bounds: CountryMapDef["bounds"]) {
   const x = ((lng - bounds.west) / (bounds.east - bounds.west)) * 100;

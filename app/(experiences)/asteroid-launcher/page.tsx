@@ -6,7 +6,7 @@ import { calculateImpact, presets } from "./data";
 import { CraterCanvas } from "./CraterCanvas";
 import { WorldMap, type MapImpact, type ShakeEvent, getImpactColor } from "./WorldMap";
 import { CountryMap } from "./CountryMap";
-import { popularCountries, isInBounds } from "./countryMaps";
+import { countries, isInBounds } from "./countryMaps";
 
 const locations = [
   { id: "ocean", name: "Ocean", density: 10, emoji: "🌊", desc: "Ocean" },
@@ -34,6 +34,7 @@ export default function AsteroidLauncherPage() {
 
   const [mapMode, setMapMode] = useState<"world" | "countries">("world");
   const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(["usa", "china", "india"]);
+  const [countrySearch, setCountrySearch] = useState("");
 
   const result = useMemo(
     () => calculateImpact({ diameter, density, velocity, angle }),
@@ -62,7 +63,18 @@ export default function AsteroidLauncherPage() {
     return result;
   }, [selectedImpacts, result]);
 
-  const selectedCountries = popularCountries.filter((c) => selectedCountryIds.includes(c.id));
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return countries;
+    const q = countrySearch.toLowerCase();
+    return countries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.capital.toLowerCase().includes(q) ||
+        c.id.toLowerCase().includes(q)
+    );
+  }, [countrySearch]);
+
+  const selectedCountries = countries.filter((c) => selectedCountryIds.includes(c.id));
 
   const handleMapClick = useCallback(
     (lat: number, lng: number) => {
@@ -131,7 +143,7 @@ export default function AsteroidLauncherPage() {
 
   const countryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const c of popularCountries)
+    for (const c of countries)
       counts[c.id] = impacts.filter((imp) => isInBounds(imp.lat, imp.lng, c.bounds)).length;
     return counts;
   }, [impacts]);
@@ -149,7 +161,7 @@ export default function AsteroidLauncherPage() {
             Asteroid Launcher
           </h1>
           <p className="text-[var(--muted-foreground)]">
-            Launch asteroids • World + {popularCountries.length} countries • Multi-select impacts
+            Launch asteroids • World + {countries.length} countries • Multi-select
           </p>
         </div>
 
@@ -165,16 +177,8 @@ export default function AsteroidLauncherPage() {
               onClick={() => setMapMode("countries")}
               className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "countries" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
             >
-              🗺️ Countries ({popularCountries.length})
+              🗺️ Countries ({countries.length})
             </button>
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-[10px] text-[var(--muted-foreground)]">
-            <span>💥 {impacts.length} impacts</span>
-            {selectedIds.length > 0 && (
-              <span className="px-2 py-0.5 bg-violet-500/20 text-violet-400 rounded-full">
-                {selectedIds.length} selected
-              </span>
-            )}
           </div>
         </div>
 
@@ -190,37 +194,77 @@ export default function AsteroidLauncherPage() {
           ) : (
             <div className="space-y-3">
               <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold">
-                    {popularCountries.length} maps • Click to show • Multi-select up to 6
-                  </span>
-                  <div className="flex gap-1.5">
+                <div className="flex flex-col md:flex-row gap-2 justify-between items-start md:items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold">
+                      {countries.length} countries • Multi-select up to 6
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 bg-[var(--secondary)] rounded-full">
+                      {filteredCountries.length} shown
+                    </span>
+                  </div>
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                      <input
+                        type="text"
+                        placeholder="Search countries..."
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        className="w-full px-3 py-1.5 pr-8 rounded-full border bg-[var(--secondary)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] opacity-50">
+                        🔍
+                      </span>
+                    </div>
                     <button
-                      onClick={() =>
-                        setSelectedCountryIds(popularCountries.slice(0, 6).map((c) => c.id))
-                      }
-                      className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
-                    >
-                      Top 6
-                    </button>
-                    <button
-                      onClick={() =>
-                        setSelectedCountryIds(popularCountries.map((c) => c.id).slice(0, 6))
-                      }
-                      className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
-                    >
-                      Random 6
-                    </button>
-                    <button
-                      onClick={() => setSelectedCountryIds(["usa"])}
-                      className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                      onClick={() => setCountrySearch("")}
+                      className="px-3 py-1.5 text-[10px] rounded-full border bg-[var(--secondary)]"
                     >
                       Clear
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2">
-                  {popularCountries.map((c) => {
+
+                <div className="flex gap-1.5 mb-3 flex-wrap">
+                  <button
+                    onClick={() => setSelectedCountryIds(countries.slice(0, 6).map((c) => c.id))}
+                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
+                  >
+                    Top 6
+                  </button>
+                  <button
+                    onClick={() =>
+                      setSelectedCountryIds([
+                        "usa",
+                        "china",
+                        "india",
+                        "brazil",
+                        "russia",
+                        "australia",
+                      ])
+                    }
+                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                  >
+                    Biggest
+                  </button>
+                  <button
+                    onClick={() => setSelectedCountryIds(["usa"])}
+                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                  >
+                    Only USA
+                  </button>
+                  <button
+                    onClick={() =>
+                      setSelectedCountryIds(filteredCountries.slice(0, 6).map((c) => c.id))
+                    }
+                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                  >
+                    Select filtered
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                  {filteredCountries.map((c) => {
                     const count = countryCounts[c.id] ?? 0;
                     const isSelected = selectedCountryIds.includes(c.id);
                     return (
@@ -262,6 +306,11 @@ export default function AsteroidLauncherPage() {
                     );
                   })}
                 </div>
+                {filteredCountries.length === 0 && (
+                  <div className="text-center py-8 text-xs text-[var(--muted-foreground)]">
+                    No countries found for &quot;{countrySearch}&quot;
+                  </div>
+                )}
               </div>
 
               <div
@@ -324,8 +373,7 @@ export default function AsteroidLauncherPage() {
           {impacts.length > 0 && (
             <div className="mt-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
               <div className="text-xs font-semibold mb-2">
-                Impacts ({impacts.length}) • Click crater to toggle multi-select • Vibration faster
-                for bigger
+                Impacts ({impacts.length}) • Click to toggle multi-select
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
                 {impacts.map((impact, idx) => {
@@ -334,7 +382,7 @@ export default function AsteroidLauncherPage() {
                     <button
                       key={impact.id}
                       onClick={() => handleSelectImpact(impact.id)}
-                      className={`text-left px-3 py-2 rounded-lg border text-xs flex items-center gap-2 transition-colors ${isSelected ? "bg-[var(--primary)]/15 border-[var(--primary)]/50" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
+                      className={`text-left px-3 py-2 rounded-lg border text-xs flex items-center gap-2 ${isSelected ? "bg-[var(--primary)]/15 border-[var(--primary)]/50" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
                     >
                       <input
                         type="checkbox"
@@ -454,8 +502,7 @@ export default function AsteroidLauncherPage() {
                         {p.diameter < 1000
                           ? `${p.diameter}m`
                           : `${(p.diameter / 1000).toFixed(1)}km`}{" "}
-                        • M{r.earthquakeMagnitude.toFixed(1)} •{" "}
-                        {r.earthquakeMagnitude > 7 ? "FAST vib" : "slow vib"}
+                        • M{r.earthquakeMagnitude.toFixed(1)}
                       </div>
                     </button>
                   );
@@ -470,7 +517,7 @@ export default function AsteroidLauncherPage() {
             {selectedIds.length === 1
               ? `Impact #${impacts.findIndex((i) => i.id === selectedIds[0]) + 1}`
               : selectedIds.length > 1
-                ? `${selectedIds.length} impacts selected`
+                ? `${selectedIds.length} impacts`
                 : "Preview"}
           </h2>
           <div className="text-center mb-6">
