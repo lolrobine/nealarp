@@ -74,7 +74,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
 
   useEffect(() => {
     if (!checking) {
-      const t = setTimeout(() => inputRef.current?.focus(), 150);
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
   }, [checking]);
@@ -137,8 +137,10 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     try {
       if (await verifyPassword(password)) {
         setSuccess(true);
-        await new Promise((r) => setTimeout(r, 600));
+        // Instant unlock — no artificial delay, just a tiny tick for animation
         await rememberUnlock();
+        // Minimal delay for checkmark to be visible (100ms instead of 600ms)
+        await new Promise((r) => setTimeout(r, 100));
         onUnlocked();
         return;
       }
@@ -183,7 +185,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-[var(--background)]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.35 } }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
     >
       <Confetti active={success} />
 
@@ -252,9 +254,9 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
         <motion.div
           animate={shake}
           className="w-full max-w-[380px]"
-          initial={{ y: 24, opacity: 0 }}
+          initial={{ y: 12, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <form
             onSubmit={handleSubmit}
@@ -443,7 +445,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                 )}
               </AnimatePresence>
 
-              {/* Hint */}
+              {/* Hint — no password reveal */}
               <AnimatePresence>
                 {showHint && !success && (
                   <motion.div
@@ -459,23 +461,9 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                           Need a hint?
                         </p>
                         <p className="mt-0.5 text-amber-700/80 dark:text-amber-300/80">
-                          It&apos;s{" "}
-                          <code className="rounded bg-amber-500/20 px-1 py-0.5 font-mono text-amber-800 dark:text-amber-200">
-                            nealarp
-                          </code>{" "}
-                          — the project name. Or try the Konami code ↑↑↓↓←→←→BA
+                          Think about the project name… it&apos;s short and fun. Try the Konami code
+                          ↑↑↓↓←→←→BA for a surprise.
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPassword("nealarp");
-                            setError(null);
-                            inputRef.current?.focus();
-                          }}
-                          className="mt-2 rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white hover:bg-amber-600 transition-colors"
-                        >
-                          Fill password
-                        </button>
                       </div>
                     </div>
                   </motion.div>
