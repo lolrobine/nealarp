@@ -1,20 +1,26 @@
-Made with ai
 # Neal.fun V2
 
-An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences.
+[![Build](https://github.com/lolrobine/nealarp/actions/workflows/deploy.yml/badge.svg)](https://github.com/lolrobine/nealarp/actions/workflows/deploy.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?logo=next.js)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🎮 Experiences
+An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences with modern stack, PWA, a11y, and extensive polish.
 
-| # | Experience | Description |
-|---|-----------|-------------|
-| 1 | 💰 **Spend Money** | Spend $1 trillion on 40+ items |
-| 2 | 🔐 **The Password Game** | 20 increasingly absurd password rules |
-| 3 | 🌊 **The Deep Sea** | Scroll through ocean depths, discover 20 creatures |
-| 4 | ⚡ **Speed** | Compare speeds from snails to light |
-| 5 | 📊 **Life Stats** | Birthday → mind-blowing life statistics |
-| 6 | ⭕ **Perfect Circle** | Draw a perfect circle and get scored |
-| 7 | 🌌 **Size of Space** | Cosmic scale visualization |
-| 8 | ☄️ **Asteroid Launcher** | Launch asteroids and see the devastation |
+## 🎮 Experiences (8 + template)
+
+| #   | Experience               | Description                | Highlights                                                                                                                  |
+| --- | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 💰 **Spend Money**       | Spend $1T on 40+ items     | Search, sort, encouragement, confetti 50%/100%, receipt export, favorites, recently played                                  |
+| 2   | 🔐 **The Password Game** | 20 absurd password rules   | Progress bar, timer, copy, shake, confetti, localStorage persistence                                                        |
+| 3   | 🌊 **The Deep Sea**      | Scroll 11km, 20 creatures  | CSS bubbles, RAF throttle, discovery counter, mini progress map, jump-to-depth slider, creature modal, ambient sound toggle |
+| 4   | ⚡ **Speed**             | Snail to light (log scale) | Race track animation, compare 2 items, unit toggle km/h/mph/m/s, Earth/Moon time calc                                       |
+| 5   | 📊 **Life Stats**        | Birthday → stats           | 20+ stats (Mars years, Moon orbits, water drunk), animated numbers, share + export as image, life expectancy bar            |
+| 6   | ⭕ **Perfect Circle**    | Draw circle, Kasa fit      | Best score + history (20), ghost circle, confetti 90%+, export + replay                                                     |
+| 7   | 🌌 **Size of Space**     | Atoms to universe          | Log scale, comparison mode with relative bar, zoomable canvas, journey mode (20s auto), click to highlight                  |
+| 8   | ☄️ **Asteroid Launcher** | Impact simulator           | Crater canvas visualization, casualty estimate by location (ocean to megacity), known craters comparison, presets           |
+
+Template: `app/(experiences)/_template/` — scaffold for new experiences.
 
 ## 🔒 Site Password
 
@@ -42,10 +48,12 @@ NEXT_PUBLIC_SITE_PASSWORD="my new password" pnpm build
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - pnpm 9+
 
 ### Install & Run
+
 ```bash
 pnpm install
 pnpm dev
@@ -54,6 +62,7 @@ pnpm dev
 Open [http://localhost:3000](http://localhost:3000)
 
 ### Build for Production
+
 ```bash
 pnpm build
 ```
@@ -76,6 +85,7 @@ This repository is configured to use Git LFS for large binary files.
 ## 🌐 Deployment
 
 ### GitHub Pages (Recommended)
+
 1. Make this repo **public** (Settings → General → Danger Zone)
 2. Go to **Settings → Pages**
 3. Set Source to **GitHub Actions**
@@ -84,17 +94,30 @@ This repository is configured to use Git LFS for large binary files.
 Your site will be live at: `https://<username>.github.io/nealarp/`
 
 ### Vercel
+
 1. Import this repo on [vercel.com](https://vercel.com)
 2. Keep the default Next.js build settings; the config automatically disables the GitHub Pages base path and static export on Vercel
 3. Deploy!
 
+## ✨ Key Features
+
+- **Homepage**: search (title/desc/tags), category filter, favorites (Zustand persist), recently played (last 20), random button (R key), keyboard nav (arrows + Enter), sort (recent/featured/alpha/category), clear buttons
+- **Experience Shell**: back button, share (Web Share API + clipboard), fullscreen, theme toggle, skip link, PWA service worker, JSON-LD breadcrumbs
+- **Security**: client-side password gate with SHA-256 + FNV-1a fallback, rate limiting (exponential backoff), Vercel middleware, security headers (X-Frame-Options DENY, etc)
+- **PWA**: `manifest.webmanifest`, `sw.js` caching, `PWARegister`, favicon, opengraph images per experience
+- **A11y**: prefers-reduced-motion, focus-visible, aria-pressed, aria-live, aria-valuetext, keyboard handlers, skip links
+- **DX**: `CONTRIBUTING.md`, `_template` scaffold, `.nvmrc` 22, `engines`, `lint-staged` + `husky`, `playwright` e2e, `bundle-analyzer`, `zod` registry validation, `noUncheckedIndexedAccess`
+
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS v4
-- **Animation:** Framer Motion
-- **State:** Zustand
+- **Framework:** Next.js 15.5 (App Router, static export for GH Pages, middleware for Vercel)
+- **Language:** TypeScript 5.7 (strict + noUncheckedIndexedAccess)
+- **Styling:** Tailwind CSS v4 + `tailwind-merge` + CSS variables
+- **Animation:** Framer Motion 11
+- **State:** Zustand 5 (persist)
+- **Validation:** Zod 4
+- **Testing:** Vitest 5 + Testing Library + Playwright 1.64
+- **Tooling:** Prettier, ESLint (next/core-web-vitals), Husky, lint-staged, bundle-analyzer
 
 ## 📁 Project Structure
 

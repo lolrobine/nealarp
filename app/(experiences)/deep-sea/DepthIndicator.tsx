@@ -8,23 +8,22 @@ interface DepthIndicatorProps {
 }
 
 export function DepthIndicator({ depth }: DepthIndicatorProps) {
-  const zone = getZone(depth);
+  const zone = getZone(depth) ?? { name: "Unknown" };
   const progress = (depth / MAX_DEPTH) * 100;
 
   return (
     <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2">
       {/* Depth Number */}
-      <motion.div
+      <div
         className="bg-[var(--card)]/90 backdrop-blur-sm border border-[var(--border)] rounded-xl px-3 py-2 text-center shadow-lg"
-        key={Math.round(depth)}
-        initial={{ scale: 1.1 }}
-        animate={{ scale: 1 }}
+        aria-live="polite"
+        aria-atomic="true"
       >
         <div className="text-xs text-[var(--muted-foreground)]">Depth</div>
         <div className="text-lg font-bold text-[var(--primary)]">
           {Math.round(depth).toLocaleString()}m
         </div>
-      </motion.div>
+      </div>
 
       {/* Progress Bar */}
       <div className="relative w-2 h-48 bg-[var(--secondary)] rounded-full overflow-hidden">

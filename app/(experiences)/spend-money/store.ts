@@ -1,14 +1,34 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { items } from "./data";
+
+// Build price lookup for spent calculation
+const priceMap = new Map<string, number>(items.map((i) => [i.id, i.price]));
+
+function calculateSpent(purchases: Record<string, number>): number {
+  let total = 0;
+  for (const [id, qty] of Object.entries(purchases)) {
+    const price = priceMap.get(id);
+    if (!price) continue;
+    // Guard against overflow / invalid qty
+    const safeQty = Math.max(0, Math.min(qty, Number.MAX_SAFE_INTEGER));
+    total += safeQty * price;
+    // Prevent Infinity
+    if (!Number.isFinite(total)) return Number.MAX_SAFE_INTEGER;
+  }
+  return total;
+}
 
 interface SpendMoneyState {
   totalMoney: number;
-  purchases: Record<string, number>; // itemId -> quantity
+  purchases: Record<string, number>;
+  // Derived, not persisted directly — kept for convenience but recalculated on rehydrate
   spent: number;
   buy: (itemId: string, price: number) => void;
   sell: (itemId: string, price: number) => void;
   setQuantity: (itemId: string, quantity: number, price: number) => void;
   reset: () => void;
+  _recalculate: () => void;
 }
 
 export const useSpendMoneyStore = create<SpendMoneyState>()(
@@ -19,74 +39,113 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
       spent: 0,
 
       buy: (itemId: string, price: number) => {
-        const { totalMoney, purchases, spent } = get();
+        const { totalMoney, purchases } = get();
+        const spent = calculateSpent(purchases);
         if (totalMoney - spent < price) return;
 
         const newPurchases = { ...purchases };
-        newPurchases[itemId] = (newPurchases[itemId] || 0) + 1;
+        const current = newPurchases[itemId] || 0;
+        // Prevent overflow
+        if (current >= Number.MAX_SAFE_INTEGER) return;
+        newPurchases[itemId] = current + 1;
 
         set({
           purchases: newPurchases,
-          spent: spent + price,
+          spent: calculateSpent(newPurchases),
         });
       },
 
-      sell: (itemId: string, price: number) => {
-        const { purchases, spent } = get();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      sell: (itemId: string, _price: number) => {
+        const { purchases } = get();
         const currentQty = purchases[itemId] || 0;
         if (currentQty <= 0) return;
 
         const newPurchases = { ...purchases };
-        newPurchases[itemId] = currentQty - 1;
-        if (newPurchases[itemId] === 0) delete newPurchases[itemId];
+        if (currentQty <= 1) {
+          delete newPurchases[itemId];
+        } else {
+          newPurchases[itemId] = currentQty - 1;
+        }
 
         set({
           purchases: newPurchases,
-          spent: Math.max(0, spent - price),
+          spent: calculateSpent(newPurchases),
         });
       },
 
       setQuantity: (itemId: string, quantity: number, price: number) => {
-        const { totalMoney, purchases, spent } = get();
+        const { totalMoney, purchases } = get();
+        // Sanitize quantity
+        let q = Math.floor(quantity);
+        if (!Number.isFinite(q) || q < 0) q = 0;
+        if (q > 1_000_000_000) q = 1_000_000_000; // cap to prevent overflow
+
         const currentQty = purchases[itemId] || 0;
-        const diff = quantity - currentQty;
-        const cost = diff * price;
+        const spent = calculateSpent(purchases);
+        const currentItemSpent = currentQty * price;
+        const spentWithoutThis = spent - currentItemSpent;
 
-        if (diff > 0 && spent + cost > totalMoney) {
-          // Can't afford it - set to max affordable
-          const maxAffordable = Math.floor((totalMoney - spent) / price) + currentQty;
-          const actualDiff = maxAffordable - currentQty;
-          if (actualDiff <= 0) return;
-
-          const newPurchases = { ...purchases };
-          newPurchases[itemId] = maxAffordable;
-
-          set({
-            purchases: newPurchases,
-            spent: spent + actualDiff * price,
-          });
-          return;
+        // Check affordability for increase
+        if (q > currentQty) {
+          const maxAffordableQty = Math.floor((totalMoney - spentWithoutThis) / price);
+          if (q > maxAffordableQty) {
+            q = Math.max(currentQty, maxAffordableQty);
+          }
         }
 
         const newPurchases = { ...purchases };
-        if (quantity <= 0) {
+        if (q <= 0) {
           delete newPurchases[itemId];
         } else {
-          newPurchases[itemId] = quantity;
+          newPurchases[itemId] = q;
         }
 
         set({
           purchases: newPurchases,
-          spent: Math.max(0, spent + cost),
+          spent: calculateSpent(newPurchases),
         });
       },
 
       reset: () => {
         set({ purchases: {}, spent: 0 });
       },
+
+      _recalculate: () => {
+        const { purchases } = get();
+        set({ spent: calculateSpent(purchases) });
+      },
     }),
     {
       name: "spend-money-storage",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ purchases: state.purchases }) as unknown as SpendMoneyState,
+      // Migrate old persisted state that had spent
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Recalculate spent from purchases to fix desync
+          state.spent = calculateSpent(state.purchases || {});
+        }
+      },
+      version: 1,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      migrate: (persisted: unknown, _version: number) => {
+        // Drop old spent field, keep only purchases
+        if (persisted && typeof persisted === "object" && "purchases" in persisted) {
+          const p = persisted as { purchases?: Record<string, number> };
+          return {
+            totalMoney: 1_000_000_000_000,
+            purchases: p.purchases || {},
+            spent: calculateSpent(p.purchases || {}),
+          } as SpendMoneyState;
+        }
+        return persisted as SpendMoneyState;
+      },
     }
   )
 );
+
+// Selector helpers for components to avoid re-rendering all cards
+export const useSpent = () => useSpendMoneyStore((s) => s.spent);
+export const useRemaining = () => useSpendMoneyStore((s) => s.totalMoney - s.spent);
+export const usePurchaseQuantity = (id: string) => useSpendMoneyStore((s) => s.purchases[id] || 0);
