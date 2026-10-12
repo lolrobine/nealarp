@@ -7,6 +7,7 @@ import { CraterCanvas } from "./CraterCanvas";
 import { WorldMap, type MapImpact, type ShakeEvent, getImpactColor } from "./WorldMap";
 import { CountryMap } from "./CountryMap";
 import { countries, isInBounds } from "./countryMaps";
+import { getAssetUrl } from "@/lib/utils/assets";
 
 const locations = [
   { id: "ocean", name: "Ocean", density: 10, emoji: "🌊", desc: "Ocean" },
@@ -32,8 +33,15 @@ export default function AsteroidLauncherPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [shakeEvent, setShakeEvent] = useState<ShakeEvent>(null);
 
-  const [mapMode, setMapMode] = useState<"world" | "countries">("world");
-  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(["usa", "china", "india"]);
+  const [mapMode, setMapMode] = useState<"world" | "countries">("countries");
+  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([
+    "usa",
+    "china",
+    "india",
+    "brazil",
+    "russia",
+    "australia",
+  ]);
   const [countrySearch, setCountrySearch] = useState("");
 
   const result = useMemo(
@@ -70,7 +78,8 @@ export default function AsteroidLauncherPage() {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.capital.toLowerCase().includes(q) ||
-        c.id.toLowerCase().includes(q)
+        c.id.toLowerCase().includes(q) ||
+        c.flag.includes(q)
     );
   }, [countrySearch]);
 
@@ -78,7 +87,7 @@ export default function AsteroidLauncherPage() {
 
   const handleMapClick = useCallback(
     (lat: number, lng: number) => {
-      if (impacts.length >= 80) setImpacts((prev) => prev.slice(1));
+      if (impacts.length >= 100) setImpacts((prev) => prev.slice(1));
       const newResult = calculateImpact({ diameter, density, velocity, angle });
       const { x, y } = latLngToWorldPct(lat, lng);
       const newImpact: MapImpact = {
@@ -93,7 +102,7 @@ export default function AsteroidLauncherPage() {
         color: getImpactColor(impacts.length),
         timestamp: Date.now(),
       };
-      setImpacts((prev) => [...prev.slice(-79), newImpact]);
+      setImpacts((prev) => [...prev.slice(-99), newImpact]);
       setSelectedIds((prev) => [...prev, newImpact.id]);
       setShakeEvent({
         id: newImpact.id,
@@ -106,6 +115,11 @@ export default function AsteroidLauncherPage() {
 
   const handleSelectImpact = useCallback((id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+  }, []);
+
+  const handleRemoveSingle = useCallback((id: string) => {
+    setImpacts((prev) => prev.filter((i) => i.id !== id));
+    setSelectedIds((prev) => prev.filter((i) => i !== id));
   }, []);
 
   const handleRemoveSelected = useCallback(() => {
@@ -124,7 +138,7 @@ export default function AsteroidLauncherPage() {
         if (prev.length === 1) return prev;
         return prev.filter((c) => c !== id);
       }
-      if (prev.length >= 6) return [...prev.slice(1), id];
+      if (prev.length >= 8) return [...prev.slice(1), id];
       return [...prev, id];
     });
   }, []);
@@ -195,12 +209,12 @@ export default function AsteroidLauncherPage() {
             <div className="space-y-3">
               <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
                 <div className="flex flex-col md:flex-row gap-2 justify-between items-start md:items-center mb-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-semibold">
-                      {countries.length} countries • Multi-select up to 6
+                      Countries • {countries.length} maps • Multi-select up to 8
                     </span>
                     <span className="text-[10px] px-2 py-0.5 bg-[var(--secondary)] rounded-full">
-                      {filteredCountries.length} shown
+                      {filteredCountries.length} shown • {selectedCountryIds.length} selected
                     </span>
                   </div>
                   <div className="flex gap-2 w-full md:w-auto">
@@ -210,7 +224,7 @@ export default function AsteroidLauncherPage() {
                         placeholder="Search countries..."
                         value={countrySearch}
                         onChange={(e) => setCountrySearch(e.target.value)}
-                        className="w-full px-3 py-1.5 pr-8 rounded-full border bg-[var(--secondary)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                        className="w-full px-3 py-1.5 pr-8 rounded-full border bg-[var(--background)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] opacity-50">
                         🔍
@@ -218,7 +232,7 @@ export default function AsteroidLauncherPage() {
                     </div>
                     <button
                       onClick={() => setCountrySearch("")}
-                      className="px-3 py-1.5 text-[10px] rounded-full border bg-[var(--secondary)]"
+                      className="px-3 py-1.5 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
                     >
                       Clear
                     </button>
@@ -227,10 +241,10 @@ export default function AsteroidLauncherPage() {
 
                 <div className="flex gap-1.5 mb-3 flex-wrap">
                   <button
-                    onClick={() => setSelectedCountryIds(countries.slice(0, 6).map((c) => c.id))}
+                    onClick={() => setSelectedCountryIds(countries.slice(0, 8).map((c) => c.id))}
                     className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
                   >
-                    Top 6
+                    Top 8
                   </button>
                   <button
                     onClick={() =>
@@ -241,11 +255,30 @@ export default function AsteroidLauncherPage() {
                         "brazil",
                         "russia",
                         "australia",
+                        "canada",
+                        "uk",
                       ])
                     }
                     className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
                     Biggest
+                  </button>
+                  <button
+                    onClick={() =>
+                      setSelectedCountryIds([
+                        "italy",
+                        "spain",
+                        "france",
+                        "germany",
+                        "uk",
+                        "greece",
+                        "portugal",
+                        "ireland",
+                      ])
+                    }
+                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                  >
+                    Europe
                   </button>
                   <button
                     onClick={() => setSelectedCountryIds(["usa"])}
@@ -255,7 +288,7 @@ export default function AsteroidLauncherPage() {
                   </button>
                   <button
                     onClick={() =>
-                      setSelectedCountryIds(filteredCountries.slice(0, 6).map((c) => c.id))
+                      setSelectedCountryIds(filteredCountries.slice(0, 8).map((c) => c.id))
                     }
                     className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
@@ -263,7 +296,7 @@ export default function AsteroidLauncherPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-[400px] overflow-y-auto pr-1">
                   {filteredCountries.map((c) => {
                     const count = countryCounts[c.id] ?? 0;
                     const isSelected = selectedCountryIds.includes(c.id);
@@ -271,19 +304,19 @@ export default function AsteroidLauncherPage() {
                       <button
                         key={c.id}
                         onClick={() => handleSelectCountry(c.id)}
-                        className={`group relative text-left rounded-lg border overflow-hidden transition-all ${isSelected ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/30" : "border-[var(--border)] hover:border-[var(--primary)]/50"}`}
+                        className={`group relative text-left rounded-lg border overflow-hidden transition-all ${isSelected ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/40" : "border-[var(--border)] hover:border-[var(--primary)]/50"}`}
                       >
-                        <div className="aspect-[16/10] relative bg-[#0a1628]">
+                        <div className="aspect-[16/10] relative bg-[#0f1e2e] overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`/experiences/asteroid-launcher/country-${c.id}.jpg`}
+                            src={getAssetUrl(c.image)}
                             alt={c.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => (e.currentTarget.style.display = "none")}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loading="lazy"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                          <div className="absolute bottom-1 left-1.5 right-1.5 flex justify-between items-end">
-                            <span className="text-white text-[11px] font-bold flex items-center gap-1">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
+                          <div className="absolute bottom-1 left-1.5 right-1.5 flex justify-between items-end pointer-events-none">
+                            <span className="text-white text-[11px] font-bold flex items-center gap-1 drop-shadow-md">
                               {c.flag} {c.name}
                             </span>
                             {isSelected && (
@@ -293,13 +326,13 @@ export default function AsteroidLauncherPage() {
                             )}
                           </div>
                           {count > 0 && (
-                            <span className="absolute top-1 right-1 text-[9px] bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold">
+                            <span className="absolute top-1 right-1 text-[9px] bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold pointer-events-none">
                               {count}
                             </span>
                           )}
                         </div>
                         <div className="px-2 py-1 bg-[var(--card)] text-[10px] text-[var(--muted-foreground)] flex justify-between">
-                          <span>{c.capital}</span>
+                          <span className="truncate">{c.capital}</span>
                           <span>{c.population}</span>
                         </div>
                       </button>
@@ -343,22 +376,22 @@ export default function AsteroidLauncherPage() {
                 {selectedIds.length > 0 && (
                   <button
                     onClick={handleRemoveSelected}
-                    className="px-3 py-1.5 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-lg text-xs"
+                    className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 rounded-lg text-xs"
                   >
                     Remove selected ({selectedIds.length})
                   </button>
                 )}
                 <button
                   onClick={() => setSelectedIds(impacts.map((i) => i.id))}
-                  className="px-3 py-1.5 bg-[var(--secondary)] rounded-lg text-xs"
+                  className="px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--muted)] rounded-lg text-xs"
                 >
-                  Select all
+                  Select all asteroids
                 </button>
                 <button
                   onClick={() => setSelectedIds([])}
-                  className="px-3 py-1.5 bg-[var(--secondary)] rounded-lg text-xs"
+                  className="px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--muted)] rounded-lg text-xs"
                 >
-                  Deselect
+                  Deselect all
                 </button>
               </div>
               {totalStats && (
@@ -373,39 +406,49 @@ export default function AsteroidLauncherPage() {
           {impacts.length > 0 && (
             <div className="mt-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
               <div className="text-xs font-semibold mb-2">
-                Impacts ({impacts.length}) • Click to toggle multi-select
+                Asteroids ({impacts.length}) • Multi-select to delete • Click to toggle
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
                 {impacts.map((impact, idx) => {
                   const isSelected = selectedIds.includes(impact.id);
                   return (
-                    <button
+                    <div
                       key={impact.id}
-                      onClick={() => handleSelectImpact(impact.id)}
-                      className={`text-left px-3 py-2 rounded-lg border text-xs flex items-center gap-2 ${isSelected ? "bg-[var(--primary)]/15 border-[var(--primary)]/50" : "bg-[var(--secondary)] border-[var(--border)] hover:bg-[var(--muted)]"}`}
+                      className={`px-3 py-2 rounded-lg border text-xs flex items-center gap-2 ${isSelected ? "bg-[var(--primary)]/15 border-[var(--primary)]/50" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        readOnly
-                        className="pointer-events-none"
+                        onChange={() => handleSelectImpact(impact.id)}
+                        className="shrink-0"
                       />
-                      <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                        style={{ backgroundColor: impact.color }}
+                      <button
+                        onClick={() => handleSelectImpact(impact.id)}
+                        className="flex items-center gap-2 flex-1 text-left min-w-0"
                       >
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">
-                          {impact.result.equivalentTNT} • M
-                          {impact.result.earthquakeMagnitude.toFixed(1)}
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                          style={{ backgroundColor: impact.color }}
+                        >
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">
+                            {impact.result.equivalentTNT} • M
+                            {impact.result.earthquakeMagnitude.toFixed(1)}
+                          </div>
+                          <div className="text-[10px] text-[var(--muted-foreground)] truncate">
+                            {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • {impact.diameter}m
+                          </div>
                         </div>
-                        <div className="text-[10px] text-[var(--muted-foreground)] truncate">
-                          {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • {impact.diameter}m
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                      <button
+                        onClick={() => handleRemoveSingle(impact.id)}
+                        className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[10px] shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   );
                 })}
               </div>
