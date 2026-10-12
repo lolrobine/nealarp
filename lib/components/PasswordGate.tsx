@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { forgetUnlock, isUnlocked, rememberUnlock, verifyPassword } from "@/lib/auth/sitePassword";
 import { Confetti } from "./Confetti";
-import { ThemeToggle } from "./ThemeToggle";
+import { useThemeStore, resolveTheme } from "@/lib/store/theme";
 
 type Status = "checking" | "locked" | "unlocked";
 
@@ -70,6 +70,20 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
   const inputRef = useRef<HTMLInputElement>(null);
   const shake = useAnimationControls();
 
+  // Theme handling for prominent toggle
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const [resolved, setResolved] = useState<"light" | "dark">("dark");
+  useEffect(() => {
+    setResolved(resolveTheme(theme));
+    if (theme === "system" && typeof window !== "undefined") {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = () => setResolved(media.matches ? "dark" : "light");
+      media.addEventListener("change", handler);
+      return () => media.removeEventListener("change", handler);
+    }
+  }, [theme]);
+
   const funMessage = funMessages[Math.min(attempts, funMessages.length - 1)];
 
   useEffect(() => {
@@ -91,7 +105,6 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     }
   }, [cooldown, attempts]);
 
-  // Konami easter egg: ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a
   useEffect(() => {
     const konami = [
       "ArrowUp",
@@ -130,16 +143,12 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isButtonDisabled) return;
-
     setSubmitting(true);
     setError(null);
-
     try {
       if (await verifyPassword(password)) {
         setSuccess(true);
-        // Instant unlock — no artificial delay, just a tiny tick for animation
         await rememberUnlock();
-        // Minimal delay for checkmark to be visible (100ms instead of 600ms)
         await new Promise((r) => setTimeout(r, 100));
         onUnlocked();
         return;
@@ -149,12 +158,10 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       setSubmitting(false);
       return;
     }
-
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     setSubmitting(false);
     setPassword("");
-
     if (nextAttempts >= 3) {
       const delay = Math.min(30, Math.pow(2, nextAttempts - 3));
       setCooldown(delay);
@@ -180,6 +187,8 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     if (e.getModifierState) setCapsLock(e.getModifierState("CapsLock"));
   }
 
+  const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
+
   return (
     <motion.div
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-[var(--background)]"
@@ -187,65 +196,70 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.2 } }}
     >
-      <Confetti active={success} />
+      {/* Confetti above everything */}
+      <div className="pointer-events-none fixed inset-0 z-[110]">
+        <Confetti active={success} />
+      </div>
 
       {/* Animated background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Gradient mesh */}
         <motion.div
-          className="absolute -top-1/2 left-1/2 h-[120%] w-[180%] -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/15 via-cyan-500/10 to-transparent blur-3xl"
+          className="absolute -top-1/2 left-1/2 h-[120%] w-[180%] -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/15 via-cyan-500/10 to-transparent blur-3xl dark:from-violet-500/10 dark:via-cyan-500/5"
           animate={{ scale: [1, 1.1, 1], rotate: [0, 3, 0] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute -bottom-1/2 left-1/4 h-[80%] w-[100%] rounded-full bg-gradient-to-t from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl"
+          className="absolute -bottom-1/2 left-1/4 h-[80%] w-[100%] rounded-full bg-gradient-to-t from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl dark:from-emerald-500/5"
           animate={{ scale: [1, 1.15, 1], x: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         />
-        {/* Floating orbs */}
         <motion.div
-          className="absolute left-[15%] top-[20%] h-32 w-32 rounded-full bg-gradient-to-br from-violet-400/20 to-cyan-400/20 blur-2xl"
+          className="absolute left-[15%] top-[20%] h-32 w-32 rounded-full bg-gradient-to-br from-violet-400/20 to-cyan-400/20 blur-2xl dark:from-violet-400/10 dark:to-cyan-400/10"
           animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute right-[20%] top-[60%] h-40 w-40 rounded-full bg-gradient-to-br from-emerald-400/15 to-sky-400/15 blur-2xl"
+          className="absolute right-[20%] top-[60%] h-40 w-40 rounded-full bg-gradient-to-br from-emerald-400/15 to-sky-400/15 blur-2xl dark:from-emerald-400/5 dark:to-sky-400/5"
           animate={{ y: [0, 15, 0], x: [0, -15, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         />
-        <motion.div
-          className="absolute left-[50%] top-[10%] h-24 w-24 rounded-full bg-gradient-to-br from-amber-400/10 to-orange-400/10 blur-xl"
-          animate={{ y: [0, -10, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)]" />
       </div>
 
-      {/* Top bar */}
+      {/* Top bar with prominent dark mode */}
       <div className="relative flex h-16 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2 text-sm">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--card)] border border-[var(--border)] shadow-sm">
-            <span className="text-sm font-bold">n</span>
+        <div className="flex items-center gap-2.5 text-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/20">
+            <span className="text-[15px] font-bold">n</span>
           </div>
-          <span className="font-bold tracking-tight">neal.fun</span>
-          <span className="rounded-full bg-[var(--secondary)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">
-            v2
-          </span>
+          <div className="flex flex-col leading-none">
+            <span className="font-bold tracking-tight">neal.fun</span>
+            <span className="text-[10px] text-[var(--muted-foreground)]">interactive • v2</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Prominent dark mode toggle */}
+          <motion.button
+            onClick={toggleTheme}
+            whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.05 }}
+            className="flex h-10 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3.5 text-sm font-medium shadow-sm transition-colors hover:bg-[var(--secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+            aria-label={`Switch to ${resolved === "dark" ? "light" : "dark"} mode`}
+          >
+            <span className="text-base">{resolved === "dark" ? "🌙" : "☀️"}</span>
+            <span className="hidden sm:inline">{resolved === "dark" ? "Dark" : "Light"}</span>
+          </motion.button>
           <a
             href="https://github.com/lolrobine/nealarp"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] shadow-sm hover:text-[var(--foreground)] transition-colors"
             aria-label="GitHub"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
             </svg>
           </a>
-          <ThemeToggle />
         </div>
       </div>
 
@@ -263,11 +277,9 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
             className="relative overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--card)]/80 p-7 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:p-8"
             noValidate
           >
-            {/* Card shine */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent dark:from-white/[0.04]" />
 
             <div className="relative">
-              {/* Icon */}
               <div className="flex justify-center">
                 <motion.div
                   className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg transition-colors ${
@@ -310,7 +322,6 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                     : "Enter the password to explore 8 interactive experiences."}
               </p>
 
-              {/* Attempt indicator */}
               <AnimatePresence>
                 {attempts > 0 && !success && (
                   <motion.div
@@ -338,7 +349,6 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                 )}
               </AnimatePresence>
 
-              {/* Input */}
               <div className="mt-6">
                 <label htmlFor="site-password" className="sr-only">
                   Site password
@@ -368,7 +378,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                     aria-describedby={
                       error ? "site-password-error" : capsLock ? "caps-lock-warning" : undefined
                     }
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-3.5 pl-10 pr-[88px] text-[15px] font-medium outline-none transition-all placeholder:text-[var(--muted-foreground)]/60 focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60 group-hover:border-[var(--border)]/80"
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-3.5 pl-10 pr-[88px] text-[15px] font-medium outline-none transition-all placeholder:text-[var(--muted-foreground)]/60 focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
                     {password.length > 0 && !isDisabled && (
@@ -413,7 +423,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
 
                 {cooldown > 0 && (
                   <div className="mt-3">
-                    <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] mb-1">
+                    <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
                       <span>Cooldown</span>
                       <span className="font-mono">{cooldown}s</span>
                     </div>
@@ -437,7 +447,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                     initial={{ opacity: 0, y: -6, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    className="mt-4 flex gap-2.5 rounded-xl bg-red-500/10 px-3.5 py-3 text-[13px] leading-5 text-red-600 dark:text-red-400 border border-red-500/20"
+                    className="mt-4 flex gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-3 text-[13px] leading-5 text-red-600 dark:text-red-400"
                   >
                     <span className="mt-0.5 shrink-0">⚠️</span>
                     <span className="font-medium">{error}</span>
@@ -445,14 +455,13 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                 )}
               </AnimatePresence>
 
-              {/* Hint — no password reveal */}
               <AnimatePresence>
                 {showHint && !success && (
                   <motion.div
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-3"
+                    className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-3"
                   >
                     <div className="flex gap-2.5">
                       <span className="text-sm">💡</span>
@@ -492,37 +501,66 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                 )}
               </motion.button>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[var(--muted-foreground)]">
-                <span className="hidden sm:inline-flex items-center gap-1">
-                  <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
-                    ↵
-                  </kbd>{" "}
-                  to unlock
-                </span>
-                <span className="hidden sm:inline">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
-                    Esc
-                  </kbd>{" "}
-                  to clear
-                </span>
-                <span>•</span>
-                <span>Once per browser</span>
+              {/* Dark mode toggle inside card — prominent */}
+              <div className="mt-5 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--secondary)] px-3 py-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                >
+                  <span>{resolved === "dark" ? "☀️" : "🌙"}</span>
+                  {resolved === "dark" ? "Light mode" : "Dark mode"}
+                </button>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--muted-foreground)]">
+                  <span className="hidden sm:inline-flex items-center gap-1">
+                    <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
+                      ↵
+                    </kbd>{" "}
+                    unlock
+                  </span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="inline-flex items-center gap-1">
+                    <kbd className="rounded border border-[var(--border)] bg-[var(--secondary)] px-1.5 py-0.5 font-mono text-[10px]">
+                      Esc
+                    </kbd>{" "}
+                    clear
+                  </span>
+                </div>
               </div>
+
+              <p className="mt-3 text-center text-[11px] text-[var(--muted-foreground)]">
+                Once per browser • Encrypted locally
+              </p>
             </div>
           </form>
 
           <div className="mt-6 flex items-center justify-center gap-3 text-[11px] text-[var(--muted-foreground)]">
             <span className="h-px w-8 bg-[var(--border)]" />
-            <span>8 experiences • Built with Next.js 15 • PWA ready</span>
+            <span>8 experiences • Next.js 15 • PWA ready</span>
             <span className="h-px w-8 bg-[var(--border)]" />
           </div>
         </motion.div>
       </div>
 
+      {/* Bottom floating dark mode — extra prominent */}
+      <div className="pointer-events-none fixed bottom-4 right-4 z-20 flex gap-2">
+        <div className="pointer-events-auto">
+          <motion.button
+            onClick={toggleTheme}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] shadow-xl backdrop-blur-md transition-colors hover:bg-[var(--secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            <span className="text-xl">{resolved === "dark" ? "☀️" : "🌙"}</span>
+          </motion.button>
+        </div>
+      </div>
+
       <div className="relative pb-5 text-center">
         <p className="text-[10px] leading-4 text-[var(--muted-foreground)]/70">
-          Client-side gate for static export • Not real authentication •{" "}
+          Client-side gate for static export • Not real auth •{" "}
           <a
             href="https://github.com/lolrobine/nealarp"
             target="_blank"
@@ -547,7 +585,6 @@ function LockButton({ onLock }: { onLock: () => void }) {
     const t = setTimeout(() => setConfirm(false), 3000);
     return () => clearTimeout(t);
   }, [confirm]);
-
   return (
     <div className="fixed bottom-4 left-4 z-[90] flex items-center gap-2">
       <button
