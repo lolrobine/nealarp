@@ -18,11 +18,14 @@ export type MapImpact = {
   timestamp: number;
 };
 
+export type ShakeEvent = { id: string; magnitude: number; energy: number } | null;
+
 interface Props {
   impacts: MapImpact[];
   onMapClick: (lat: number, lng: number, xPct: number, yPct: number) => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  shakeEvent: ShakeEvent;
 }
 
 function pctToLatLng(xPct: number, yPct: number) {
@@ -36,10 +39,10 @@ type Explosion = {
   x: number;
   y: number;
   color: string;
-  size: number;
+  magnitude: number;
 };
 
-export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
+export function WorldMap({ impacts, onMapClick, selectedId, onSelect, shakeEvent }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapContentRef = useRef<HTMLDivElement>(null);
   const [hoverPos, setHoverPos] = useState<{
@@ -60,11 +63,63 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 6;
 
+  // Shake based on asteroid strength - strength = earthquake magnitude
+  useEffect(() => {
+    if (!shakeEvent) return;
+    const magnitude = shakeEvent.magnitude;
+    // Intensity: magnitude 0-12 => 2px to 45px, based on strength
+    const intensity = Math.min(45, Math.max(2, magnitude * 3.8));
+    const duration = Math.min(2, Math.max(0.3, magnitude * 0.18));
+    const vertical = intensity * 0.35;
+
+    shakeControls.start({
+      x: [
+        0,
+        -intensity,
+        intensity,
+        -intensity * 0.85,
+        intensity * 0.85,
+        -intensity * 0.5,
+        intensity * 0.5,
+        0,
+      ],
+      y: [0, vertical, -vertical, vertical * 0.7, -vertical * 0.7, 0],
+      transition: { duration, ease: "easeOut" },
+    });
+
+    // Explosion for world map - find impact that matches shakeEvent id
+    const latest = impacts.find((i) => i.id === shakeEvent.id);
+    if (latest) {
+      setExplosions((prev) => [
+        ...prev,
+        { id: latest.id, x: latest.x, y: latest.y, color: latest.color, magnitude },
+      ]);
+      setTimeout(
+        () => {
+          setExplosions((prev) => prev.filter((ex) => ex.id !== latest.id));
+        },
+        1200 + magnitude * 120
+      );
+    }
+
+    try {
+      // Haptic strength based on magnitude
+      const vib =
+        magnitude < 3
+          ? [20]
+          : magnitude < 5
+            ? [40, 20, 60]
+            : magnitude < 7
+              ? [80, 40, 120]
+              : [120, 60, 200, 40, 250];
+      navigator.vibrate?.(vib);
+    } catch {}
+  }, [shakeEvent, impacts, shakeControls]);
+
   const handleZoom = useCallback(
     (newZoom: number, centerX?: number, centerY?: number) => {
       const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
       if (centerX !== undefined && centerY !== undefined && containerRef.current) {
-        // Zoom towards mouse position
         const rect = containerRef.current.getBoundingClientRect();
         const mouseX = centerX - rect.left;
         const mouseY = centerY - rect.top;
@@ -81,7 +136,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) return; // Allow browser zoom with ctrl
+      if (e.ctrlKey || e.metaKey) return;
       e.preventDefault();
       const delta = -e.deltaY;
       const zoomFactor = delta > 0 ? 1.1 : 0.9;
@@ -113,10 +168,8 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
         const dy = e.clientY - dragStart.y;
         setPan({ x: dragStart.panX + dx, y: dragStart.panY + dy });
       }
-      // Hover pos for crosshair (account for zoom/pan)
       if (!containerRef.current || !mapContentRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      // Transform mouse to map content coordinates (0-100%)
       const xInContainer = e.clientX - rect.left;
       const yInContainer = e.clientY - rect.top;
       const xInContent = (xInContainer - pan.x) / zoom;
@@ -131,9 +184,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
     [isDragging, dragStart, pan, zoom]
   );
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -148,30 +199,9 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
       const yPct = (yInContent / rect.height) * 100;
       if (xPct < 0 || xPct > 100 || yPct < 0 || yPct > 100) return;
       const { lat, lng } = pctToLatLng(xPct, yPct);
-
-      // Shake + explosion
-      shakeControls.start({
-        x: [0, -12, 12, -10, 10, -6, 6, 0],
-        y: [0, 4, -4, 2, -2, 0],
-        transition: { duration: 0.6, ease: "easeOut" },
-      });
-
-      const explosionId = Math.random().toString(36).slice(2);
-      const color = getImpactColor(impacts.length);
-      // Size based on current asteroid config (will be updated by parent, but we estimate)
-      setExplosions((prev) => [...prev, { id: explosionId, x: xPct, y: yPct, color, size: 1 }]);
-      setTimeout(() => {
-        setExplosions((prev) => prev.filter((ex) => ex.id !== explosionId));
-      }, 1200);
-
-      // Haptic
-      try {
-        navigator.vibrate?.([50, 30, 80]);
-      } catch {}
-
       onMapClick(lat, lng, xPct, yPct);
     },
-    [onMapClick, impacts.length, isDragging, pan, zoom, shakeControls]
+    [onMapClick, isDragging, pan, zoom]
   );
 
   const getImpactSize = (result: ImpactResult, type: "crater" | "blast") => {
@@ -184,7 +214,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
 
   return (
     <div className="relative w-full bg-[var(--secondary)] rounded-xl overflow-hidden border border-[var(--border)]">
-      {/* Header with zoom controls */}
       <div className="px-3 py-2 bg-[var(--card)] border-b border-[var(--border)] flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">🌍 World Map</span>
@@ -193,7 +222,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
           </span>
           {zoom > 1 && (
             <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-400 rounded-full">
-              {zoom.toFixed(1)}x • Drag to pan
+              {zoom.toFixed(1)}x • Drag
             </span>
           )}
         </div>
@@ -236,7 +265,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
         </div>
       </div>
 
-      {/* Map container with shake */}
       <motion.div
         ref={containerRef}
         animate={shakeControls}
@@ -253,7 +281,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
         role="application"
         aria-label="World map - click to launch, scroll to zoom, drag to pan"
       >
-        {/* Zoomable content */}
         <div
           ref={mapContentRef}
           className="absolute inset-0 w-full h-full will-change-transform"
@@ -262,7 +289,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
             transformOrigin: "0 0",
           }}
         >
-          {/* High-res world map for crisp zoom */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getAssetUrl("/experiences/asteroid-launcher/world-map-4k.jpg")}
@@ -271,10 +297,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
             draggable={false}
             style={{ imageRendering: "auto" as const }}
           />
-          {/* Fallback low-res for fast load (hidden when high-res loaded, but we just use high-res) */}
           <div className="absolute inset-0 bg-blue-900/10 pointer-events-none" />
-
-          {/* Grid */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
             <line
               x1="0"
@@ -314,7 +337,6 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
             />
           </svg>
 
-          {/* Impacts - no delete X button, only via tab below */}
           {impacts.map((impact, idx) => {
             const isSelected = selectedId === impact.id;
             const blastSize = getImpactSize(impact.result, "blast");
@@ -359,9 +381,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
                   }}
                 />
                 <div
-                  className={`relative rounded-full border-2 flex items-center justify-center font-bold text-[10px] text-white shadow-lg cursor-pointer transition-all hover:scale-110 ${
-                    isSelected ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-125" : ""
-                  }`}
+                  className={`relative rounded-full border-2 flex items-center justify-center font-bold text-[10px] text-white shadow-lg cursor-pointer transition-all hover:scale-110 ${isSelected ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-125" : ""}`}
                   style={{
                     width: `${Math.max(1.2, craterSize)}em`,
                     height: `${Math.max(1.2, craterSize)}em`,
@@ -373,12 +393,12 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
                 >
                   {impacts.length <= 12 ? idx + 1 : ""}
                 </div>
-
                 {isSelected && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black/90 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none z-30 border border-white/20">
                     <div className="font-bold">{impact.result.equivalentTNT}</div>
                     <div className="text-white/70">
-                      {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • {impact.diameter}m
+                      {impact.lat.toFixed(1)}°, {impact.lng.toFixed(1)}° • {impact.diameter}m • M
+                      {impact.result.earthquakeMagnitude.toFixed(1)}
                     </div>
                   </div>
                 )}
@@ -386,85 +406,85 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
             );
           })}
 
-          {/* Explosions */}
-          {explosions.map((ex) => (
-            <div
-              key={ex.id}
-              className="absolute pointer-events-none z-50"
-              style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
-            >
-              {/* Flash */}
-              <motion.div
-                initial={{ scale: 0, opacity: 1 }}
-                animate={{ scale: [0, 3, 6], opacity: [1, 0.8, 0] }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-                style={{ left: "50%", top: "50%" }}
-              />
-              {/* Fireball */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.5, 2.2], opacity: [1, 0.9, 0] }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
-                className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
-                style={{
-                  left: "50%",
-                  top: "50%",
-                  background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
-                }}
-              />
-              {/* Shockwave */}
-              <motion.div
-                initial={{ scale: 0, opacity: 0.8 }}
-                animate={{ scale: [0, 4, 8], opacity: [0.8, 0.4, 0] }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
-                style={{
-                  left: "50%",
-                  top: "50%",
-                  borderColor: ex.color,
-                  boxShadow: `0 0 20px ${ex.color}`,
-                }}
-              />
-              <motion.div
-                initial={{ scale: 0, opacity: 0.6 }}
-                animate={{ scale: [0, 6, 12], opacity: [0.6, 0.2, 0] }}
-                transition={{ duration: 1, ease: "easeOut", delay: 0.1 }}
-                className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border"
-                style={{ left: "50%", top: "50%", borderColor: `${ex.color}80` }}
-              />
-              {/* Debris particles */}
-              {Array.from({ length: 8 }).map((_, i) => (
+          {explosions.map((ex) => {
+            const scale = Math.min(3.5, Math.max(0.5, ex.magnitude / 3));
+            return (
+              <div
+                key={ex.id}
+                className="absolute pointer-events-none z-50"
+                style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
+              >
                 <motion.div
-                  key={i}
-                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-                  animate={{
-                    x: Math.cos((i / 8) * Math.PI * 2) * (30 + Math.random() * 40),
-                    y: Math.sin((i / 8) * Math.PI * 2) * (30 + Math.random() * 40),
-                    opacity: 0,
-                    scale: 0,
-                  }}
-                  transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 + i * 0.02 }}
-                  className="absolute w-1.5 h-1.5 rounded-full"
+                  initial={{ scale: 0, opacity: 1 }}
+                  animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+                  style={{ left: "50%", top: "50%" }}
+                />
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
+                  transition={{ duration: 0.6, delay: 0.05 }}
+                  className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
                   style={{
                     left: "50%",
                     top: "50%",
-                    backgroundColor: i % 2 === 0 ? "#ff6600" : ex.color,
+                    background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
                   }}
                 />
-              ))}
-              {/* Smoke */}
-              <motion.div
-                initial={{ scale: 0, opacity: 0.5, y: 0 }}
-                animate={{ scale: [0, 2, 3], opacity: [0.5, 0.3, 0], y: [0, -10, -20] }}
-                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
-                className="absolute w-16 h-16 -translate-x-1/2 rounded-full blur-xl"
-                style={{ left: "50%", top: "50%", backgroundColor: "rgba(100,100,100,0.5)" }}
-              />
-            </div>
-          ))}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0.8 }}
+                  animate={{ scale: [0, 4 * scale, 8 * scale], opacity: [0.8, 0.4, 0] }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+                  style={{
+                    left: "50%",
+                    top: "50%",
+                    borderColor: ex.color,
+                    boxShadow: `0 0 20px ${ex.color}`,
+                  }}
+                />
+                <motion.div
+                  initial={{ scale: 0, opacity: 0.6 }}
+                  animate={{ scale: [0, 6 * scale, 12 * scale], opacity: [0.6, 0.2, 0] }}
+                  transition={{ duration: 1, delay: 0.1 }}
+                  className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                  style={{ left: "50%", top: "50%", borderColor: `${ex.color}80` }}
+                />
+                {Array.from({ length: Math.round(8 + ex.magnitude) }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                    animate={{
+                      x: Math.cos((i / 8) * Math.PI * 2) * (20 + ex.magnitude * 6),
+                      y: Math.sin((i / 8) * Math.PI * 2) * (20 + ex.magnitude * 6),
+                      opacity: 0,
+                      scale: 0,
+                    }}
+                    transition={{ duration: 0.7, delay: 0.1 + i * 0.02 }}
+                    className="absolute w-1.5 h-1.5 rounded-full"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      backgroundColor: i % 2 === 0 ? "#ff6600" : ex.color,
+                    }}
+                  />
+                ))}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0.5, y: 0 }}
+                  animate={{
+                    scale: [0, 2 * scale, 3 * scale],
+                    opacity: [0.5, 0.3, 0],
+                    y: [0, -10, -20],
+                  }}
+                  transition={{ duration: 1.2, delay: 0.2 }}
+                  className="absolute w-16 h-16 -translate-x-1/2 rounded-full blur-xl"
+                  style={{ left: "50%", top: "50%", backgroundColor: "rgba(100,100,100,0.5)" }}
+                />
+              </div>
+            );
+          })}
 
-          {/* Hover crosshair */}
           {isHovering && hoverPos && !isDragging && (
             <>
               <div
@@ -488,24 +508,21 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
           )}
         </div>
 
-        {/* Click overlay for map (handles click, but content is transformed) */}
         <div className="absolute inset-0 z-10" onClick={handleClick} aria-hidden />
 
-        {/* Instructions */}
         {impacts.length === 0 && !isHovering && zoom === 1 && (
           <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
             <div className="bg-black/70 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-4 text-center">
               <div className="text-2xl mb-2">☄️</div>
               <div className="text-white font-bold text-sm">Click anywhere to launch</div>
               <div className="text-white/60 text-xs mt-1">
-                Scroll to zoom • Drag to pan • Crisp 4K quality
+                Scroll to zoom • Drag to pan • Shake scales with power
               </div>
             </div>
           </div>
         )}
       </motion.div>
 
-      {/* Legend */}
       <div className="px-3 py-2 bg-[var(--card)] border-t border-[var(--border)] flex flex-wrap gap-3 text-[10px] text-[var(--muted-foreground)]">
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-full bg-black border border-red-500 inline-block" />{" "}
@@ -520,7 +537,7 @@ export function WorldMap({ impacts, onMapClick, selectedId, onSelect }: Props) {
           Blast
         </span>
         <span className="ml-auto">
-          4K map • Zoom {zoom.toFixed(1)}x • 1°≈111km • No map delete button (use list below)
+          4K • Zoom {zoom.toFixed(1)}x • Shake = M × 3.8px • No X on map (use list)
         </span>
       </div>
     </div>
