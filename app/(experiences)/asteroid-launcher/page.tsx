@@ -52,6 +52,11 @@ export default function AsteroidLauncherPage() {
 
   const handleMapClick = useCallback(
     (lat: number, lng: number, xPct: number, yPct: number) => {
+      // Limit to 50 impacts for performance
+      if (impacts.length >= 50) {
+        // Remove oldest to make room
+        setImpacts((prev) => prev.slice(1));
+      }
       const newResult = calculateImpact({ diameter, density, velocity, angle });
       const newImpact: MapImpact = {
         id: Math.random().toString(36).slice(2, 9),
@@ -65,7 +70,7 @@ export default function AsteroidLauncherPage() {
         color: getImpactColor(impacts.length),
         timestamp: Date.now(),
       };
-      setImpacts((prev) => [...prev, newImpact]);
+      setImpacts((prev) => [...prev.slice(-49), newImpact]);
       setSelectedId(newImpact.id);
 
       // Haptic feedback if available

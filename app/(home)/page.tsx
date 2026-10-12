@@ -94,9 +94,14 @@ export default function Home() {
   }, [filtered, focusedIdx, router]);
 
   useEffect(() => {
+    // Clamp focused index when filtered list shrinks
+    if (focusedIdx >= filtered.length && filtered.length > 0) {
+      setFocusedIdx(filtered.length - 1);
+      return;
+    }
     const el = document.querySelector(`[data-idx="${focusedIdx}"]`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [focusedIdx]);
+  }, [focusedIdx, filtered.length]);
 
   const recentlyPlayedList = useMemo(() => {
     const ids = Object.entries(played)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { getAssetUrl } from "@/lib/utils/assets";
 import type { ImpactResult } from "./data";
 
 export type MapImpact = {
@@ -114,7 +115,7 @@ export function WorldMap({ impacts, onMapClick, onRemoveImpact, selectedId, onSe
         {/* World map image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/experiences/asteroid-launcher/world-map.jpg"
+          src={getAssetUrl("/experiences/asteroid-launcher/world-map.jpg")}
           alt="World map"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}

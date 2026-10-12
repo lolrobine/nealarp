@@ -185,7 +185,11 @@ export default function DeepSeaPage() {
     // Initial call to set correct depth on mount
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, [isMounted]);
 
   const currentZone = getZone(currentDepth) ?? zones[0]!;

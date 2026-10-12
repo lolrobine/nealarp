@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { getAssetUrl } from "@/lib/utils/assets";
 import { MAX_DEPTH } from "./data";
 
 interface Props {
@@ -48,7 +49,7 @@ export function RealisticOceanBackground({ depth }: Props) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/experiences/deep-sea/sunlight.jpg"
+          src={getAssetUrl("/experiences/deep-sea/sunlight.jpg")}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           aria-hidden
@@ -88,7 +89,7 @@ export function RealisticOceanBackground({ depth }: Props) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/experiences/deep-sea/twilight.jpg"
+          src={getAssetUrl("/experiences/deep-sea/twilight.jpg")}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           aria-hidden
@@ -104,7 +105,7 @@ export function RealisticOceanBackground({ depth }: Props) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/experiences/deep-sea/midnight.jpg"
+          src={getAssetUrl("/experiences/deep-sea/midnight.jpg")}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           aria-hidden
@@ -126,7 +127,7 @@ export function RealisticOceanBackground({ depth }: Props) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/experiences/deep-sea/abyssal.jpg"
+          src={getAssetUrl("/experiences/deep-sea/abyssal.jpg")}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           aria-hidden
