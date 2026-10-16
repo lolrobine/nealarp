@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { unlockSite } from "./auth";
+
+test.beforeEach(async ({ page }) => {
+  await unlockSite(page);
+});
 
 const experiences = [
   "spend-money",

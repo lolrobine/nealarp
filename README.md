@@ -1,8 +1,8 @@
 # Neal.fun V2
 
 [![Build](https://github.com/lolrobine/nealarp/actions/workflows/deploy.yml/badge.svg)](https://github.com/lolrobine/nealarp/actions/workflows/deploy.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences with modern stack, PWA, a11y, and extensive polish.
@@ -27,12 +27,12 @@ Template: `app/(experiences)/_template/` — scaffold for new experiences.
 The whole site (every experience, plus the 404 page) sits behind a password screen. The password is **`nealarp`** unless you change it.
 
 - The password is only stored as a digest in `lib/auth/sitePassword.ts` — the plaintext is never in the code or the bundle.
-- Once entered, the unlock is remembered in `localStorage`, so visitors are asked only once per browser. The small lock button in the bottom-right corner locks the site again.
+- Once entered, the unlock is remembered in `localStorage`, so visitors are asked only once per browser. The small lock button in the bottom-left corner locks the site again.
 
 ### Changing the password
 
 ```bash
-pnpm password:hash "my new password"
+corepack pnpm password:hash "my new password"
 ```
 
 Paste the two digests it prints into `DEFAULT_PASSWORD_SHA256` / `DEFAULT_PASSWORD_FNV1A` in `lib/auth/sitePassword.ts`.
@@ -40,23 +40,23 @@ Paste the two digests it prints into `DEFAULT_PASSWORD_SHA256` / `DEFAULT_PASSWO
 Alternatively, set `NEXT_PUBLIC_SITE_PASSWORD` at build time (this value is embedded verbatim in the bundle):
 
 ```bash
-NEXT_PUBLIC_SITE_PASSWORD="my new password" pnpm build
+NEXT_PUBLIC_SITE_PASSWORD="my new password" corepack pnpm build
 ```
 
-> **Note:** GitHub Pages serves this site as a static export, so the gate runs in the browser. It keeps casual visitors out, but the page markup is still part of the published bundle — it is not server-side access control. On a host with a server (Vercel, `next start`), you can add a `middleware.ts` to enforce the password before any HTML is served.
+> **Security note:** GitHub Pages serves this site as a static export, so the password gate runs in the browser. It keeps casual visitors out, but the page markup is still part of the published bundle — it is not access control. The repository's current `middleware.ts` also does not reject locked requests; do not rely on it to protect private content. For a private deployment, use and test proper server-side or host-level access control.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 20+ (Node 22 is pinned in `.nvmrc`)
+- Corepack (uses the repository-pinned pnpm 9.15.0)
 
 ### Install & Run
 
 ```bash
-pnpm install
-pnpm dev
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
@@ -64,7 +64,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ### Build for Production
 
 ```bash
-pnpm build
+corepack pnpm build
 ```
 
 ## 📦 Adding large files (e.g. 160MB)
@@ -103,15 +103,21 @@ Your site will be live at: `https://<username>.github.io/nealarp/`
 
 - **Homepage**: search (title/desc/tags), category filter, favorites (Zustand persist), recently played (last 20), random button (R key), keyboard nav (arrows + Enter), sort (recent/featured/alpha/category), clear buttons
 - **Experience Shell**: back button, share (Web Share API + clipboard), fullscreen, theme toggle, skip link, PWA service worker, JSON-LD breadcrumbs
-- **Security**: client-side password gate with SHA-256 + FNV-1a fallback, rate limiting (exponential backoff), Vercel middleware, security headers (X-Frame-Options DENY, etc)
+- **Security**: client-side password gate with SHA-256 + FNV-1a fallback and exponential backoff; server response headers on Vercel. The gate is not access control for private content.
 - **PWA**: `manifest.webmanifest`, `sw.js` caching, `PWARegister`, favicon, opengraph images per experience
 - **A11y**: prefers-reduced-motion, focus-visible, aria-pressed, aria-live, aria-valuetext, keyboard handlers, skip links
 - **DX**: `CONTRIBUTING.md`, `_template` scaffold, `.nvmrc` 22, `engines`, `lint-staged` + `husky`, `playwright` e2e, `bundle-analyzer`, `zod` registry validation, `noUncheckedIndexedAccess`
 
+## 🤖 AI coding agents
+
+- [`AGENTS.md`](AGENTS.md) contains the current repository instructions and verification commands.
+- [`docs/agent-resources.md`](docs/agent-resources.md) lists external agent-skill repositories to review; it does not vendor them into the application.
+- Historical plans are in [`docs/archive/`](docs/archive/) and are not current specifications.
+
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 15.5 (App Router, static export for GH Pages, middleware for Vercel)
-- **Language:** TypeScript 5.7 (strict + noUncheckedIndexedAccess)
+- **Framework:** Next.js 16.4 (App Router, static export for GitHub Pages)
+- **Language:** TypeScript 5 (strict + `noUncheckedIndexedAccess`)
 - **Styling:** Tailwind CSS v4 + `tailwind-merge` + CSS variables
 - **Animation:** Framer Motion 11
 - **State:** Zustand 5 (persist)
@@ -137,6 +143,10 @@ nealarp/
 │   └── layout.tsx
 ├── content/
 │   └── experiences.json         # Experience registry
+├── docs/
+│   ├── agent-resources.md       # External AI-agent references
+│   └── archive/                 # Historical plans and audits
+├── AGENTS.md                    # Repository instructions for coding agents
 ├── lib/
 │   ├── auth/
 │   │   └── sitePassword.ts      # 🔒 Site password digests & unlock storage
@@ -144,7 +154,7 @@ nealarp/
 │   ├── store/                   # Zustand stores
 │   └── utils/
 ├── scripts/
-│   └── password-hash.mjs        # pnpm password:hash
+│   └── password-hash.mjs        # corepack pnpm password:hash
 └── .github/workflows/
     └── deploy.yml               # GitHub Pages deploy
 ```

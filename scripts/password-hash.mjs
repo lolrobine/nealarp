@@ -32,6 +32,4 @@ console.log(`password                : ${password}`);
 console.log(`DEFAULT_PASSWORD_SHA256 = "${sha256}"`);
 console.log(`DEFAULT_PASSWORD_FNV1A  = "${fnv1aHex(password)}"`);
 console.log("");
-console.log(
-  "Paste both values into lib/auth/sitePassword.ts (they replace the built-in digests)."
-);
+console.log("Paste both values into lib/auth/sitePassword.ts (they replace the built-in digests).");

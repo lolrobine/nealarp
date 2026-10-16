@@ -63,7 +63,7 @@ export default function TemplateExperiencePage() {
             <li>Build your interactive UI in page.tsx</li>
             <li>Add data.ts if needed for static data</li>
             <li>Register in content/experiences.json</li>
-            <li>Run pnpm typecheck, lint, test, build</li>
+            <li>Run corepack pnpm typecheck, lint, format:check, test, test:e2e, build</li>
           </ul>
         </div>
       </div>

@@ -5,8 +5,8 @@ Thanks for wanting to contribute! This project is an open-source reimagining of 
 ## Quick Start
 
 ```bash
-pnpm install
-pnpm dev
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
 ```
 
 Open http://localhost:3000 — default password is `nealarp`.
@@ -112,10 +112,12 @@ Put icon (48x48) and thumbnail (16:9) in `public/experiences/my-new-game/` as we
 ### 6. Test
 
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm build
+corepack pnpm typecheck
+corepack pnpm lint
+corepack pnpm format:check
+corepack pnpm test
+corepack pnpm test:e2e
+corepack pnpm build
 ```
 
 ## Code Guidelines
@@ -146,8 +148,10 @@ import { Slider } from "@/lib/components/ui/slider";
 ## Testing
 
 ```bash
-pnpm test        # run all vitest
-pnpm test:watch  # watch mode
+corepack pnpm test        # run all Vitest tests
+corepack pnpm test:watch  # watch mode
+corepack pnpm test:e2e    # run Playwright browser tests
+corepack pnpm format:check
 ```
 
 Add tests for calculators/rules in `*.test.ts` alongside your experience.
@@ -166,7 +170,7 @@ a11y: add aria-pressed to category filters
 ## Pull Request
 
 1. Fork, create branch `feat/my-new-game`
-2. Ensure `pnpm build` passes and no a11y issues
+2. Ensure `corepack pnpm build` passes and no a11y issues
 3. Open PR against `main` with screenshots
 
 ## Questions?
