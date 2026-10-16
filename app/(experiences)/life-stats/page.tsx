@@ -70,7 +70,7 @@ export default function LifeStatsPage() {
   const [birthday, setBirthday] = useState("");
   const [showStats, setShowStats] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
   const [copied, setCopied] = useState(false);
 
   // Update every second for live counters
@@ -82,6 +82,7 @@ export default function LifeStatsPage() {
 
   const handleCalculate = () => {
     if (birthday) {
+      setNow(Date.now());
       setShowStats(true);
     }
   };

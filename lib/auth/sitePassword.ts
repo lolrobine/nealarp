@@ -40,8 +40,7 @@ const UNLOCK_SALT = "nealarp-site-gate-v1";
  * SHA-256 hex digest of the current site password ("nealarp").
  * Generate a new digest with `pnpm password:hash "<new password>"`.
  */
-const DEFAULT_PASSWORD_SHA256 =
-  "fecc1595b9a008f8628d9986cc872df7e1ce77e927483fe2fc513c66db144070";
+const DEFAULT_PASSWORD_SHA256 = "fecc1595b9a008f8628d9986cc872df7e1ce77e927483fe2fc513c66db144070";
 
 /**
  * FNV-1a 32-bit hex digest of the same password. Browsers only expose
@@ -71,10 +70,7 @@ function toHex(bytes: Uint8Array): string {
 async function sha256Hex(text: string): Promise<string | null> {
   if (typeof crypto === "undefined" || !crypto.subtle) return null;
   try {
-    const digest = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(text)
-    );
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return toHex(new Uint8Array(digest));
   } catch {
     return null;
@@ -116,8 +112,7 @@ export async function verifyPassword(input: string): Promise<boolean> {
   if (override) return actual === (await digest(override));
 
   return (
-    actual === `sha256:${DEFAULT_PASSWORD_SHA256}` ||
-    actual === `fnv1a:${DEFAULT_PASSWORD_FNV1A}`
+    actual === `sha256:${DEFAULT_PASSWORD_SHA256}` || actual === `fnv1a:${DEFAULT_PASSWORD_FNV1A}`
   );
 }
 

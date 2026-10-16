@@ -26,7 +26,14 @@ export const TOTAL_MONEY = 1_000_000_000_000; // 1 trillion
 
 export const items: ShopItem[] = [
   // Food & Drink
-  { id: "big-mac", name: "Big Mac", price: 5, category: "food", emoji: "🍔", description: "A classic McDonald's burger" },
+  {
+    id: "big-mac",
+    name: "Big Mac",
+    price: 5,
+    category: "food",
+    emoji: "🍔",
+    description: "A classic McDonald's burger",
+  },
   { id: "pizza", name: "Pizza", price: 10, category: "food", emoji: "🍕" },
   { id: "coffee", name: "Fancy Coffee", price: 7, category: "food", emoji: "☕" },
   { id: "avocado-toast", name: "Avocado Toast", price: 15, category: "food", emoji: "🥑" },
@@ -56,21 +63,57 @@ export const items: ShopItem[] = [
   { id: "designer-watch", name: "Designer Watch", price: 50000, category: "luxury", emoji: "⌚" },
   { id: "diamond-ring", name: "Diamond Ring", price: 100000, category: "luxury", emoji: "💍" },
   { id: "mansion", name: "Mansion", price: 10000000, category: "luxury", emoji: "🏰" },
-  { id: "private-island", name: "Private Island", price: 100000000, category: "luxury", emoji: "🏝️" },
+  {
+    id: "private-island",
+    name: "Private Island",
+    price: 100000000,
+    category: "luxury",
+    emoji: "🏝️",
+  },
   { id: "penthouse", name: "NYC Penthouse", price: 50000000, category: "luxury", emoji: "🏙️" },
   { id: "art-painting", name: "Famous Painting", price: 80000000, category: "luxury", emoji: "🖼️" },
 
   // Companies
   { id: "nba-team", name: "NBA Team", price: 4000000000, category: "companies", emoji: "🏀" },
   { id: "nfl-team", name: "NFL Team", price: 5000000000, category: "companies", emoji: "🏈" },
-  { id: "airline", name: "Airline Company", price: 10000000000, category: "companies", emoji: "🛫" },
-  { id: "social-media", name: "Social Media Platform", price: 44000000000, category: "companies", emoji: "📲" },
-  { id: "movie-studio", name: "Movie Studio", price: 50000000000, category: "companies", emoji: "🎬" },
+  {
+    id: "airline",
+    name: "Airline Company",
+    price: 10000000000,
+    category: "companies",
+    emoji: "🛫",
+  },
+  {
+    id: "social-media",
+    name: "Social Media Platform",
+    price: 44000000000,
+    category: "companies",
+    emoji: "📲",
+  },
+  {
+    id: "movie-studio",
+    name: "Movie Studio",
+    price: 50000000000,
+    category: "companies",
+    emoji: "🎬",
+  },
 
   // Mega Purchases
   { id: "skyscraper", name: "Skyscraper", price: 1500000000, category: "mega", emoji: "🏗️" },
-  { id: "aircraft-carrier", name: "Aircraft Carrier", price: 13000000000, category: "mega", emoji: "⚓" },
+  {
+    id: "aircraft-carrier",
+    name: "Aircraft Carrier",
+    price: 13000000000,
+    category: "mega",
+    emoji: "⚓",
+  },
   { id: "space-program", name: "Space Program", price: 50000000000, category: "mega", emoji: "🚀" },
-  { id: "cure-disease", name: "Cure a Disease (Research)", price: 100000000000, category: "mega", emoji: "🧬" },
+  {
+    id: "cure-disease",
+    name: "Cure a Disease (Research)",
+    price: 100000000000,
+    category: "mega",
+    emoji: "🧬",
+  },
   { id: "mars-colony", name: "Mars Colony", price: 500000000000, category: "mega", emoji: "🔴" },
 ];

@@ -10,6 +10,11 @@ import { MarineSnow } from "./MarineSnow";
 import { sortedCreatures, MAX_DEPTH, getZone, zones } from "./data";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
+function bubbleVariation(index: number, salt: number): number {
+  const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
+
 function Bubbles({ depth }: { depth: number }) {
   const count = depth < 500 ? 16 : depth < 2000 ? 8 : 3;
   if (depth > 3000) return null;
@@ -24,11 +29,11 @@ function Bubbles({ depth }: { depth: number }) {
         }
       `}</style>
       {Array.from({ length: count }).map((_, i) => {
-        const size = 3 + Math.random() * 6;
-        const left = 5 + i * (90 / count) + (Math.random() - 0.5) * 5;
+        const size = 3 + bubbleVariation(i, 1) * 6;
+        const left = 5 + i * (90 / count) + (bubbleVariation(i, 2) - 0.5) * 5;
         const drift = (Math.sin(i * 1.3) * 40).toFixed(0);
-        const duration = 6 + Math.random() * 8;
-        const delay = i * 0.6 + Math.random() * 2;
+        const duration = 6 + bubbleVariation(i, 3) * 8;
+        const delay = i * 0.6 + bubbleVariation(i, 4) * 2;
         const blur = depth > 1000 ? 1 : 0;
         return (
           <div

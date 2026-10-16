@@ -1,0 +1,15 @@
+# Generated output and dependency files
+node_modules/
+.next/
+out/
+coverage/
+build/
+pnpm-lock.yaml
+
+# Historical snapshots are intentionally preserved as written
+docs/archive/
+
+# Pinned upstream skill files are preserved as published
+.agents/skills/vercel-react-best-practices/
+.agents/skills/vercel-composition-patterns/
+.agents/skills/next-bundle-optimizer/references/
