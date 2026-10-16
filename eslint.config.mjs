@@ -6,9 +6,9 @@ const eslintConfig = [
   ...nextTypeScript,
   {
     rules: {
-      // Existing components synchronize browser APIs and UI state after mount.
-      // Keep the rule visible as a warning while that baseline is migrated.
-      "react-hooks/set-state-in-effect": "warn",
+      // Browser snapshots and derived UI no longer need cascading effect updates.
+      // Reject regressions instead of restoring the old warning baseline.
+      "react-hooks/set-state-in-effect": "error",
     },
   },
 ];

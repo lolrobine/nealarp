@@ -17,7 +17,7 @@
 - Respect keyboard access, visible focus, semantic labels, and `prefers-reduced-motion` for UI changes.
 - New or changed factual claims (especially science, speed, prices, and impact calculations) need a source or a clearly stated assumption. Do not invent data or citations.
 - Avoid unrelated refactors and new dependencies. If a dependency is genuinely needed, explain why and update `pnpm-lock.yaml` with `corepack pnpm`.
-- ESLint currently reports existing `react-hooks/set-state-in-effect` warnings. Do not add new instances; do not broaden this warning baseline by refactoring unrelated components.
+- Keep ESLint free of warnings and errors. `react-hooks/set-state-in-effect` is enforced as an error; use derived values, event updates, and external-store subscriptions rather than effect-driven state synchronization.
 
 ## Working workflow
 

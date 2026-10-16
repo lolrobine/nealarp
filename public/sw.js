@@ -1,5 +1,4 @@
-const CACHE_NAME = "nealarp-v2-2";
-// Derive base path from SW location (e.g. /nealarp/sw.js -> /nealarp/)
+const CACHE_NAME = "nealarp-v2-6";
 const BASE_PATH = new URL(".", self.location).pathname.replace(/\/$/, "") || "";
 const ASSETS = [`${BASE_PATH}/`, `${BASE_PATH}/manifest.webmanifest`];
 
@@ -17,7 +16,11 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith("nealarp-") && key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
       .then(() => self.clients.claim())
   );
@@ -25,24 +28,42 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET") return;
-  // Only cache same-origin GET
-  if (!request.url.startsWith(self.location.origin)) return;
-  // Don't cache API or dev HMR
-  if (request.url.includes("/_next/webpack-hmr")) return;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  // RSC responses and dev sources must never be confused with cached page documents.
+  if (
+    request.headers.has("RSC") ||
+    url.searchParams.has("_rsc") ||
+    url.pathname.includes("webpack-hmr") ||
+    url.pathname.startsWith(`${BASE_PATH}/_next/static/chunks/webpack`)
+  )
+    return;
+  const navigation = request.mode === "navigate";
+  const asset = /\.(webp|png|jpe?g|svg|css|js|woff2?)$/.test(url.pathname);
+  if (!navigation && !asset) return;
+  const immutable = url.pathname.startsWith(`${BASE_PATH}/_next/static/`);
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request)
-        .then((response) => {
-          // Cache successful responses for static assets
-          if (response.ok && request.url.match(/\.(webp|png|jpg|jpeg|svg|css|js|woff2?)$/)) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone).catch(() => {}));
-          }
-          return response;
-        })
-        .catch(() => cached);
-    })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(request);
+      if (immutable && cached) return cached;
+      // Fresh documents and game art online, cached fallback offline. Never cache-first HTML.
+      try {
+        const response = await fetch(request, immutable ? undefined : { cache: "no-cache" });
+        if (response.ok && (navigation || asset)) {
+          event.waitUntil(cache.put(request, response.clone()).catch(() => {}));
+        }
+        if (!response.ok && cached) return cached;
+        return response;
+      } catch {
+        return (
+          cached ||
+          new Response("Offline: this page is not cached yet.", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          })
+        );
+      }
+    })()
   );
 });

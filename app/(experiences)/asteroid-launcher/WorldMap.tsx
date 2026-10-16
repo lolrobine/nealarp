@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { ImpactBurst } from "./ImpactBurst";
 import { motion, useAnimationControls } from "framer-motion";
 import { getAssetUrl } from "@/lib/utils/assets";
 import type { ImpactResult } from "./data";
@@ -31,8 +32,6 @@ interface Props {
 function pctToLatLng(xPct: number, yPct: number) {
   return { lng: (xPct / 100) * 360 - 180, lat: 90 - (yPct / 100) * 180 };
 }
-
-type Explosion = { id: string; x: number; y: number; color: string; magnitude: number };
 
 function getVibratePattern(magnitude: number): number[] {
   // Faster vibration when bigger: gap shrinks to 1ms for huge asteroids
@@ -72,13 +71,17 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
     lng: number;
   } | null>(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [explosions, setExplosions] = useState<Explosion[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const shakeControls = useAnimationControls();
+
+  const explosions = impacts.map((impact) => ({
+    ...impact,
+    magnitude: impact.result.earthquakeMagnitude,
+  }));
 
   useEffect(() => {
     if (!shakeEvent) return;
@@ -87,18 +90,6 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
     const duration = Math.min(1, Math.max(0.2, 0.25 + magnitude * 0.04)); // faster when bigger: more shakes in less time increase
     const { x, y } = generateShakePattern(intensity, magnitude);
     shakeControls.start({ x, y, transition: { duration, ease: "easeOut" } });
-
-    const latest = impacts.find((i) => i.id === shakeEvent.id);
-    if (latest) {
-      setExplosions((prev) => [
-        ...prev,
-        { id: latest.id, x: latest.x, y: latest.y, color: latest.color, magnitude },
-      ]);
-      setTimeout(
-        () => setExplosions((prev) => prev.filter((ex) => ex.id !== latest.id)),
-        1000 + magnitude * 80
-      );
-    }
 
     try {
       navigator.vibrate?.(getVibratePattern(magnitude));
@@ -307,48 +298,49 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
           {explosions.map((ex) => {
             const scale = Math.min(3.5, Math.max(0.5, ex.magnitude / 3));
             return (
-              <div
-                key={ex.id}
-                className="absolute pointer-events-none z-50"
-                style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
-              >
-                <motion.div
-                  initial={{ scale: 0, opacity: 1 }}
-                  animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-                  style={{ left: "50%", top: "50%" }}
-                />
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
-                  transition={{ duration: 0.45 }}
-                  className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
-                  }}
-                />
-                {Array.from({ length: Math.round(6 + ex.magnitude) }).map((_, i) => (
+              <ImpactBurst key={ex.id} timestamp={ex.timestamp} magnitude={ex.magnitude}>
+                <div
+                  className="absolute pointer-events-none z-50"
+                  style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
+                >
                   <motion.div
-                    key={i}
-                    initial={{ x: 0, y: 0, opacity: 1 }}
-                    animate={{
-                      x: Math.cos((i / 8) * Math.PI * 2) * (18 + ex.magnitude * 5),
-                      y: Math.sin((i / 8) * Math.PI * 2) * (18 + ex.magnitude * 5),
-                      opacity: 0,
-                    }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute w-1.5 h-1.5 rounded-full"
+                    initial={{ scale: 0, opacity: 1 }}
+                    animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+                    style={{ left: "50%", top: "50%" }}
+                  />
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
+                    transition={{ duration: 0.45 }}
+                    className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
                     style={{
                       left: "50%",
                       top: "50%",
-                      backgroundColor: i % 2 === 0 ? "#ff6600" : ex.color,
+                      background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
                     }}
                   />
-                ))}
-              </div>
+                  {Array.from({ length: Math.round(6 + ex.magnitude) }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ x: 0, y: 0, opacity: 1 }}
+                      animate={{
+                        x: Math.cos((i / 8) * Math.PI * 2) * (18 + ex.magnitude * 5),
+                        y: Math.sin((i / 8) * Math.PI * 2) * (18 + ex.magnitude * 5),
+                        opacity: 0,
+                      }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute w-1.5 h-1.5 rounded-full"
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        backgroundColor: i % 2 === 0 ? "#ff6600" : ex.color,
+                      }}
+                    />
+                  ))}
+                </div>
+              </ImpactBurst>
             );
           })}
 

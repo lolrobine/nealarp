@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
+import { unlockedRuleCount } from "./progression";
 import { rules } from "./rules";
 import { Confetti } from "@/lib/components/Confetti";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
@@ -16,11 +17,10 @@ export default function PasswordGamePage() {
       return "";
     }
   });
-  const [unlockedRules, setUnlockedRules] = useState(1);
+  const [previouslyUnlocked, setUnlockedRules] = useState(1);
   const [copied, setCopied] = useState(false);
   const [startTime] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
-  const [showConfetti, setShowConfetti] = useState(false);
   const shakeControls = useAnimationControls();
   const prevFailedRef = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -46,7 +46,12 @@ export default function PasswordGamePage() {
     }));
   }, [password]);
 
-  // Unlock new rules as previous ones are satisfied + shake on new failure
+  const unlockedRules = unlockedRuleCount(
+    ruleResults.map((rule) => rule.passed),
+    previouslyUnlocked
+  );
+
+  // Synchronize the animation controller only; rule visibility is derived above.
   useEffect(() => {
     for (let i = 0; i < unlockedRules && i < rules.length; i++) {
       const res = ruleResults[i];
@@ -62,23 +67,10 @@ export default function PasswordGamePage() {
         return;
       }
     }
-    // If all unlocked rules pass, unlock the next one
-    const allUnlockedPass = ruleResults.slice(0, unlockedRules).every((r) => r.passed);
-
-    if (allUnlockedPass && unlockedRules < rules.length) {
-      setUnlockedRules(unlockedRules + 1);
-    }
   }, [ruleResults, unlockedRules, shakeControls, prefersReducedMotion]);
 
   const allPassed = unlockedRules >= rules.length && ruleResults.every((r) => r.passed);
   const charCount = password.length;
-
-  useEffect(() => {
-    if (allPassed && !prefersReducedMotion) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 4000);
-    }
-  }, [allPassed, prefersReducedMotion]);
 
   const handleCopy = async () => {
     try {
@@ -92,7 +84,7 @@ export default function PasswordGamePage() {
 
   return (
     <div className="min-h-screen">
-      <Confetti active={showConfetti} />
+      <Confetti active={allPassed && !prefersReducedMotion} />
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Title */}
         <div className="text-center mb-12">
@@ -146,7 +138,16 @@ export default function PasswordGamePage() {
             <textarea
               id="password-input"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setPassword(next);
+                setUnlockedRules(
+                  unlockedRuleCount(
+                    rules.map((rule) => rule.validate(next)),
+                    unlockedRules
+                  )
+                );
+              }}
               rows={4}
               aria-describedby="char-count"
               className="w-full bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 pr-20 text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)] transition-colors resize-none font-mono text-sm"

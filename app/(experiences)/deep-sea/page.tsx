@@ -8,6 +8,7 @@ import { CreatureCard } from "./CreatureCard";
 import { RealisticOceanBackground } from "./RealisticOceanBackground";
 import { MarineSnow } from "./MarineSnow";
 import { sortedCreatures, MAX_DEPTH, getZone, zones } from "./data";
+import { useHydrated } from "@/lib/hooks/useHydrated";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 function bubbleVariation(index: number, salt: number): number {
@@ -62,7 +63,7 @@ function Bubbles({ depth }: { depth: number }) {
 export default function DeepSeaPage() {
   const [currentDepth, setCurrentDepth] = useState(0);
   const [discoveredCreatures, setDiscoveredCreatures] = useState<Set<string>>(new Set());
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useHydrated();
   const [selectedCreature, setSelectedCreature] = useState<(typeof sortedCreatures)[0] | null>(
     null
   );
@@ -146,10 +147,6 @@ export default function DeepSeaPage() {
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
   };
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isMounted) return;

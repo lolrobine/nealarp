@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
+import { BirthdaySelect } from "./BirthdaySelect";
 import { lifeStats, statCategories } from "./calculator";
 
 function AnimatedNumber({ value, format }: { value: number; format: (v: number) => string }) {
@@ -47,14 +48,6 @@ function AnimatedNumber({ value, format }: { value: number; format: (v: number) 
   return <>{format(Math.round(displayed))}</>;
 }
 
-function getLocalTodayISO(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 function parseLocalDate(dateStr: string): number {
   if (!dateStr) return 0;
   const parts = dateStr.split("-").map(Number);
@@ -93,8 +86,6 @@ export default function LifeStatsPage() {
 
   const filteredStats =
     activeCategory === "all" ? lifeStats : lifeStats.filter((s) => s.category === activeCategory);
-
-  const todayISO = getLocalTodayISO();
 
   const handleShare = async () => {
     const years = Math.floor(ageMs / 1000 / (365.25 * 24 * 60 * 60));
@@ -193,20 +184,12 @@ export default function LifeStatsPage() {
         {/* Input */}
         <div className="mb-12">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8">
-            <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-4">
-              When were you born?
-            </label>
-            <div className="flex gap-4 items-center flex-wrap">
-              <input
-                type="date"
-                value={birthday}
-                onChange={(e) => {
-                  setBirthday(e.target.value);
+            <div className="flex gap-4 items-end flex-wrap">
+              <BirthdaySelect
+                onChange={(value) => {
+                  setBirthday(value);
                   setShowStats(false);
                 }}
-                max={todayISO}
-                aria-label="Your birthday"
-                className="flex-1 min-w-[200px] bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-4 py-3 text-[var(--foreground)] outline-none focus:border-[var(--primary)] transition-colors"
               />
               <motion.button
                 onClick={handleCalculate}

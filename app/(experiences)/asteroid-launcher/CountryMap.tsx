@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { ImpactBurst } from "./ImpactBurst";
 import { motion, useAnimationControls } from "framer-motion";
 import { getAssetUrl } from "@/lib/utils/assets";
 import type { MapImpact, ShakeEvent } from "./WorldMap";
@@ -15,8 +16,6 @@ interface Props {
   onSelect: (id: string) => void;
   shakeEvent: ShakeEvent;
 }
-
-type Explosion = { id: string; x: number; y: number; color: string; magnitude: number };
 
 function getVibratePattern(magnitude: number): number[] {
   if (magnitude < 2) return [30];
@@ -61,7 +60,6 @@ export function CountryMap({
     lng: number;
   } | null>(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [explosions, setExplosions] = useState<Explosion[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -72,6 +70,12 @@ export function CountryMap({
 
   const visibleImpacts = impacts.filter((imp) => isInBounds(imp.lat, imp.lng, country.bounds));
 
+  const explosions = visibleImpacts.map((impact) => ({
+    ...impact,
+    ...latLngToPct(impact.lat, impact.lng, country.bounds),
+    magnitude: impact.result.earthquakeMagnitude,
+  }));
+
   useEffect(() => {
     if (!shakeEvent) return;
     const magnitude = shakeEvent.magnitude;
@@ -79,19 +83,6 @@ export function CountryMap({
     const duration = Math.min(1, Math.max(0.2, 0.25 + magnitude * 0.04));
     const { x, y } = generateShakePattern(intensity, magnitude);
     shakeControls.start({ x, y, transition: { duration, ease: "easeOut" } });
-
-    const latest = impacts.find((i) => i.id === shakeEvent.id);
-    if (latest && isInBounds(latest.lat, latest.lng, country.bounds)) {
-      const { x: px, y: py } = latLngToPct(latest.lat, latest.lng, country.bounds);
-      setExplosions((prev) => [
-        ...prev,
-        { id: shakeEvent.id, x: px, y: py, color: latest.color, magnitude },
-      ]);
-      setTimeout(
-        () => setExplosions((prev) => prev.filter((ex) => ex.id !== shakeEvent.id)),
-        1000 + magnitude * 80
-      );
-    }
 
     try {
       navigator.vibrate?.(getVibratePattern(magnitude));
@@ -283,30 +274,31 @@ export function CountryMap({
           {explosions.map((ex) => {
             const scale = Math.min(3.5, Math.max(0.5, ex.magnitude / 3));
             return (
-              <div
-                key={ex.id}
-                className="absolute pointer-events-none z-50"
-                style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
-              >
-                <motion.div
-                  initial={{ scale: 0, opacity: 1 }}
-                  animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-                  style={{ left: "50%", top: "50%" }}
-                />
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
-                  transition={{ duration: 0.45 }}
-                  className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
-                  }}
-                />
-              </div>
+              <ImpactBurst key={ex.id} timestamp={ex.timestamp} magnitude={ex.magnitude}>
+                <div
+                  className="absolute pointer-events-none z-50"
+                  style={{ left: `${ex.x}%`, top: `${ex.y}%`, transform: "translate(-50%, -50%)" }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, opacity: 1 }}
+                    animate={{ scale: [0, 3 * scale, 6 * scale], opacity: [1, 0.8, 0] }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+                    style={{ left: "50%", top: "50%" }}
+                  />
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1.5 * scale, 2.2 * scale], opacity: [1, 0.9, 0] }}
+                    transition={{ duration: 0.45 }}
+                    className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      background: `radial-gradient(circle, #fff 0%, ${ex.color} 30%, #ff6600 60%, transparent 80%)`,
+                    }}
+                  />
+                </div>
+              </ImpactBurst>
             );
           })}
 

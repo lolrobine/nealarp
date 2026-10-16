@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 interface ConfettiPiece {
   id: number;
@@ -13,16 +14,15 @@ interface ConfettiPiece {
 }
 
 export function Confetti({ active }: { active: boolean }) {
-  const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
+  const reducedMotion = usePrefersReducedMotion();
+  return active && !reducedMotion ? <ConfettiBurst /> : null;
+}
 
-  useEffect(() => {
-    if (!active) {
-      setPieces([]);
-      return;
-    }
+function ConfettiBurst() {
+  const [pieces, setPieces] = useState<ConfettiPiece[]>(() => {
     const colors = ["#6366f1", "#22c55e", "#06b6d4", "#f59e0b", "#ef4444"];
-    const newPieces: ConfettiPiece[] = Array.from({ length: 30 }).map((_, i) => ({
-      id: i,
+    return Array.from({ length: 30 }, (_, id) => ({
+      id,
       x: Math.random() * 100,
       y: -10,
       color: colors[Math.floor(Math.random() * colors.length)]!,
@@ -30,10 +30,11 @@ export function Confetti({ active }: { active: boolean }) {
       duration: 1 + Math.random() * 1.5,
       size: 6 + Math.random() * 8,
     }));
-    setPieces(newPieces);
+  });
+  useEffect(() => {
     const timer = setTimeout(() => setPieces([]), 4000);
     return () => clearTimeout(timer);
-  }, [active]);
+  }, []);
 
   if (pieces.length === 0) return null;
 

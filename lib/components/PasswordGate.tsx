@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { forgetUnlock, isUnlocked, rememberUnlock, verifyPassword } from "@/lib/auth/sitePassword";
+import { useHydrated } from "@/lib/hooks/useHydrated";
+import { useResolvedTheme } from "@/lib/hooks/useResolvedTheme";
 import { Confetti } from "./Confetti";
-import { useThemeStore, resolveTheme } from "@/lib/store/theme";
+import { useThemeStore } from "@/lib/store/theme";
 
 type Status = "checking" | "locked" | "unlocked";
 
@@ -66,20 +68,8 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
   // Single dark mode button — respects browser settings via system theme
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
-  const [resolved, setResolved] = useState<"light" | "dark">("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const update = () => setResolved(resolveTheme(theme));
-    update();
-    if (theme === "system" && typeof window !== "undefined") {
-      const media = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = () => setResolved(media.matches ? "dark" : "light");
-      media.addEventListener("change", handler);
-      return () => media.removeEventListener("change", handler);
-    }
-  }, [theme]);
+  const resolved = useResolvedTheme();
+  const mounted = useHydrated();
 
   useEffect(() => {
     if (!checking && mounted) {
@@ -94,11 +84,10 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  useEffect(() => {
-    if (cooldown > 0 && attempts >= 3) {
-      setError(`Wrong password. Try again in ${cooldown}s • ${attempts} failed`);
-    }
-  }, [cooldown, attempts]);
+  const displayedError =
+    cooldown > 0 && attempts >= 3
+      ? `Wrong password. Try again in ${cooldown}s • ${attempts} failed`
+      : error;
 
   const trimmed = password.trim();
   const isDisabled = checking || submitting || cooldown > 0;
@@ -129,7 +118,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
     if (nextAttempts >= 3) {
       const delay = Math.min(30, Math.pow(2, nextAttempts - 3));
       setCooldown(delay);
-      setError(`Wrong password. Try again in ${delay}s • ${nextAttempts} failed`);
+      setError("That password is not right. Try again.");
       if (nextAttempts >= 4) setShowHint(true);
     } else {
       setError("That password is not right. Try again.");
@@ -296,7 +285,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                       autoCorrect="off"
                       spellCheck={false}
                       disabled={isDisabled}
-                      aria-invalid={!!error}
+                      aria-invalid={!!displayedError}
                       className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-3.5 pl-10 pr-[88px] text-[15px] font-medium outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/10 disabled:opacity-60"
                     />
                     <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
@@ -350,7 +339,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                 </div>
 
                 <AnimatePresence mode="wait">
-                  {error && (
+                  {displayedError && (
                     <motion.p
                       role="alert"
                       initial={{ opacity: 0, y: -6 }}
@@ -358,7 +347,7 @@ function UnlockScreen({ checking, onUnlocked }: { checking: boolean; onUnlocked:
                       exit={{ opacity: 0 }}
                       className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-3 text-[13px] text-red-600 dark:text-red-400"
                     >
-                      {error}
+                      {displayedError}
                     </motion.p>
                   )}
                 </AnimatePresence>

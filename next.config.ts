@@ -36,10 +36,8 @@ const nextConfig: NextConfig = {
             {
               source: "/(.*)",
               headers: [
-                {
-                  key: "X-Frame-Options",
-                  value: "DENY",
-                },
+                // Permit the embedded sandbox preview in development; production remains protected.
+                ...(isProd ? [{ key: "X-Frame-Options", value: "DENY" }] : []),
                 {
                   key: "X-Content-Type-Options",
                   value: "nosniff",

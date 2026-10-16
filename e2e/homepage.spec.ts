@@ -28,7 +28,7 @@ test("category filter works", async ({ page }) => {
   await expect(gameBtn).toBeVisible();
   await gameBtn.click();
 
-  await expect(page.locator("article")).toHaveCount(3);
+  await expect(page.locator("article")).toHaveCount(10);
   await expect(page.getByRole("heading", { name: "The Password Game" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Deep Sea" })).toHaveCount(0);
 });
