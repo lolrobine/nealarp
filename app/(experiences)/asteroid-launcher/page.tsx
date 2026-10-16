@@ -460,10 +460,11 @@ export default function AsteroidLauncherPage() {
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 space-y-5">
             <h3 className="font-semibold">☄️ Asteroid</h3>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label htmlFor="asteroid-diameter" className="block text-sm font-medium mb-1">
                 Diameter: {diameter < 1000 ? `${diameter} m` : `${(diameter / 1000).toFixed(1)} km`}
               </label>
               <input
+                id="asteroid-diameter"
                 type="range"
                 min="1"
                 max="15000"
@@ -473,8 +474,11 @@ export default function AsteroidLauncherPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Density: {density} kg/m³</label>
+              <label htmlFor="asteroid-density" className="block text-sm font-medium mb-1">
+                Density: {density} kg/m³
+              </label>
               <input
+                id="asteroid-density"
                 type="range"
                 min="1000"
                 max="8000"
@@ -485,8 +489,11 @@ export default function AsteroidLauncherPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Velocity: {velocity} km/s</label>
+              <label htmlFor="asteroid-velocity" className="block text-sm font-medium mb-1">
+                Velocity: {velocity} km/s
+              </label>
               <input
+                id="asteroid-velocity"
                 type="range"
                 min="5"
                 max="72"
@@ -496,8 +503,11 @@ export default function AsteroidLauncherPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Angle: {angle}°</label>
+              <label htmlFor="asteroid-angle" className="block text-sm font-medium mb-1">
+                Angle: {angle}°
+              </label>
               <input
+                id="asteroid-angle"
                 type="range"
                 min="10"
                 max="90"

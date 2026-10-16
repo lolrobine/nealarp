@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test("homepage loads and shows experiences", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("Nealarp")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nealarp" })).toBeVisible();
   // Check at least one experience card
   await expect(page.getByText(/Spend.*Trillion|Password Game|Deep Sea/i).first()).toBeVisible();
 });
