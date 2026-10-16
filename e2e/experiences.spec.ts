@@ -55,7 +55,8 @@ test("asteroid-launcher sliders", async ({ page }) => {
   await page.goto("/asteroid-launcher");
   const slider = page.getByLabel(/diameter/i).first();
   await expect(slider).toBeVisible();
-  await expect(page.getByText(/impact results/i)).toBeVisible();
+  // Results panel heading: "Preview" before launching, "Impact #N"/"N impacts" after
+  await expect(page.getByRole("heading", { name: /preview|impact/i })).toBeVisible();
 });
 
 test("perfect-circle canvas exists", async ({ page }) => {

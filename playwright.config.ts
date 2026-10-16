@@ -6,7 +6,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
+  // In CI, print results to the log ("list"), annotate the check run with
+  // failures ("github"), and keep the HTML report for the uploaded artifact.
+  reporter: process.env.CI ? [["list"], ["github"], ["html", { open: "never" }]] : "html",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
