@@ -23,7 +23,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "featured" | "alpha" | "category">("recent");
-  const [focusedIdx, setFocusedIdx] = useState(0);
+  const [requestedFocusIdx, setFocusedIdx] = useState(0);
   const played = useRecentlyPlayedStore((s) => s.played);
   const clearPlayed = useRecentlyPlayedStore((s) => s.clear);
   const favorites = useFavoritesStore((s) => s.favorites);
@@ -70,6 +70,8 @@ export default function Home() {
     });
   }, [allExperiences, activeCategory, search, played, favorites, showFavoritesOnly, sortBy]);
 
+  const focusedIdx = Math.max(0, Math.min(requestedFocusIdx, filtered.length - 1));
+
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -77,10 +79,10 @@ export default function Home() {
       if (filtered.length === 0) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedIdx((i) => Math.min(filtered.length - 1, i + 1));
+        setFocusedIdx(Math.min(filtered.length - 1, focusedIdx + 1));
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusedIdx((i) => Math.max(0, i - 1));
+        setFocusedIdx(Math.max(0, focusedIdx - 1));
       } else if (e.key === "Enter") {
         const exp = filtered[focusedIdx];
         if (exp) router.push(`/${exp.id}`);
@@ -94,11 +96,6 @@ export default function Home() {
   }, [filtered, focusedIdx, router]);
 
   useEffect(() => {
-    // Clamp focused index when filtered list shrinks
-    if (focusedIdx >= filtered.length && filtered.length > 0) {
-      setFocusedIdx(filtered.length - 1);
-      return;
-    }
     const el = document.querySelector(`[data-idx="${focusedIdx}"]`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [focusedIdx, filtered.length]);
@@ -276,6 +273,12 @@ export default function Home() {
                         aria-hidden="true"
                         className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"
                       />
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all duration-300 group-hover:bg-white group-hover:text-slate-950 group-focus-within:bg-white group-focus-within:text-slate-950"
+                      >
+                        Play now <span>↗</span>
+                      </span>
                       {isRecentlyPlayed && (
                         <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
                           <span>🕒</span> Played

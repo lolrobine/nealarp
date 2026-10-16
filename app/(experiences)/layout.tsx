@@ -24,6 +24,7 @@ export default function ExperiencesLayout({ children }: { children: React.ReactN
           <div className="flex items-center gap-4">
             <Link
               href="/"
+              aria-label="Back to all experiences"
               className="flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded"
             >
               <svg

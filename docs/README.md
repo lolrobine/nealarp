@@ -8,6 +8,8 @@
 - [`../.agents/skills/`](../.agents/skills/) — selected project-local skills for performance, composition, UI review, and Playwright E2E work.
 - [`agent-resources.md`](agent-resources.md) — skill sources, licenses, and maintenance notes.
 
+- [`singleplayer-rollout.md`](singleplayer-rollout.md) — staged singleplayer release scope, assumptions, and verification.
+
 ## Historical documents
 
 - [`archive/PLAN.md`](archive/PLAN.md) — original build plan.

@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { Confetti } from "@/lib/components/Confetti";
+import { useStoredValue } from "@/lib/hooks/useSavedProgress";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 type GameState = "idle" | "drawing" | "scored";
@@ -163,6 +164,24 @@ function getScoreMessage(score: number, closed: boolean, coverage: number): stri
   return "💀 What was that?";
 }
 
+type CircleGhost = { centerX: number; centerY: number; radius: number };
+function isCircleScore(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+function isCircleHistory(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every(isCircleScore);
+}
+function isCircleGhost(value: unknown): value is CircleGhost | null {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const circle = value as Partial<CircleGhost>;
+  return (
+    [circle.centerX, circle.centerY, circle.radius].every(
+      (n) => typeof n === "number" && Number.isFinite(n)
+    ) && circle.radius! > 0
+  );
+}
+
 export default function PerfectCirclePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointsRef = useRef<Point[]>([]);
@@ -171,13 +190,22 @@ export default function PerfectCirclePage() {
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [score, setScore] = useState<number | null>(null);
-  const [bestScore, setBestScore] = useState(0);
-  const [history, setHistory] = useState<number[]>([]);
-  const [bestCircle, setBestCircle] = useState<{
-    centerX: number;
-    centerY: number;
-    radius: number;
-  } | null>(null);
+  const { value: bestScore, save: setBestScore } = useStoredValue(
+    "perfect-circle-best",
+    0,
+    isCircleScore
+  );
+  const { value: storedHistory, save: setHistory } = useStoredValue<number[]>(
+    "perfect-circle-history",
+    [],
+    isCircleHistory
+  );
+  const history = storedHistory.slice(0, 20);
+  const { value: bestCircle, save: setBestCircle } = useStoredValue<CircleGhost | null>(
+    "perfect-circle-best-circle",
+    null,
+    isCircleGhost
+  );
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 500 });
   const [pointCount, setPointCount] = useState(0);
   const [lastResult, setLastResult] = useState<{
@@ -199,26 +227,6 @@ export default function PerfectCirclePage() {
     updateSize();
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
-  }, []);
-
-  // Load best score, history, and best circle from localStorage
-  useEffect(() => {
-    try {
-      const storedBest = localStorage.getItem("perfect-circle-best");
-      if (storedBest) setBestScore(parseInt(storedBest, 10) || 0);
-      const storedHistory = localStorage.getItem("perfect-circle-history");
-      if (storedHistory) {
-        const parsed = JSON.parse(storedHistory);
-        if (Array.isArray(parsed)) setHistory(parsed.slice(0, 20));
-      }
-      const storedCircle = localStorage.getItem("perfect-circle-best-circle");
-      if (storedCircle) {
-        const parsed = JSON.parse(storedCircle);
-        if (parsed && typeof parsed.centerX === "number") setBestCircle(parsed);
-      }
-    } catch {
-      // ignore
-    }
   }, []);
 
   // Draw the canvas — no longer depends on React state for points
@@ -383,21 +391,10 @@ export default function PerfectCirclePage() {
     if (result.score > 0) {
       const newHistory = [result.score, ...history].slice(0, 20);
       setHistory(newHistory);
-      try {
-        localStorage.setItem("perfect-circle-history", JSON.stringify(newHistory));
-      } catch {
-        // ignore
-      }
       if (result.score > bestScore) {
         setBestScore(result.score);
         const circle = { centerX: result.centerX, centerY: result.centerY, radius: result.radius };
         setBestCircle(circle);
-        try {
-          localStorage.setItem("perfect-circle-best", String(result.score));
-          localStorage.setItem("perfect-circle-best-circle", JSON.stringify(circle));
-        } catch {
-          // ignore
-        }
       }
       if (result.score >= 90 && !prefersReducedMotion) {
         setShowConfetti(true);

@@ -7,7 +7,7 @@
 
 An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences with modern stack, PWA, a11y, and extensive polish.
 
-## 🎮 Experiences (8 + template)
+## 🎮 Experiences (18 + template)
 
 | #   | Experience               | Description                | Highlights                                                                                                                  |
 | --- | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -19,6 +19,32 @@ An open-source reimagining of [neal.fun](https://neal.fun) — a collection of q
 | 6   | ⭕ **Perfect Circle**    | Draw circle, Kasa fit      | Best score + history (20), ghost circle, confetti 90%+, export + replay                                                     |
 | 7   | 🌌 **Size of Space**     | Atoms to universe          | Log scale, comparison mode with relative bar, zoomable canvas, journey mode (20s auto), click to highlight                  |
 | 8   | ☄️ **Asteroid Launcher** | Impact simulator           | Crater canvas visualization, casualty estimate by location (ocean to megacity), known craters comparison, presets           |
+
+New singleplayer games:
+
+- **One Second Off** (`/one-second-off`): hidden timer, 3/7/10-second targets, single rounds or three-round sessions. Switching tabs cancels the current attempt without scoring it.
+- **Trust Your Eyes** (`/trust-your-eyes`): six midpoint, center and angle challenges, pointer and keyboard controls, normalized accuracy scores.
+
+Both games store only personal bests locally (versioned `nealarp:best:v1:` keys), offer a reset button and remain playable when storage is unavailable. No accounts, multiplayer or leaderboards. Unfinished sessions are not persisted.
+
+### Additional singleplayer experiences (stages 2–5)
+
+| Experience                                          | First release                                                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Color Memory** (`/color-memory`)                  | Five rounds, three-second memorization, neutral pause, RGB reconstruction, last ten scores                                     |
+| **Which Is More?** (`/which-is-more`)               | Ten exact measurement puzzles, speed/size categories, answer explanations, saved best streak, unlimited unscored practice      |
+| **The Form Game** (`/form-game`)                    | Ten dependent but solvable approvals, hints, locally restored progress, complete ending                                        |
+| **Pack It Perfectly** (`/pack-it-perfectly`)        | Three hand-built solvable suitcase levels, rotation, removal, undo, per-level personal bests                                   |
+| **Gravity Golf** (`/gravity-golf`)                  | Nine solvable courses, stronger inverse-square gravity, optional field arrows, partial trajectory preview, eight shots per run |
+| **How Deep Can You Dig?** (`/how-deep-can-you-dig`) | Eight discoveries, revisit navigation, saved journey, source links and approximate Earth model                                 |
+| **Tiny Ecosystem** (`/tiny-ecosystem`)              | Twelve-turn solo survival, two interventions per turn, population history, explicit fictional rates                            |
+| **One Small Change** (`/one-small-change`)          | One restitution experiment, fixed reference, height plot and accessible data table                                             |
+
+These releases add no accounts, network gameplay, leaderboard, API or application dependency. Comparison puzzles use explicitly fictional supplied measurements and exact arithmetic rather than unverified real-world records. Earth descriptions link to USGS/NASA references; the drill is fictional. Both physics experiences and the ecosystem disclose their model assumptions.
+
+Best scores use `nealarp:best:v1:` keys. Form approvals and digging discoveries use validated `nealarp:progress:v1:` data; each experience has reset controls. If a write fails, progress remains usable for the current session. Other unfinished sessions restart on reload.
+
+See [the rollout and verification notes](docs/singleplayer-rollout.md) for scope and checks.
 
 Template: `app/(experiences)/_template/` — scaffold for new experiences.
 
@@ -139,7 +165,17 @@ nealarp/
 │   │   ├── life-stats/          # 📊
 │   │   ├── perfect-circle/      # ⭕
 │   │   ├── size-of-space/       # 🌌
-│   │   └── asteroid-launcher/   # ☄️
+│   │   ├── asteroid-launcher/   # ☄️
+│   │   ├── one-second-off/     # Hidden timer
+│   │   ├── trust-your-eyes/    # Visual precision
+│   │   ├── color-memory/       # Color recall
+│   │   ├── which-is-more/      # Measurement quiz
+│   │   ├── form-game/          # Bureaucratic puzzle
+│   │   ├── pack-it-perfectly/  # Suitcase levels
+│   │   ├── gravity-golf/       # Toy-gravity levels
+│   │   ├── how-deep-can-you-dig/ # Earth journey
+│   │   ├── tiny-ecosystem/     # Turn-based balancing
+│   │   └── one-small-change/   # Single-parameter experiment
 │   └── layout.tsx
 ├── content/
 │   └── experiences.json         # Experience registry
@@ -162,3 +198,39 @@ nealarp/
 ## 📝 License
 
 MIT
+
+## Realistic covers and direct interaction
+
+All eighteen catalogue cards now use distinct local AI-generated photorealistic covers, served as optimized 960 × 540 WebP files (about 25–152 KB each), with matching SVG icons. Illustrated covers remain as source fallbacks, not the active gallery thumbnails. These images are creative artwork, not documentary photographs or scientific observations.
+
+Generated JPEG masters live beside their optimized `realistic.webp` files. Run `node scripts/optimize-realistic-thumbnails.mjs` to resize/compress available masters and register them. Run `node scripts/build-thumbnails.mjs` to regenerate SVG icons/fallbacks; this preserves photographic covers. Afterwards run `corepack pnpm exec prettier --write content/experiences.json`. No remote runtime images or new application dependencies are required.
+
+- Gravity Golf: nine courses with stronger combined planetary attraction, shaded planets and optional force arrows; drag to aim, then watch, pause, resume or skip a curved flight.
+- Pack It Perfectly: preview valid/invalid placements by hovering or focusing cells; optionally drag pieces onto the grid. Tap/keyboard placement remains available.
+- Tiny Ecosystem: drag plants, bushes, realistic rabbit/fox sprites from the species tray onto dry grass with a mouse or touch. Placement costs one intervention; keyboard placement and numeric controls remain available. Animals wander and breathe visually, with a pause toggle and reduced-motion support.
+- One Small Change: replay two bouncing balls, pause, and scrub the full eight-second timeline.
+- Digging: animated drill and clickable discovered stations; reset and revisit without losing local progress.
+- Color Memory: open the direct color mixer or use RGB sliders.
+- Which Is More?: keyboard choices 1/2 and visual answer comparisons.
+- The Form Game: tap approval stamps to review prior answers.
+- One Second Off: large clickable timer pad shows the actual stopped time after each round, plus visual round-score feedback.
+
+Motion is presentational only. Physics stays deterministic, scoring does not depend on frame rate, and reduced-motion mode skips automatic replays. Replay effects clean up when leaving a game.
+
+## Personal daily tasks, achievements and result cards
+
+- **Color Memory** and **Which Is More?** include an optional “Play today's challenge” mode. Colors and comparison order/sides are deterministically seeded from the player's local calendar date. The date is captured on selection and stays fixed across midnight for that session; restarting keeps the same task. Standard sessions remain available.
+- Daily records use separate dated, versioned `nealarp:best:v1:` keys. They do not overwrite standard bests or standard Color Memory history. These are solo tasks, not a shared competition: no rankings, account, attendance streak or missed-day penalty.
+- The seven score-based additions (One Second Off, Trust Your Eyes, Color Memory, Which Is More?, Pack It Perfectly, Gravity Golf and Tiny Ecosystem) show **local achievements** for First Finish, Bronze (60), Silver (80), Gold (95) and Perfect (100). They derive from that mode/level's saved best; resetting the best also resets its badges.
+- **Download result card** exports that saved best as a local 1200 × 630 PNG. It includes only the game, mode/date and score, not form answers or other personal data. No upload or sharing service is used. Games without a normalized score keep their existing progress/results rather than inventing a score.
+- Development removes old Nealarp service workers and caches (not unrelated apps' caches), then reloads a controlled tab once. Production revalidates HTML and game artwork online and retains an offline fallback; only hashed Next assets stay cache-first. A fresh preview origin avoids previously cached documents before the cleanup code can run.
+
+For an already-running preview on another port, browser tests accept `PLAYWRIGHT_BASE_URL=http://localhost:3001`.
+
+### Latest four-game interaction update
+
+Life Stats now uses separate day/month/year dropdowns, validates leap years and prevents future birthdays. Changing the month or year clears an impossible day instead of silently rolling it into another month. Birthday calculations retain local-calendar semantics.
+
+Gravity Golf now has nine courses (six additional maps). The stationary planets exert a stronger summed inverse-square pull, so trajectories visibly curve. The model remains a toy in arbitrary units, not a real astronomical simulation. All nine maps have tested winning shots within the offered controls. New results use `gravity-v2` mode keys, leaving the old lower-gravity bests untouched rather than comparing different physics.
+
+Tiny Ecosystem's rabbit and fox art is AI-generated promotional game artwork. Original PNG masters and optimized transparent local WebP sprites are kept under `public/experiences/tiny-ecosystem/`. `node scripts/optimize-ecosystem-sprites.mjs` removes edge-connected source backgrounds and generates the lightweight sprites with the existing image toolchain. Plants and bushes both add ten plant units; each rabbit/fox adds one animal unit. Coordinates and cosmetic CSS movement do not alter population calculations or survival scores. Movement can be paused and is disabled for reduced-motion preferences.

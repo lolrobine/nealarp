@@ -1,24 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useThemeStore, resolveTheme } from "@/lib/store/theme";
+import { useThemeStore } from "@/lib/store/theme";
+import { useResolvedTheme } from "@/lib/hooks/useResolvedTheme";
 import { motion } from "framer-motion";
 
 export function ThemeToggle() {
-  const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
-  const [resolved, setResolved] = useState<"light" | "dark">("dark");
-
-  useEffect(() => {
-    setResolved(resolveTheme(theme));
-    // Update on system change if needed
-    if (theme === "system" && typeof window !== "undefined") {
-      const media = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = () => setResolved(media.matches ? "dark" : "light");
-      media.addEventListener("change", handler);
-      return () => media.removeEventListener("change", handler);
-    }
-  }, [theme]);
+  const resolved = useResolvedTheme();
 
   const toggleTheme = () => {
     setTheme(resolved === "dark" ? "light" : "dark");
