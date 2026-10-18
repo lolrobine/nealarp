@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { isSolved, LEVELS, traceBeams, type Level } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 function cellLabel(cell: Level["grid"][0][0]): string {
   if (!cell) return "empty";
@@ -71,7 +72,7 @@ export default function LightLoomPage() {
         </div>
 
         <div
-          className="mx-auto grid grid-cols-6 gap-1"
+          className="board mx-auto grid grid-cols-6 gap-1.5 p-3"
           style={{ width: "min(92vw, 420px)" }}
           role="img"
           aria-label={`Level ${level.name}. ${litTargets.length} targets lit.`}
@@ -160,6 +161,18 @@ export default function LightLoomPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Colouring every target">
+        <ExampleStep n={1}>
+          Remember the prism rule: red travels straight on, green turns left, blue turns right.
+          Place prisms where the beam must <em>split</em>, not just bend.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Mirrors swap beam directions (mirror A maps [1,0,3,2]); work backwards from the targets to
+          the lamp when a level looks impossible.
+        </ExampleStep>
+        <ExampleResult>Colour all four targets on each of the four levels for 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

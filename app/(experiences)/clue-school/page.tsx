@@ -7,6 +7,7 @@ import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { CLUES } from "./data";
 import { isCorrect, scoreClues } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function ClueSchoolPage() {
   const record = usePersonalBest("clue-school");
@@ -116,6 +117,18 @@ export default function ClueSchoolPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Reading a clue like a lesson">
+        <ExampleStep n={1}>
+          The answer is hidden <em>inside</em> the clue&apos;s own words — split the surface text
+          (&quot;train seat&quot; → &quot;in + seat&quot;) before inventing meanings.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Stuck? Open the lesson before guessing: a hint costs 12 points, a wrong answer 8. Eight
+          clues, eight clean answers.
+        </ExampleStep>
+        <ExampleResult>Eight straight answers: 100 − 8 × wrong − 12 × hints = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

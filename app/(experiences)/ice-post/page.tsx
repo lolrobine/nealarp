@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { applySlide, initialState, isWin, LEVELS, scoreRun, type SlideState } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const DIR_LABELS = ["up", "right", "down", "left"];
 
@@ -71,7 +72,7 @@ export default function IcePostPage() {
         </div>
 
         <div
-          className="mx-auto grid grid-cols-6 gap-1"
+          className="board mx-auto grid grid-cols-6 gap-1.5 p-3"
           style={{ width: "min(92vw, 420px)" }}
           role="img"
           aria-label={`You are at ${state.x + 1},${state.y + 1}. Postman at ${postman.x + 1},${postman.y + 1}. Postbox at ${level.goal.x + 1},${level.goal.y + 1}.`}
@@ -150,6 +151,18 @@ export default function IcePostPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A par delivery round">
+        <ExampleStep n={1}>
+          You slide until something stops you — aim at the <em>end square</em>, not the path. Walls
+          and edges are your brakes.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          The postman steps once after each of your slides. Count his round while you plan: pars run
+          3–7 slides and are BFS-minimums.
+        </ExampleStep>
+        <ExampleResult>Deliver at par on all ten rounds for the full score.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

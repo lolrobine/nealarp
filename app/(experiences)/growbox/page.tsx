@@ -15,6 +15,7 @@ import {
   totalLevels,
   type ItemId,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 function isItemId(value: unknown): value is ItemId {
   return typeof value === "string" && ITEMS.some((item) => item.id === value);
@@ -131,6 +132,21 @@ export default function GrowboxPage() {
       )}
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A worked upgrade schedule">
+        <ExampleStep n={1}>
+          Place upgrades in dependency order — Soil, Seeds, Water, Light first — and level one
+          upgrade to 2 before spreading out. Each level counts once toward the 16-point ring (8
+          upgrades × 2 levels).
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Timing beats stacking: the log after each placement names the effect that fired, so match
+          the next upgrade to the plant&apos;s current stage rather than the same one twice.
+        </ExampleStep>
+        <ExampleResult>
+          All sixteen levels placed with the plant healthy — 16 / 16 → score 100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

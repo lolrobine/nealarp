@@ -7,6 +7,7 @@ import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { allCells, comparePatterns, generatePattern, scoreBlockTalk } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const MEMORISE_MS = 4000;
 
@@ -152,6 +153,18 @@ export default function BlockTalkPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Describing a pattern exactly">
+        <ExampleStep n={1}>
+          Speak the grid: &quot;B2, C3 and D1 filled — B2 is the tall one&quot;. Column-row
+          coordinates beat colours and shapes in words.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Solo mode flashes the A1–D4 pattern for four seconds: memorise corners and count, then
+          rebuild. Score is the pixel overlap (IoU) of both grids.
+        </ExampleStep>
+        <ExampleResult>Near-identical rebuilds score close to 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

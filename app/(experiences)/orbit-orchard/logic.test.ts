@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { collectedRings, DT, launch, LEVELS, scoreRun, simulate, stepBody } from "./logic";
+import {
+  collectedRings,
+  DT,
+  HINT_DEGREES,
+  launch,
+  LEVELS,
+  MU,
+  scoreRun,
+  simulate,
+  stepBody,
+} from "./logic";
 
 describe("orbit-orchard integrator", () => {
   it("uses fixed 1/120 s steps", () => {
@@ -14,8 +24,8 @@ describe("orbit-orchard integrator", () => {
   });
 
   it("keeps a circular-ish launch close to its starting distance", () => {
-    // Circular orbit speed for radius 220: sqrt(MU / r) ≈ 7.39√... — launch sideways.
-    const speed = Math.sqrt(12000 / 220);
+    // Circular orbit speed for radius 220: sqrt(MU / r) — launch sideways.
+    const speed = Math.sqrt(MU / 220);
     const body = { x: 0, y: -220, vx: speed, vy: 0 };
     const path = simulate(body, 600);
     const radii = path.map((p) => Math.hypot(p.x, p.y));
@@ -52,6 +62,26 @@ describe("orbit-orchard rings and scoring", () => {
       expect(level.rings.length).toBeGreaterThanOrEqual(3);
       expect(level.launchPower).toBeGreaterThan(0);
     }
+  });
+
+  it("every level is beatable at its documented hint angle", () => {
+    LEVELS.forEach((level, i) => {
+      const rad = ((HINT_DEGREES[i] ?? 0) * Math.PI) / 180;
+      const path = simulate(launch(rad, level.launchPower, level.origin), 12 * 120);
+      expect(collectedRings(path, level.rings).length, level.name).toBe(level.rings.length);
+    });
+  });
+
+  it("winning windows are forgiving: nearby angles still clear", () => {
+    LEVELS.forEach((level, i) => {
+      let windowSize = 0;
+      for (let d = -8; d <= 8; d++) {
+        const rad = (((HINT_DEGREES[i] ?? 0) + d) * Math.PI) / 180;
+        const path = simulate(launch(rad, level.launchPower, level.origin), 12 * 120);
+        if (collectedRings(path, level.rings).length === level.rings.length) windowSize++;
+      }
+      expect(windowSize, level.name).toBeGreaterThanOrEqual(6);
+    });
   });
 
   it("scoring maps collected fruit onto 0–100", () => {

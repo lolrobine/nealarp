@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { dailySeed, DAYS, MAX_ORDER, playDay, scoreRun, type DayResult } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function StockroomSixPage() {
   const record = usePersonalBest("stockroom-six");
@@ -132,6 +133,20 @@ export default function StockroomSixPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="The ordering edge">
+        <ExampleStep n={1}>
+          Each unit costs 2 to buy, sells at 5, salvages at 1: selling earns +3, a leftover loses
+          −1, and a missed sale costs 3 of foregone profit. Demand runs 4–12 most days.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Worked day: demand 10, you order 8 → 8 sold = +24 profit. Order 12 against demand 8 → 8
+          sold (+24) minus 4 leftovers (−4) = +20. Cutting close wins.
+        </ExampleStep>
+        <ExampleResult>
+          Twelve days averaging 22 profit: score = profit / 264 × 100 = 100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

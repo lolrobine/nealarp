@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { CONCEPTS, discoveryScore, INGREDIENTS, mix, type Ingredient } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function PocketAlchemistPage() {
   const record = usePersonalBest("pocket-alchemist");
@@ -95,6 +96,20 @@ export default function PocketAlchemistPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Discovering concepts fast">
+        <ExampleStep n={1}>
+          Each ingredient hides a trait vector; a blend lands at the geometric midpoint. Mix
+          neighbours in trait space — Water + Fire lands near Steam.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          The discovery panel names what you found. Push into empty corners of trait space (cold +
+          wet, hot + dry) for new concepts instead of re-mixing the middle.
+        </ExampleStep>
+        <ExampleResult>
+          The first twelve discoveries fill the bar: 12 finds → score 100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

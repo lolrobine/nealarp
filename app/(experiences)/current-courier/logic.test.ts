@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import { dailyStops, isValidRoute, MAPS, routeLength, scoreRoute } from "./logic";
 
 describe("current-courier maps", () => {
-  it("ships four connected delivery maps with proven routes", () => {
-    expect(MAPS).toHaveLength(4);
+  it("ships seven connected delivery maps with proven routes", () => {
+    expect(MAPS).toHaveLength(7);
     for (const map of MAPS) {
       expect(map.stops.length).toBeGreaterThanOrEqual(4);
       expect(isValidRoute(map, map.solution), map.name).toBe(true);
     }
+    // The later maps are genuinely bigger grids.
+    expect(MAPS[4]!.nodes.length).toBe(16);
+    expect(MAPS[6]!.nodes.length).toBeGreaterThanOrEqual(16);
   });
 
   it("every solution is a single unbroken walk along real edges", () => {

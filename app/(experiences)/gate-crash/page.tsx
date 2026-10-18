@@ -7,6 +7,7 @@ import { Card } from "@/lib/components/ui/card";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { correctGateIndex, generateRound, scoreStreak, type Gate } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const PREVIEW_MS = [
   { id: "slow", label: "Practice pace (5s)", value: 5000 },
@@ -174,6 +175,18 @@ export default function GateCrashPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Ten rules, ten crashes">
+        <ExampleStep n={1}>
+          The rule flashes first — read its key word (highest / even / circle / amber …) and ignore
+          the near-miss gates that differ by exactly one property.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Only one gate matches. Wrong crashes reset the streak; the ten rules are drawn from
+          numbers, shapes and colours, one property at a time.
+        </ExampleStep>
+        <ExampleResult>Ten crashes in a row: 10 × streak = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

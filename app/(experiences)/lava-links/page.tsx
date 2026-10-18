@@ -15,6 +15,7 @@ import {
   type HexState,
   type Hop,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const DIR_LABELS = ["E", "W", "NW", "NE", "SW", "SE"];
 
@@ -79,7 +80,7 @@ export default function LavaLinksPage() {
         </div>
 
         <div
-          className="mx-auto grid gap-1"
+          className="board mx-auto grid gap-1.5 p-3"
           style={{ width: "min(92vw, 380px)" }}
           role="group"
           aria-label={`${level.name}. You are at ${state.x + 1},${state.y + 1}. Goal at ${level.goal.x + 1},${level.goal.y + 1}.`}
@@ -188,6 +189,18 @@ export default function LavaLinksPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Clearing a level at par">
+        <ExampleStep n={1}>
+          Hop one or two tiles along the chain; the tile you leave crumbles. Plan the LAST landing
+          first — every early hop removes a future option.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Each level is BFS-solved at its par (2–5 hops). Over par? Restart and try the other first
+          hop — the crumbling rule makes first moves decisive.
+        </ExampleStep>
+        <ExampleResult>All seven levels at par — scoreRun keeps the full 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

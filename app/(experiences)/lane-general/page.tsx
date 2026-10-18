@@ -14,6 +14,7 @@ import {
   type Lineup,
   type Unit,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const ROUNDS = 5;
 const TRAIT_TEXT: Record<Unit["trait"], string> = {
@@ -146,6 +147,19 @@ export default function LaneGeneralPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A draft that almost always wins">
+        <ExampleStep n={1}>
+          Draft Tuck + Moss + Cheep. Over the pure resolver&apos;s full space of 504 possible enemy
+          trios, this line-up wins 501 — the two sturdy units absorb the first exchange and
+          Cheep&apos;s jolly bonus finishes the last enemy.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Against fast glass cannons (e.g. Moss + Flick + Waddle), swap to Pip + Tuck + Bumble:
+          sturdy halving blunts Flick&apos;s 4-damage first strike, and Pip and Tuck survive.
+        </ExampleStep>
+        <ExampleResult>Five straight round wins → score = streak / 5 × 100 = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

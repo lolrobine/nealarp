@@ -13,6 +13,7 @@ import {
   splitWords,
   type ConstraintId,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function BackronymStudioPage() {
   const record = usePersonalBest("backronym-studio");
@@ -117,6 +118,20 @@ export default function BackronymStudioPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A full-mark backronym">
+        <ExampleStep n={1}>
+          Pick constraint cards you can satisfy with your letter pool first — coverage is worth 40
+          points and constraints another 30.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Write the phrase for the rubric: every hidden-word letter needs its own word, in order.
+          Then polish — wording quality is the last 30 points.
+        </ExampleStep>
+        <ExampleResult>
+          Full coverage + every constraint + clean prose = 40 + 30 + 30 = 100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

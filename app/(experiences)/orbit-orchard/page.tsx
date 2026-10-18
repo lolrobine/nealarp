@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { collectedRings, launch, LEVELS, scoreRun, simulate, type Body } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SCALE = 0.75; // world units → canvas pixels (500×500 canvas shows ±333 units)
 
@@ -205,6 +206,18 @@ export default function OrbitOrchardPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A full-clear launch">
+        <ExampleStep n={1}>
+          Toggle the trajectory preview — it runs the exact same fixed-step physics forward. Aim
+          inside the arc of the rings, not at the nearest one.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          The rings sit on real simulated orbits. Known clears: First orbit ≈ 316° (up-right),
+          Slingshot ≈ 26° (right-down), Grand tour ≈ 140° (left-down). Windows are 11–19° wide.
+        </ExampleStep>
+        <ExampleResult>Thread every ring: score = collected / total × 100 = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

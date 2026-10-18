@@ -15,6 +15,7 @@ import {
   type Move,
   type TiltState,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const COLUMNS = ["A", "B", "C", "D", "E", "F"];
 
@@ -111,7 +112,7 @@ export default function TwinTiltPage() {
 
         <div className="flex flex-col items-center gap-4">
           <div
-            className="relative grid grid-cols-6 gap-1 rounded-xl border border-[var(--border)] bg-[var(--secondary)] p-2"
+            className="board relative grid grid-cols-6 gap-1.5 p-3"
             style={{ width: "min(92vw, 420px)", aspectRatio: "1 / 1" }}
             role="img"
             aria-label={`Room ${room.name}. ${state.balls.map((b) => `Ball ${b.id} at ${cellName(b.x, b.y)}`).join(", ")}.`}
@@ -224,6 +225,18 @@ export default function TwinTiltPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Beating a room in its par">
+        <ExampleStep n={1}>
+          Read both marbles before rotating — one rotation moves both, so chase moves that fix one
+          ball without stranding the other.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Every room is BFS-solved: the shown par (2–6 moves) is the true minimum. If you pass par,
+          undo (Ctrl/Cmd+Z) and try the opposite first rotation.
+        </ExampleStep>
+        <ExampleResult>Each room at par: 100 − 3 × (moves − par) = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

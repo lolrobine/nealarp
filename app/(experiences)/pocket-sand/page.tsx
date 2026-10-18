@@ -8,6 +8,7 @@ import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, W, WATER } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SPEEDS = [
   { id: "slow", label: "Practice pace", ticksPerSecond: 4 },
@@ -176,7 +177,7 @@ export default function PocketSandPage() {
           ref={canvasRef}
           width={W * 10}
           height={H * 10}
-          className="mx-auto w-full rounded-xl border border-[var(--border)] touch-none"
+          className="board mx-auto w-full touch-none"
           style={{ maxWidth: 640, imageRendering: "pixelated", cursor: "crosshair" }}
           aria-label="Sand canvas. Drag to pour the selected material, or focus this canvas and use the arrow keys to move the brush, Enter to pour, Delete to clear a cell."
           role="img"
@@ -219,6 +220,21 @@ export default function PocketSandPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Sculpting a goal shape">
+        <ExampleStep n={1}>
+          Pour sand slightly <em>above</em> the outline and let it settle — sand piles into clean
+          cones you can shave into shape.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Water levels itself flat — use it for Shoreline and to push piles sideways. Walls hold any
+          silhouette in place.
+        </ExampleStep>
+        <ExampleResult>
+          Score = coverage × 0.7 + precision × 0.3 — fill the goal, keep strays out for ~100 on each
+          of the six shapes.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

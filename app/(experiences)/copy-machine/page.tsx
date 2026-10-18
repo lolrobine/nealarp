@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { copyScore, normalize, stabilityScore, type Drawing, type Pt } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const GLYPHS: { name: string; drawing: Drawing }[] = [
   {
@@ -479,6 +480,20 @@ export default function CopyMachinePage() {
       )}
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="How five clean generations score">
+        <ExampleStep n={1}>
+          Copy the faint model in one confident pass — jitter is what the 24-point shape comparison
+          penalises most.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Your copy becomes generation 2&apos;s model. Zoom in before each round and keep the
+          silhouette: only comparisons above the 45% fidelity floor still count.
+        </ExampleStep>
+        <ExampleResult>
+          Stay above the floor for all five generations and the lineage score stays near 100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

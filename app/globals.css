@@ -76,3 +76,49 @@ body {
 .will-change-\[width\] {
   will-change: width;
 }
+
+/* Shared game-board chrome */
+.board {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(
+      1200px 500px at 50% -10%,
+      color-mix(in oklab, var(--ring) 10%, transparent),
+      transparent
+    ),
+    var(--card);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 6%),
+    0 12px 32px -18px rgb(0 0 0 / 35%);
+}
+
+/* Small stat pill used across game status rows */
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Faint playfield grid texture for boards */
+.grid-texture {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--border) 55%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--border) 55%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 28px 28px;
+}

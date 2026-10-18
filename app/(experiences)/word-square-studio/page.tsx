@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { bankWords, evaluateRows, scoreSquare, SQUARES, type SquareLevel } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function WordSquareStudioPage() {
   const record = usePersonalBest("word-square-studio");
@@ -150,6 +151,17 @@ export default function WordSquareStudioPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Solving a square without checks">
+        <ExampleStep n={1}>
+          Start with the longest word — it fixes a full row <em>and</em> its crossing column.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          The list holds every answer plus two decoys. A decoy fits its own row but breaks a
+          crossing — trust the crossings over the fit.
+        </ExampleStep>
+        <ExampleResult>No wrong checks, no hints: 100 − 6 × wrong − 3 × hints = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

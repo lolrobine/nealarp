@@ -288,7 +288,7 @@
   {
     "id": "stack-ledger",
     "title": "Stack Ledger",
-    "description": "Stack swinging numbered blocks — each one may only rest on an equal or higher number.",
+    "description": "Slide and drop bars onto a skyline — the full width queue is visible up front, so planning beats luck. Overhanging parts snap off; reach 20 to close the ledger.",
     "category": "game",
     "icon": "/experiences/stack-ledger/icon.svg",
     "thumbnail": "/experiences/stack-ledger/realistic.webp",
@@ -299,7 +299,7 @@
   {
     "id": "current-courier",
     "title": "Current Courier",
-    "description": "Draw one unbroken delivery route through every stop and keep it short.",
+    "description": "Draw one unbroken delivery route through every stop across seven city maps, from corner rounds to a five-by-five ring road. Par routes pay 100.",
     "category": "game",
     "icon": "/experiences/current-courier/icon.svg",
     "thumbnail": "/experiences/current-courier/realistic.webp",

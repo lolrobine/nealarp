@@ -11,6 +11,10 @@ export const WATER = 3;
 
 export type Grid = Uint8Array;
 
+function isWater(m: number): boolean {
+  return m === WATER;
+}
+
 export function makeGrid(): Grid {
   return new Uint8Array(W * H);
 }
@@ -33,9 +37,10 @@ function unclaimed(next: Grid, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < W && y < H && next[y * W + x] === EMPTY;
 }
 
-/** One deterministic simulation tick. Sand slides down/diagonal-down; water also
- * spreads sideways one cell per tick. A bottom-up left-first sweep gives consistent
- * piles, and claim checks keep grain counts exactly conserved. */
+/** One deterministic simulation tick. Sand slides down/diagonal-down; water falls,
+ * flows over edges, and is then equalised between neighbouring columns — a monotone
+ * height levelling that fills cups flat and never drifts or freezes into checkerboards.
+ * Claim checks keep every material exactly conserved. */
 export function step(grid: Grid): Grid {
   const next = grid.slice();
   for (let y = H - 1; y >= 0; y--) {
@@ -47,15 +52,15 @@ export function step(grid: Grid): Grid {
         if (below === EMPTY && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, SAND);
-        } else if (below === WATER && belowNext === WATER) {
+        } else if (isWater(below) && isWater(belowNext)) {
           // Sink through standing water: the water takes the grain's place.
-          set(next, x, y, WATER);
+          set(next, x, y, belowNext);
           set(next, x, y + 1, SAND);
-        } else if (below === WATER && unclaimed(next, x, y + 1)) {
+        } else if (isWater(below) && unclaimed(next, x, y + 1)) {
           // The water already moved this tick: drop into the vacated cell.
           set(next, x, y, EMPTY);
           set(next, x, y + 1, SAND);
-        } else if (below !== WATER) {
+        } else if (!isWater(below)) {
           const left = x - 1,
             right = x + 1;
           if (free(grid, left, y + 1) && unclaimed(next, left, y + 1)) {
@@ -66,25 +71,82 @@ export function step(grid: Grid): Grid {
             set(next, right, y + 1, SAND);
           }
         }
-      } else if (mat === WATER) {
+      } else if (isWater(mat)) {
         const below = y + 1 < H ? grid[(y + 1) * W + x]! : WALL;
+        // 1) Fall — including into gaps that opened this tick.
         if (below === EMPTY && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, WATER);
-        } else if (below !== EMPTY) {
-          const side = (x + y) % 2 === 0 ? -1 : 1;
-          if (free(grid, x + side, y) && unclaimed(next, x + side, y)) {
-            set(next, x, y, EMPTY);
-            set(next, x + side, y, WATER);
-          } else if (free(grid, x - side, y) && unclaimed(next, x - side, y)) {
-            set(next, x, y, EMPTY);
-            set(next, x - side, y, WATER);
-          }
+          continue;
+        }
+        // 2) Flow diagonally over open edges into holes below.
+        const side = (x + y) % 2 === 0 ? -1 : 1;
+        const dl: [number, number] = [x + side, y + 1];
+        const dr: [number, number] = [x - side, y + 1];
+        const dropSide =
+          dl[1] < H && free(grid, dl[0], dl[1]) && unclaimed(next, dl[0], dl[1])
+            ? dl
+            : dr[1] < H && free(grid, dr[0], dr[1]) && unclaimed(next, dr[0], dr[1])
+              ? dr
+              : null;
+        if (dropSide) {
+          set(next, x, y, EMPTY);
+          set(next, dropSide[0], dropSide[1], WATER);
         }
       }
     }
   }
-  return next;
+  return equaliseWater(next);
+}
+
+/** Height-based levelling: columns of standing water equalise with their neighbours.
+ * Each transfer strictly lowers the sum of squared column heights, so the process
+ * terminates in a flat surface — no perpetual drift, no frozen gaps. */
+function equaliseWater(grid: Grid): Grid {
+  const heights = (g: Grid): number[] => {
+    const h = Array<number>(W).fill(0);
+    for (let x = 0; x < W; x++) {
+      for (let y = 0; y < H; y++) if (g[y * W + x] === WATER) h[x]!++;
+    }
+    return h;
+  };
+  const topWater = (g: Grid, x: number): number => {
+    for (let y = 0; y < H; y++) if (g[y * W + x] === WATER) return y;
+    return H;
+  };
+  const surfaceSlot = (g: Grid, x: number): number => {
+    // The cell just above the column's topmost matter (floor counts as matter).
+    const tw = topWater(g, x);
+    if (tw < H) return tw - 1;
+    for (let y = H - 1; y >= 0; y--) {
+      if (g[y * W + x] !== EMPTY) return y - 1;
+    }
+    return H - 1;
+  };
+  for (let pass = 0; pass < 3; pass++) {
+    const h = heights(grid);
+    let moved = false;
+    for (let x = 0; x < W - 1; x++) {
+      const a = x;
+      const b = x + 1;
+      const from = h[a]! > h[b]! + 1 ? a : h[b]! > h[a]! + 1 ? b : -1;
+      if (from < 0) continue;
+      const to = from === a ? b : a;
+      const srcY = topWater(grid, from);
+      const dstY = surfaceSlot(grid, to);
+      if (srcY >= H || dstY < 0) continue;
+      if (grid[dstY * W + to] !== EMPTY) continue;
+      // The hop happens at the source's surface row: a wall on the boundary blocks it.
+      if (srcY < H && grid[srcY * W + to] === WALL) continue;
+      grid[srcY * W + from] = EMPTY;
+      grid[dstY * W + to] = WATER;
+      h[from]!--;
+      h[to]!++;
+      moved = true;
+    }
+    if (!moved) break;
+  }
+  return grid;
 }
 
 export type Goal = {

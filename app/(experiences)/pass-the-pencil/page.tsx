@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { buildRun, dailySeed, ROUNDS, scoreRound, scoreRun, type RoundScore } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 type Stroke = { x: number; y: number }[];
 
@@ -203,6 +204,20 @@ export default function PassThePencilPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Keeping a drawing alive">
+        <ExampleStep n={1}>
+          Draw big, bold landmarks — shape corners survive memory, fine hatching does not.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Every second round hides the prompt: your own previous drawing becomes the model. Redraw
+          what you see, not what you remember writing.
+        </ExampleStep>
+        <ExampleResult>
+          Six rounds: match × 12 + effort × 8 per round — faithful redraws keep both near max for
+          100.
+        </ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

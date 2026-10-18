@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { makeBoard, place, PLACEMENTS, scoreRun, SIZE, tileSequence, type Tile } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const TILE_EMOJI: Record<string, string> = {
   house: "🏠",
@@ -63,7 +64,7 @@ export default function TinyTownTacticsPage() {
         </div>
 
         <div
-          className="mx-auto grid gap-1"
+          className="board mx-auto grid gap-1.5 p-3"
           style={{ width: "min(92vw, 420px)", gridTemplateColumns: `repeat(${SIZE}, 1fr)` }}
           role="grid"
           aria-label="Town board"
@@ -127,6 +128,18 @@ export default function TinyTownTacticsPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="Building to 320">
+        <ExampleStep n={1}>
+          Cluster by adjacency: houses score next to parks, shops next to factories. The full
+          scoring sheet sits under the board — every bonus is listed.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Sixteen placements on an 8×8 meadow. Build tight neighbourhoods first, then fill the edges
+          — scattered tiles waste adjacency bonuses.
+        </ExampleStep>
+        <ExampleResult>Total 320 points → score = total / 320 × 100 = 100.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

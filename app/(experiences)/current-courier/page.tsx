@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { isValidRoute, MAPS, routeLength, scoreRoute, type NodeId } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function CurrentCourierPage() {
   const record = usePersonalBest("current-courier");
@@ -14,9 +15,10 @@ export default function CurrentCourierPage() {
   const [bestScore, setBestScore] = useState(0);
   const map = MAPS[mapIndex] ?? MAPS[0]!;
   const mapRows = Math.max(...map.nodes.map((n) => Number(n.slice(1))));
+  const mapCols = Math.max(...map.nodes.map((n) => n.charCodeAt(0) - 64));
   const mapCells: string[] = [];
   for (let row = 1; row <= mapRows; row++) {
-    for (let col = 0; col < 5; col++) {
+    for (let col = 0; col < mapCols; col++) {
       mapCells.push(`${String.fromCharCode(65 + col)}${row}`);
     }
   }
@@ -34,7 +36,7 @@ export default function CurrentCourierPage() {
       setRoute(route.slice(0, -1));
       return;
     }
-    if (route.includes(node)) return; // single walk, no revisiting for clarity
+    // A route is a walk: revisiting a junction is allowed (shortcuts loop back).
     if (!neighbours(last).includes(node)) return;
     setRoute([...route, node]);
   }
@@ -76,7 +78,10 @@ export default function CurrentCourierPage() {
 
         <div
           className="mx-auto grid gap-2"
-          style={{ width: "min(92vw, 380px)", gridTemplateColumns: "repeat(5, 1fr)" }}
+          style={{
+            width: "min(92vw, 420px)",
+            gridTemplateColumns: `repeat(${mapCols}, 1fr)`,
+          }}
           role="group"
           aria-label="Delivery map"
         >
@@ -135,6 +140,19 @@ export default function CurrentCourierPage() {
       </Card>
 
       <PersonalBest record={record} />
+
+      <HowToBeat summary="A par route, end to end">
+        <ExampleStep n={1}>
+          Visit every amber stop in one unbroken walk — junctions may repeat; only street edges
+          count as moves.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Worked example — Corner round: A1 → B1 → C1 → C2 → C3 → B3 → A3 is exactly par 6 and pays
+          100. On bigger maps (Harbour grid, Ring road) plan a loop that returns past the remaining
+          stops instead of backtracking.
+        </ExampleStep>
+        <ExampleResult>Par pays 100; every extra street costs 8 points.</ExampleResult>
+      </HowToBeat>
     </GameFrame>
   );
 }

@@ -1,94 +1,102 @@
 import { describe, expect, it } from "vitest";
 import {
-  BLOCK_W,
-  canDrop,
+  barWidth,
+  COLS,
   dropBlock,
+  efficiency,
+  landing,
   newRun,
+  nudge,
+  perfectPlay,
   scoreTower,
+  slideX,
   step,
-  swingX,
-  TOPPLE_TOLERANCE,
+  upcoming,
   WIN_HEIGHT,
+  type StackState,
 } from "./logic";
 
-describe("stack-ledger pendulum", () => {
-  it("swing stays inside the arena and moves smoothly per tick", () => {
-    for (let t = 0; t < 500; t += 7) {
-      const x = swingX(t);
-      expect(x).toBeGreaterThanOrEqual(0);
-      expect(x).toBeLessThanOrEqual(1);
-    }
-    expect(swingX(0)).toBeCloseTo(0.5, 5);
-  });
-});
-
-describe("stack-ledger drop rules", () => {
-  it("first drop always lands and starts the tower", () => {
-    const state = dropBlock(newRun("test-seed"));
-    expect(state.placed).toHaveLength(1);
-    expect(state.alive).toBe(true);
-    expect(state.dropped).toBe(1);
+describe("stack-ledger stacking", () => {
+  it("shows every upcoming width — no hidden chance", () => {
+    const state = newRun("seed-a");
+    // The queue is fully determined by the seed and always inspectable.
+    expect(state.queue.length).toBeGreaterThan(100);
+    const again = newRun("seed-a");
+    expect(again.queue).toEqual(state.queue);
+    expect(upcoming(state, 6)).toEqual(state.queue.slice(1, 7));
+    // Different seeds give different runs (not the same every game).
+    expect(newRun("seed-b").queue).not.toEqual(state.queue);
   });
 
-  it("a centred drop of a legal number keeps the tower alive", () => {
-    let state = newRun("tower-a");
-    state = dropBlock(state);
-    // Force the pendulum to the top block's x for an ideal landing.
-    const top = state.placed[0]!;
-    const aligned = { ...state, tick: Math.round(Math.asin((top.x - 0.5) / 0.32) / 0.018) };
-    const legal = aligned.nextN <= top.n ? aligned : { ...aligned, nextN: top.n };
-    const next = dropBlock(legal);
-    if (Math.abs(swingX(legal.tick) - top.x) <= TOPPLE_TOLERANCE) {
-      expect(next.alive).toBe(true);
-      expect(next.placed).toHaveLength(2);
-    }
+  it("landing rests the bar on the tallest column of its span", () => {
+    const heights = Array<number>(COLS).fill(0);
+    heights[3] = 2;
+    heights[4] = 5;
+    heights[5] = 2;
+    const { contact, supported } = landing(heights, 3, 3);
+    expect(contact).toBe(5);
+    expect(supported).toEqual([false, true, false]);
   });
 
-  it("a block with a number above the top is rejected before dropping", () => {
-    let state = newRun("tower-b");
-    state = dropBlock(state);
-    const top = state.placed[0]!;
-    const illegal = { ...state, nextN: top.n + 1 };
-    const gate = canDrop(illegal);
-    expect(gate.ok).toBe(false);
-    const after = dropBlock(illegal);
-    expect(after.placed).toHaveLength(1);
-    expect(after.dropped).toBe(1);
+  it("drops rigidly: overhangs snap off, supported cells stack", () => {
+    const state: StackState = { ...newRun("s"), heights: Array<number>(COLS).fill(0) };
+    state.heights[4] = 2;
+    state.heights[5] = 5;
+    state.heights[6] = 2;
+    state.queue = [3, 2, 2, 2, 2, 2, 2];
+    state.x = 4;
+    const next = dropBlock(state);
+    // Only the cell over the tallest column is kept.
+    expect(next.heights[4]).toBe(2);
+    expect(next.heights[5]).toBe(6);
+    expect(next.heights[6]).toBe(2);
+    expect(next.kept).toBe(1);
+    expect(next.lost).toBe(2);
+    // The queue advanced: the next width is known and different piece.
+    expect(barWidth(next)).toBe(2);
+    expect(next.dropped).toBe(1);
+    expect(efficiency(next)).toBeCloseTo(1 / 3);
   });
 
-  it("an off-centre drop topples the tower", () => {
-    let state = newRun("tower-c");
-    state = dropBlock(state);
-    const top = state.placed[0]!;
-    // Find a tick where the pendulum is far from the top block.
-    let tick = state.tick;
-    for (let t = 0; t < 10000; t++) {
-      if (Math.abs(swingX(t) - top.x) > TOPPLE_TOLERANCE + 0.05) {
-        tick = t;
-        break;
-      }
-    }
-    const legal = { ...state, tick, nextN: Math.min(state.nextN, top.n) };
-    const next = dropBlock(legal);
-    expect(next.alive).toBe(false);
-    expect(next.placed).toHaveLength(1);
+  it("a full flat landing keeps every cell and raises the whole span", () => {
+    const state = newRun("flat");
+    state.queue = [4, 2, 2, 2, 2, 2, 2];
+    state.x = 3;
+    const next = dropBlock(state);
+    expect(next.heights.slice(3, 7)).toEqual([1, 1, 1, 1]);
+    expect(next.lost).toBe(0);
+    expect(efficiency(next)).toBe(1);
   });
 
-  it("scoring is linear and clamped", () => {
-    expect(scoreTower(0)).toBe(0);
-    expect(scoreTower(5)).toBe(25);
-    expect(scoreTower(WIN_HEIGHT)).toBe(100);
-    expect(scoreTower(100)).toBe(100);
+  it("slides back and forth and can be nudged within the field", () => {
+    const w = 3;
+    expect(slideX(0, w)).toBe(0);
+    expect(slideX(COLS - w, w)).toBe(COLS - w);
+    expect(slideX(2 * (COLS - w), w)).toBe(0);
+    const state = { ...newRun("n"), x: 0, tick: 0 };
+    const right = nudge(state, 1);
+    expect(right.x).toBe(1);
+    const left = nudge({ ...right, x: 0 }, -1);
+    expect(left.x).toBe(0);
+    const stepped = step(state, 5);
+    expect(stepped.tick).toBe(5);
+    expect(stepped.x).toBe(slideX(5, barWidth(state)));
   });
 
-  it("step advances ticks without touching the score", () => {
-    const state = step(newRun("tower-d"), 30);
-    expect(state.tick).toBe(30);
-    expect(state.placed).toHaveLength(0);
+  it("reaches the target with careful play — the game is beatable", () => {
+    const result = perfectPlay("beat-me", 120);
+    expect(result.phase).toBe("won");
+    expect(Math.max(...result.heights)).toBeGreaterThanOrEqual(WIN_HEIGHT);
+    expect(scoreTower(result.heights)).toBe(100);
+    // Careful play keeps almost everything: the flat-span heuristic loses at most
+    // a few overhang cells to ragged skylines.
+    expect(efficiency(result)).toBeGreaterThan(0.5);
   });
 
-  it("block width constant is sane", () => {
-    expect(BLOCK_W).toBeGreaterThan(0.1);
-    expect(BLOCK_W).toBeLessThan(0.5);
+  it("scores height on the 0-100 scale", () => {
+    expect(scoreTower([0, 0])).toBe(0);
+    expect(scoreTower([4, 2])).toBe(20);
+    expect(scoreTower([WIN_HEIGHT, 1])).toBe(100);
+    expect(scoreTower([99, 0])).toBe(100);
   });
 });
