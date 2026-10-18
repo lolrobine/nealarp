@@ -21,13 +21,15 @@ describe("pocket-sand simulation", () => {
     expect(at(next, 19, 31)).toBe(SAND);
   });
 
-  it("sand sinks through water and water spreads sideways", () => {
+  it("sand drops through vacated water and water spreads sideways", () => {
     const grid = makeGrid();
     set(grid, 5, 30, SAND);
     set(grid, 5, 31, WATER);
     const afterSand = step(grid);
+    // Floor water spreads sideways first; the grain drops into the vacated cell.
     expect(at(afterSand, 5, 31)).toBe(SAND);
-    expect(at(afterSand, 5, 30)).toBe(WATER);
+    expect(at(afterSand, 5, 30)).toBe(0);
+    expect([at(afterSand, 4, 31), at(afterSand, 6, 31)]).toContain(WATER);
 
     const waterOnly = makeGrid();
     set(waterOnly, 8, 31, WATER);
@@ -36,6 +38,21 @@ describe("pocket-sand simulation", () => {
     expect(at(spread, 8, 31)).toBe(0);
     const neighbours = [at(spread, 7, 31), at(spread, 9, 31)];
     expect(neighbours.some((m) => m === WATER)).toBe(true);
+  });
+
+  it("never loses or duplicates grains (claim-checked collisions)", () => {
+    // Two grains funnel toward one gap; a collision must not destroy matter.
+    const grid = makeGrid();
+    set(grid, 20, 30, SAND);
+    set(grid, 21, 30, SAND);
+    set(grid, 21, 31, WALL);
+    const count = (g: Uint8Array, mat: number) => g.reduce((n, m) => n + (m === mat ? 1 : 0), 0);
+    let current = grid;
+    for (let i = 0; i < 30; i++) {
+      current = step(current);
+      expect(count(current, SAND), `tick ${i}`).toBe(2);
+      expect(count(current, WALL), `tick ${i}`).toBe(1);
+    }
   });
 
   it("simulation is deterministic", () => {

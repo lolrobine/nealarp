@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -33,6 +33,27 @@ export default function TwinTiltPage() {
   const state = history[history.length - 1] ?? initialSlide(room);
   const moves = history.length - 1;
   const won = isWin(state, cells);
+
+  // Keyboard parity: ← rotates counterclockwise, → rotates clockwise.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)
+        return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        doMove("ccw");
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        doMove("cw");
+      } else if (event.key === "z" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setHistory((h) => (h.length > 1 ? h.slice(0, -1) : h));
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, cells, won, history]);
 
   function selectRoom(index: number) {
     const target = ROOMS[index] ?? ROOMS[0]!;
@@ -96,42 +117,44 @@ export default function TwinTiltPage() {
             aria-label={`Room ${room.name}. ${state.balls.map((b) => `Ball ${b.id} at ${cellName(b.x, b.y)}`).join(", ")}.`}
           >
             {cells.map((row, y) =>
-              row.map((cell, x) => (
-                <div
-                  key={`${x}-${y}`}
-                  className={`rounded-md flex items-center justify-center text-xs font-bold ${
-                    cell === "wall"
-                      ? "bg-[var(--foreground)]/80"
-                      : cell === "sticky"
-                        ? "bg-amber-300/70"
-                        : cell === "goalA"
-                          ? "bg-sky-300/60 border-2 border-sky-500"
-                          : cell === "goalB"
-                            ? "bg-rose-300/60 border-2 border-rose-500"
-                            : "bg-[var(--card)]"
-                  }`}
-                >
-                  {cell === "goalA" ? "A" : cell === "goalB" ? "B" : cell === "sticky" ? "≈" : ""}
-                </div>
-              ))
+              row.map((cell, x) => {
+                const ball = state.balls.find((b) => b.x === x && b.y === y);
+                return (
+                  <div
+                    key={`${x}-${y}`}
+                    className={`rounded-md flex items-center justify-center text-xs font-bold ${
+                      cell === "wall"
+                        ? "bg-[var(--foreground)]/80"
+                        : cell === "sticky"
+                          ? "bg-amber-300/70"
+                          : cell === "goalA"
+                            ? "bg-sky-300/60 border-2 border-sky-500"
+                            : cell === "goalB"
+                              ? "bg-rose-300/60 border-2 border-rose-500"
+                              : "bg-[var(--card)]"
+                    }`}
+                  >
+                    {ball ? (
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow ${
+                          ball.id === "A" ? "bg-sky-600" : "bg-rose-600"
+                        }`}
+                      >
+                        {ball.id}
+                      </span>
+                    ) : cell === "goalA" ? (
+                      "A"
+                    ) : cell === "goalB" ? (
+                      "B"
+                    ) : cell === "sticky" ? (
+                      "≈"
+                    ) : (
+                      ""
+                    )}
+                  </div>
+                );
+              })
             )}
-            {state.balls.map((ball) => (
-              <div
-                key={ball.id}
-                aria-hidden="true"
-                className={`absolute rounded-full flex items-center justify-center text-xs font-bold text-white shadow ${
-                  ball.id === "A" ? "bg-sky-600" : "bg-rose-600"
-                }`}
-                style={{
-                  width: "calc((100% - 40px) / 6 * 0.8)",
-                  height: "calc((100% - 40px) / 6 * 0.8)",
-                  left: `calc(8px + (100% - 16px) / 6 * ${ball.x} + (100% - 16px) / 6 * 0.1)`,
-                  top: `calc(8px + (100% - 16px) / 6 * ${ball.y} + (100% - 16px) / 6 * 0.1)`,
-                }}
-              >
-                {ball.id}
-              </div>
-            ))}
           </div>
 
           <p className="text-sm text-[var(--muted-foreground)]">
@@ -172,6 +195,9 @@ export default function TwinTiltPage() {
               Reset room
             </Button>
           </div>
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Keyboard: ← rotates counterclockwise, → rotates clockwise, Ctrl/⌘+Z undoes.
+          </p>
         </div>
 
         {won && (

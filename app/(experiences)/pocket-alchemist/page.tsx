@@ -5,7 +5,7 @@ import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
-import { discoveryScore, INGREDIENTS, mix, type Ingredient } from "./logic";
+import { CONCEPTS, discoveryScore, INGREDIENTS, mix, type Ingredient } from "./logic";
 
 export default function PocketAlchemistPage() {
   const record = usePersonalBest("pocket-alchemist");
@@ -81,7 +81,7 @@ export default function PocketAlchemistPage() {
           </p>
           {discovered.length > 0 && (
             <p className="mt-2 text-sm">
-              {discovered.map((id) => id.replace(/-/g, " ")).join(" · ")}
+              {discovered.map((id) => CONCEPTS.find((c) => c.id === id)?.name ?? id).join(" · ")}
             </p>
           )}
         </div>

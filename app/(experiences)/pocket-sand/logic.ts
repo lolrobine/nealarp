@@ -28,8 +28,14 @@ function free(grid: Grid, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < W && y < H && grid[y * W + x] === EMPTY;
 }
 
+/** A move may only land on a cell no earlier move in this tick has claimed. */
+function unclaimed(next: Grid, x: number, y: number): boolean {
+  return x >= 0 && y >= 0 && x < W && y < H && next[y * W + x] === EMPTY;
+}
+
 /** One deterministic simulation tick. Sand slides down/diagonal-down; water also
- * spreads sideways one cell per tick. A left-first sweep gives consistent piles. */
+ * spreads sideways one cell per tick. A bottom-up left-first sweep gives consistent
+ * piles, and claim checks keep grain counts exactly conserved. */
 export function step(grid: Grid): Grid {
   const next = grid.slice();
   for (let y = H - 1; y >= 0; y--) {
@@ -37,34 +43,40 @@ export function step(grid: Grid): Grid {
       const mat = grid[y * W + x]!;
       if (mat === SAND) {
         const below = y + 1 < H ? grid[(y + 1) * W + x]! : WALL;
-        if (below === EMPTY) {
+        const belowNext = y + 1 < H ? next[(y + 1) * W + x]! : WALL;
+        if (below === EMPTY && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, SAND);
-        } else if (below === WATER) {
+        } else if (below === WATER && belowNext === WATER) {
+          // Sink through standing water: the water takes the grain's place.
           set(next, x, y, WATER);
           set(next, x, y + 1, SAND);
-        } else {
+        } else if (below === WATER && unclaimed(next, x, y + 1)) {
+          // The water already moved this tick: drop into the vacated cell.
+          set(next, x, y, EMPTY);
+          set(next, x, y + 1, SAND);
+        } else if (below !== WATER) {
           const left = x - 1,
             right = x + 1;
-          if (free(grid, left, y + 1)) {
+          if (free(grid, left, y + 1) && unclaimed(next, left, y + 1)) {
             set(next, x, y, EMPTY);
             set(next, left, y + 1, SAND);
-          } else if (free(grid, right, y + 1)) {
+          } else if (free(grid, right, y + 1) && unclaimed(next, right, y + 1)) {
             set(next, x, y, EMPTY);
             set(next, right, y + 1, SAND);
           }
         }
       } else if (mat === WATER) {
         const below = y + 1 < H ? grid[(y + 1) * W + x]! : WALL;
-        if (below === EMPTY) {
+        if (below === EMPTY && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, WATER);
-        } else {
+        } else if (below !== EMPTY) {
           const side = (x + y) % 2 === 0 ? -1 : 1;
-          if (free(grid, x + side, y)) {
+          if (free(grid, x + side, y) && unclaimed(next, x + side, y)) {
             set(next, x, y, EMPTY);
             set(next, x + side, y, WATER);
-          } else if (free(grid, x - side, y)) {
+          } else if (free(grid, x - side, y) && unclaimed(next, x - side, y)) {
             set(next, x, y, EMPTY);
             set(next, x - side, y, WATER);
           }

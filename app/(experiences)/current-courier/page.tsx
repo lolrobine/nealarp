@@ -13,6 +13,13 @@ export default function CurrentCourierPage() {
   const [route, setRoute] = useState<NodeId[]>([]);
   const [bestScore, setBestScore] = useState(0);
   const map = MAPS[mapIndex] ?? MAPS[0]!;
+  const mapRows = Math.max(...map.nodes.map((n) => Number(n.slice(1))));
+  const mapCells: string[] = [];
+  for (let row = 1; row <= mapRows; row++) {
+    for (let col = 0; col < 5; col++) {
+      mapCells.push(`${String.fromCharCode(65 + col)}${row}`);
+    }
+  }
 
   const neighbours = (node: NodeId): NodeId[] =>
     map.edges.filter((e) => e.a === node || e.b === node).map((e) => (e.a === node ? e.b : e.a));
@@ -30,9 +37,6 @@ export default function CurrentCourierPage() {
     if (route.includes(node)) return; // single walk, no revisiting for clarity
     if (!neighbours(last).includes(node)) return;
     setRoute([...route, node]);
-    if (route.length + 1 > 1) {
-      // score grows as stops get covered — evaluated on reveal
-    }
   }
 
   const valid = isValidRoute(map, route);
@@ -73,10 +77,10 @@ export default function CurrentCourierPage() {
         <div
           className="mx-auto grid gap-2"
           style={{ width: "min(92vw, 380px)", gridTemplateColumns: "repeat(5, 1fr)" }}
-          role="grid"
+          role="group"
           aria-label="Delivery map"
         >
-          {["A1", "B1", "C1", "D1", "E1", "A2", "B2", "C2", "D2", "E2"].map((node) => {
+          {mapCells.map((node) => {
             const exists = map.nodes.includes(node);
             const isStop = map.stops.includes(node);
             const index = route.indexOf(node);

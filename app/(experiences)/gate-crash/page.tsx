@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { correctGateIndex, generateRound, scoreStreak, type Gate } from "./logic";
 
@@ -34,8 +35,14 @@ export default function GateCrashPage() {
   const [streak, setStreak] = useState(0);
   const [phase, setPhase] = useState<"preview" | "pick" | "over">("preview");
   const [feedback, setFeedback] = useState("");
-  const [speedId, setSpeedId] = useState("normal");
-  const [showRuleAlways, setShowRuleAlways] = useState(false);
+  const [speedId, setSpeedId] = useLocalStorage<string>(
+    "nealarp:settings:v1:gate-crash:speed",
+    "normal"
+  );
+  const [showRuleAlways, setShowRuleAlways] = useLocalStorage<boolean>(
+    "nealarp:settings:v1:gate-crash:rule",
+    false
+  );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const round = generateRound(seed, roundNumber);

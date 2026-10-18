@@ -81,7 +81,7 @@ export default function LavaLinksPage() {
         <div
           className="mx-auto grid gap-1"
           style={{ width: "min(92vw, 380px)" }}
-          role="img"
+          role="group"
           aria-label={`${level.name}. You are at ${state.x + 1},${state.y + 1}. Goal at ${level.goal.x + 1},${level.goal.y + 1}.`}
         >
           {level.rows.map((row, y) => (
@@ -91,14 +91,14 @@ export default function LavaLinksPage() {
                 const isPawn = state.x === x && state.y === y;
                 const isGoal = level.goal.x === x && level.goal.y === y;
                 const reachable =
-                  !won && !isPawn && hopTarget(level, state, { dir: 0, steps: 1 }) !== null
-                    ? [0, 1, 2, 3, 4, 5].some((dir) =>
-                        ([1, 2] as const).some((steps) => {
-                          const t = hopTarget(level, state, { dir, steps });
-                          return t && t[0] === x && t[1] === y;
-                        })
-                      )
-                    : false;
+                  !won &&
+                  !isPawn &&
+                  [0, 1, 2, 3, 4, 5].some((dir) =>
+                    ([1, 2] as const).some((steps) => {
+                      const t = hopTarget(level, state, { dir, steps });
+                      return t && t[0] === x && t[1] === y;
+                    })
+                  );
                 return (
                   <button
                     key={x}

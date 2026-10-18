@@ -157,6 +157,26 @@ export default function OrbitOrchardPage() {
           {scoreRun(collected.length, level.rings.length)} / 100
         </p>
 
+        {flightDone && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => record.save(scoreRun(collected.length, level.rings.length))}
+            >
+              Save this score
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCollected([]);
+                setFlightDone(false);
+              }}
+            >
+              Try again
+            </Button>
+          </div>
+        )}
+
         {flightDone && collected.length === level.rings.length && (
           <div
             className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"

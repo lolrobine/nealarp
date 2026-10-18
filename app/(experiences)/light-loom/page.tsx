@@ -25,6 +25,19 @@ export default function LightLoomPage() {
   const level = LEVELS[levelIndex] ?? LEVELS[0]!;
   const { lit, litTargets } = traceBeams(level);
   const solvedNow = isSolved(level);
+  const targetStatus = level.grid.flatMap((row, y) =>
+    row.flatMap((cell, x) => {
+      if (cell?.kind !== "target" || !cell.needs) return [];
+      const colorName = cell.needs === "r" ? "red" : cell.needs === "g" ? "green" : "blue";
+      const isLit = lit.get(`${x},${y}`)?.has(cell.needs) ?? false;
+      return [
+        {
+          key: `${x}-${y}`,
+          text: `Target at column ${x + 1}, row ${y + 1} needs ${colorName} — ${isLit ? "lit" : "not lit"}`,
+        },
+      ];
+    })
+  );
 
   function selectLevel(index: number) {
     setLevelIndex(index);
@@ -111,6 +124,14 @@ export default function LightLoomPage() {
           Lit targets: <strong>{litTargets.length}</strong> · R = red (straight), G = green (left),
           B = blue (right)
         </p>
+        <ul
+          className="mx-auto list-disc pl-5 text-sm text-[var(--muted-foreground)]"
+          aria-live="polite"
+        >
+          {targetStatus.map((line) => (
+            <li key={line.key}>{line.text}</li>
+          ))}
+        </ul>
 
         {solvedNow && (
           <div

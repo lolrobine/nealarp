@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
-import { GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, W, WATER } from "./logic";
+import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, W, WATER } from "./logic";
 
 const SPEEDS = [
   { id: "slow", label: "Practice pace", ticksPerSecond: 4 },
@@ -24,9 +25,16 @@ export default function PocketSandPage() {
   const reducedMotion = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gridRef = useRef<Uint8Array>(makeGrid());
+  const brushRef = useRef({ x: 24, y: 16 });
   const [running, setRunning] = useState(!reducedMotion);
-  const [speedId, setSpeedId] = useState("normal");
-  const [material, setMaterial] = useState<number>(SAND);
+  const [speedId, setSpeedId] = useLocalStorage<string>(
+    "nealarp:settings:v1:pocket-sand:speed",
+    "normal"
+  );
+  const [material, setMaterial] = useLocalStorage<number>(
+    "nealarp:settings:v1:pocket-sand:material",
+    SAND
+  );
   const [goalIndex, setGoalIndex] = useState(0);
   const [score, setScore] = useState(0);
   const goal = GOALS[goalIndex] ?? GOALS[0]!;
@@ -46,6 +54,13 @@ export default function PocketSandPage() {
         ctx.fillStyle = mat === SAND ? "#fbbf24" : mat === WATER ? "#38bdf8" : "#94a3b8";
         ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
       }
+    }
+    // Keyboard brush marker (visible whenever the canvas is focused).
+    if (document.activeElement === canvas) {
+      const b = brushRef.current;
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(b.x * cell + 1, b.y * cell + 1, cell - 2, cell - 2);
     }
   }, []);
 
@@ -70,9 +85,44 @@ export default function PocketSandPage() {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor(((clientX - rect.left) / rect.width) * W);
     const y = Math.floor(((clientY - rect.top) / rect.height) * H);
-    set(gridRef.current, x, y, material);
+    paintCell(x, y);
+  }
+
+  function paintCell(x: number, y: number) {
+    brushRef.current = { x: Math.max(0, Math.min(W - 1, x)), y: Math.max(0, Math.min(H - 1, y)) };
+    set(gridRef.current, brushRef.current.x, brushRef.current.y, material);
     draw();
     setScore(sandScore(gridRef.current, goal));
+  }
+
+  // Keyboard parity: arrow keys move a brush cursor, Enter/Space paints, Delete clears.
+  function onCanvasKeyDown(event: React.KeyboardEvent<HTMLCanvasElement>) {
+    const { x, y } = brushRef.current;
+    const moves: Record<string, [number, number]> = {
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+    };
+    const move = moves[event.key];
+    if (move) {
+      event.preventDefault();
+      brushRef.current = {
+        x: Math.max(0, Math.min(W - 1, x + move[0])),
+        y: Math.max(0, Math.min(H - 1, y + move[1])),
+      };
+      draw();
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      paintCell(x, y);
+    } else if (event.key === "Delete" || event.key === "Backspace") {
+      event.preventDefault();
+      set(gridRef.current, x, y, EMPTY);
+      draw();
+      setScore(sandScore(gridRef.current, goal));
+    }
   }
 
   return (
@@ -128,8 +178,12 @@ export default function PocketSandPage() {
           height={H * 10}
           className="mx-auto w-full rounded-xl border border-[var(--border)] touch-none"
           style={{ maxWidth: 640, imageRendering: "pixelated", cursor: "crosshair" }}
-          aria-label="Sand canvas. Drag to pour the selected material."
+          aria-label="Sand canvas. Drag to pour the selected material, or focus this canvas and use the arrow keys to move the brush, Enter to pour, Delete to clear a cell."
           role="img"
+          tabIndex={0}
+          onKeyDown={onCanvasKeyDown}
+          onFocus={() => draw()}
+          onBlur={() => draw()}
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
             paintAt(e.clientX, e.clientY);

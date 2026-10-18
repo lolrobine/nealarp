@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import {
   canDrop,
   dropBlock,
@@ -16,6 +18,7 @@ import {
 } from "./logic";
 
 const SPEEDS = [
+  { id: "still", label: "Still", factor: 0 },
   { id: "slow", label: "Practice pace", factor: 0.6 },
   { id: "normal", label: "Normal", factor: 1 },
   { id: "fast", label: "Fast", factor: 1.6 },
@@ -23,9 +26,16 @@ const SPEEDS = [
 
 export default function StackLedgerPage() {
   const record = usePersonalBest("stack-ledger");
-  const [speedId, setSpeedId] = useState("normal");
+  const reducedMotion = usePrefersReducedMotion();
+  const [speedId, setSpeedId] = useLocalStorage<string>(
+    "nealarp:settings:v1:stack-ledger:speed",
+    reducedMotion ? "still" : "normal"
+  );
   const [state, setState] = useState<StackState>(() => newRun(`stack-${Date.now()}`));
-  const [practice, setPractice] = useState(false);
+  const [practice, setPractice] = useLocalStorage<boolean>(
+    "nealarp:settings:v1:stack-ledger:practice",
+    false
+  );
   const tickRef = useRef(state.tick);
   const blockRef = useRef<HTMLDivElement | null>(null);
   const speedRef = useRef(1);
@@ -33,6 +43,10 @@ export default function StackLedgerPage() {
   useEffect(() => {
     const factor = SPEEDS.find((s) => s.id === speedId)?.factor ?? 1;
     speedRef.current = factor;
+    if (blockRef.current) {
+      const x = swingX(tickRef.current);
+      blockRef.current.style.left = `calc(${(x * 100).toFixed(3)}% - 13%)`;
+    }
   }, [speedId]);
 
   useEffect(() => {
@@ -84,6 +98,12 @@ export default function StackLedgerPage() {
               {s.label}
             </Button>
           ))}
+          {reducedMotion && speedId === "still" && (
+            <p className="w-full text-center text-xs text-[var(--muted-foreground)]">
+              Motion is paused because your system asks for reduced motion — pick a pace when you
+              are ready.
+            </p>
+          )}
           <Button
             variant={practice ? "default" : "outline"}
             onClick={() => setPractice(!practice)}

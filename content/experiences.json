@@ -200,7 +200,7 @@
   {
     "id": "clue-school",
     "title": "Clue School",
-    "description": "Solve five bite-size cryptic clues where every trick is labeled and revealed step by step.",
+    "description": "Solve eight bite-size cryptic clues where every trick is labeled and revealed step by step.",
     "category": "game",
     "icon": "/experiences/clue-school/icon.svg",
     "thumbnail": "/experiences/clue-school/realistic.webp",
@@ -244,7 +244,7 @@
   {
     "id": "light-loom",
     "title": "Light Loom",
-    "description": "Weave a laser through every target with three prisms that also cast shadows.",
+    "description": "Split white light through prisms and mirrors to colour every target.",
     "category": "game",
     "icon": "/experiences/light-loom/icon.svg",
     "thumbnail": "/experiences/light-loom/realistic.webp",
@@ -255,7 +255,7 @@
   {
     "id": "orbit-orchard",
     "title": "Orbit Orchard",
-    "description": "Spin a tiny planet to reel in seeds and grow a garden whose gravity bends the next puzzle.",
+    "description": "Launch a seed around a toy star and thread it through fruit rings.",
     "category": "game",
     "icon": "/experiences/orbit-orchard/icon.svg",
     "thumbnail": "/experiences/orbit-orchard/realistic.webp",
@@ -277,7 +277,7 @@
   {
     "id": "ice-post",
     "title": "Ice Post",
-    "description": "Slide parcels across a frozen post office where everything glides until it hits a wall.",
+    "description": "Slide across a frozen pond to deliver the post while the postman walks his round.",
     "category": "game",
     "icon": "/experiences/ice-post/icon.svg",
     "thumbnail": "/experiences/ice-post/realistic.webp",
@@ -288,7 +288,7 @@
   {
     "id": "stack-ledger",
     "title": "Stack Ledger",
-    "description": "Stack swinging blocks in descending order and keep the tower balanced for 90 seconds.",
+    "description": "Stack swinging numbered blocks — each one may only rest on an equal or higher number.",
     "category": "game",
     "icon": "/experiences/stack-ledger/icon.svg",
     "thumbnail": "/experiences/stack-ledger/realistic.webp",
@@ -299,7 +299,7 @@
   {
     "id": "current-courier",
     "title": "Current Courier",
-    "description": "Draw river routes for toy boats while the currents push them off your lines.",
+    "description": "Draw one unbroken delivery route through every stop and keep it short.",
     "category": "game",
     "icon": "/experiences/current-courier/icon.svg",
     "thumbnail": "/experiences/current-courier/realistic.webp",
@@ -321,7 +321,7 @@
   {
     "id": "gate-crash",
     "title": "Gate Crash",
-    "description": "A 90-second one-button sprint through gates whose rules change mid-run.",
+    "description": "Study the rule while it flashes, then crash the one gate it describes.",
     "category": "game",
     "icon": "/experiences/gate-crash/icon.svg",
     "thumbnail": "/experiences/gate-crash/realistic.webp",
@@ -332,7 +332,7 @@
   {
     "id": "tiny-town-tactics",
     "title": "Tiny Town Tactics",
-    "description": "Build a town on nine tiles where success is about the journeys between buildings.",
+    "description": "Place sixteen tiles on a meadow where every neighbourhood bonus counts.",
     "category": "game",
     "icon": "/experiences/tiny-town-tactics/icon.svg",
     "thumbnail": "/experiences/tiny-town-tactics/realistic.webp",
@@ -343,7 +343,7 @@
   {
     "id": "lane-general",
     "title": "Lane General",
-    "description": "Spend five coins deploying creatures in three lanes and out-think a disclosed AI.",
+    "description": "Draft three units and watch a deterministic right-to-left resolver settle the fight.",
     "category": "game",
     "icon": "/experiences/lane-general/icon.svg",
     "thumbnail": "/experiences/lane-general/realistic.webp",
@@ -365,7 +365,7 @@
   {
     "id": "pass-the-pencil",
     "title": "Pass the Pencil",
-    "description": "Play drawing telephone on one device and watch the idea mutate across five passes.",
+    "description": "Play drawing telephone on one device, with memory rounds when the prompt is hidden.",
     "category": "game",
     "icon": "/experiences/pass-the-pencil/icon.svg",
     "thumbnail": "/experiences/pass-the-pencil/realistic.webp",
@@ -387,7 +387,7 @@
   {
     "id": "pocket-alchemist",
     "title": "Pocket Alchemist",
-    "description": "Mix ingredients by hidden properties and discover small living behaviors, not recipes.",
+    "description": "Mix ingredients by hidden traits and discover concepts through geometry, not recipes.",
     "category": "game",
     "icon": "/experiences/pocket-alchemist/icon.svg",
     "thumbnail": "/experiences/pocket-alchemist/realistic.webp",
@@ -398,7 +398,7 @@
   {
     "id": "pocket-sand",
     "title": "Pocket Sand",
-    "description": "Paint sand, water, fire and plants into a pocket world and solve tiny goals.",
+    "description": "Pour sand, water and walls into a tiny falling-sand world and sculpt six goals.",
     "category": "game",
     "icon": "/experiences/pocket-sand/icon.svg",
     "thumbnail": "/experiences/pocket-sand/realistic.webp",
