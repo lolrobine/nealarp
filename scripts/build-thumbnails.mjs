@@ -20,6 +20,26 @@ const themes = {
   "how-deep-can-you-dig": ["#29180e", "#9a3412", "#fdba74", "WHAT LIES BENEATH?"],
   "tiny-ecosystem": ["#092b25", "#166534", "#bef264", "SMALL WORLD. BIG BALANCE."],
   "one-small-change": ["#1f1539", "#6d28d9", "#c4b5fd", "CHANGE THE RULES."],
+  "clue-school": ["#1c1230", "#6d28d9", "#ddd6fe", "EVERY CLUE HAS A TRICK."],
+  "word-square-studio": ["#0c2137", "#0e7490", "#a5f3fc", "ROWS AND COLUMNS AGREE."],
+  "backronym-studio": ["#2b1a0c", "#b45309", "#fde68a", "WORDS OUT OF THIN INITIALS."],
+  "twin-tilt": ["#0b1f33", "#1d4ed8", "#93c5fd", "TWO BALLS. ONE GRAVITY."],
+  "light-loom": ["#12122e", "#4338ca", "#c7d2fe", "WEAVE WITH LIGHT."],
+  "orbit-orchard": ["#0d2417", "#15803d", "#bbf7d0", "GROW YOUR OWN GRAVITY."],
+  growbox: ["#12240f", "#4d7c0f", "#d9f99d", "IT'S NOT WHAT - IT'S WHEN."],
+  "ice-post": ["#0b2436", "#0369a1", "#bae6fd", "EVERYTHING SLIDES."],
+  "stack-ledger": ["#23140c", "#c2410c", "#fed7aa", "BALANCE THE BOOKS AND THE TOWER."],
+  "current-courier": ["#082c33", "#0f766e", "#99f6e4", "THE RIVER HAS OPINIONS."],
+  "lava-links": ["#2a0e0e", "#b91c1c", "#fecaca", "YOUR PATH BURNS BEHIND YOU."],
+  "gate-crash": ["#101c38", "#1e40af", "#bfdbfe", "ONE BUTTON. CHANGING RULES."],
+  "tiny-town-tactics": ["#1c1709", "#a16207", "#fde047", "IT'S THE JOURNEYS."],
+  "lane-general": ["#1b1030", "#7e22ce", "#e9d5ff", "DEPLOY. PREDICT. ADAPT."],
+  "stockroom-six": ["#101c14", "#166534", "#bbf7d0", "ORDER JUST ENOUGH."],
+  "pass-the-pencil": ["#2c1024", "#be185d", "#fbcfe8", "IDEAS MUTATE."],
+  "block-talk": ["#111c2e", "#0369a1", "#bae6fd", "SAY IT SO THEY CAN BUILD IT."],
+  "pocket-alchemist": ["#251207", "#b45309", "#fdba74", "NOT RECIPES. PROPERTIES."],
+  "pocket-sand": ["#241708", "#c2410c", "#fdba74", "TINY WORLD. TINY GOALS."],
+  "copy-machine": ["#170f2c", "#5b21b6", "#ddd6fe", "PLAY TELEPHONE WITH YOUR HAND."],
 };
 const rect = (x, y, w, h, fill, rx = 12, extra = "") =>
   `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" ${extra}/>`;
@@ -70,7 +90,7 @@ function art(id, a) {
     case "one-small-change":
       return `${line("M250 350H730", "#a78bfa", 4)}${line("M310 150Q360 350 405 350Q460 40 515 350Q560 170 605 350Q637 245 669 350", a, 4, 'stroke-dasharray="7 7"')}${circle(466, 178, 26, "#c4b5fd", 'filter="url(#shadow)"')}${circle(465, 175, 10, white, 'opacity=".45"')}${line("M326 398h308", "#5b458a", 10)}${circle(530, 398, 13, white)}${text(326, 439, "LESS BOUNCE", 12, a, 'letter-spacing="2"')}${text(634, 439, "MORE", 12, a, 'text-anchor="end" letter-spacing="2"')}`;
     default:
-      throw Error(id);
+      return `${circle(480, 265, 120, a, 'opacity=".9"')}${circle(480, 265, 165, "none", `stroke="${a}" stroke-opacity=".5" stroke-dasharray="9 11"`)}${rect(395, 195, 170, 140, "none", 16, `stroke="${white}" stroke-width="4"`)}${text(480, 285, "PLAY", 36, white, 'text-anchor="middle" font-weight="bold"')}`;
   }
 }
 for (const [i, item] of catalogue.entries()) {

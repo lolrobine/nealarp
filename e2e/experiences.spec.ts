@@ -24,6 +24,27 @@ const experiences = [
   "how-deep-can-you-dig",
   "tiny-ecosystem",
   "one-small-change",
+
+  "clue-school",
+  "word-square-studio",
+  "backronym-studio",
+  "twin-tilt",
+  "light-loom",
+  "orbit-orchard",
+  "growbox",
+  "ice-post",
+  "stack-ledger",
+  "current-courier",
+  "lava-links",
+  "gate-crash",
+  "tiny-town-tactics",
+  "lane-general",
+  "stockroom-six",
+  "pass-the-pencil",
+  "block-talk",
+  "pocket-alchemist",
+  "pocket-sand",
+  "copy-machine",
 ];
 
 for (const id of experiences) {
