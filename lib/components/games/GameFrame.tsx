@@ -18,16 +18,24 @@ export function GameFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 space-y-6">
-      <header className="text-center space-y-4">
+    <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
+      <header className="relative space-y-5 overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-b from-[var(--card)] to-transparent px-6 py-10 text-center">
         <p className="text-xs uppercase tracking-[0.25em] text-[var(--muted-foreground)]">
           Singleplayer · No account needed
         </p>
-        <h1 className="flex flex-wrap justify-center items-center gap-3 text-4xl font-bold">
+        <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl font-bold">
           <GameIcon src={`/experiences/${id}/icon.svg`} />
-          {title}
+          <span className="bg-gradient-to-r from-[var(--foreground)] via-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text">
+            {title}
+          </span>
         </h1>
-        <p className="text-lg text-[var(--muted-foreground)]">{intro}</p>
+        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[var(--muted-foreground)]">
+          {intro}
+        </p>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--ring)]/50 to-transparent"
+        />
       </header>
       {children}
     </div>
@@ -37,8 +45,15 @@ export function PersonalBest({ record }: { record: ReturnType<typeof usePersonal
   return (
     <Card className="p-6 space-y-3">
       <h2 className="font-bold">Your personal best</h2>
-      <p>
-        {record.best === null ? "No completed attempt yet." : `${record.best.toFixed(1)} / 100`}
+      <p className="flex items-baseline gap-2">
+        {record.best === null ? (
+          <span className="text-[var(--muted-foreground)]">No completed attempt yet.</span>
+        ) : (
+          <>
+            <span className="text-3xl font-bold tabular-nums">{record.best.toFixed(1)}</span>
+            <span className="text-[var(--muted-foreground)]">/ 100</span>
+          </>
+        )}
       </p>
       <Button variant="secondary" onClick={record.clear}>
         Reset personal best

@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import { getLiveExperiences } from "@/lib/registry/experiences";
 
 describe("local catalogue covers", () => {
-  it("provides a unique realistic cover for all eighteen experiences", () => {
+  it("provides a unique realistic cover for all thirty-eight experiences", () => {
     const experiences = getLiveExperiences();
-    expect(experiences).toHaveLength(18);
+    expect(experiences).toHaveLength(38);
     const paths = new Set<string>();
     for (const experience of experiences) {
       const base = `/experiences/${experience.id}/`;
@@ -27,6 +27,6 @@ describe("local catalogue covers", () => {
       expect(svg).not.toMatch(/<script|(?:href|src)=["']https?:|<image\s/);
       paths.add(experience.thumbnail);
     }
-    expect(paths.size).toBe(18);
+    expect(paths.size).toBe(38);
   });
 });

@@ -7,7 +7,7 @@
 
 An open-source reimagining of [neal.fun](https://neal.fun) — a collection of quirky, interactive web experiences with modern stack, PWA, a11y, and extensive polish.
 
-## 🎮 Experiences (18 + template)
+## 🎮 Experiences (38 + template)
 
 | #   | Experience               | Description                | Highlights                                                                                                                  |
 | --- | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -47,6 +47,33 @@ Best scores use `nealarp:best:v1:` keys. Form approvals and digging discoveries 
 See [the rollout and verification notes](docs/singleplayer-rollout.md) for scope and checks.
 
 Template: `app/(experiences)/_template/` — scaffold for new experiences.
+
+### Wave 1–3: twenty new games
+
+All twenty ship with pure `logic.ts` modules and unit tests (including BFS-verified solvability for the authored puzzle levels), local-only personal bests, touch + keyboard parity, silent-first audio and `prefers-reduced-motion` handling. Timing games offer practice/speed options.
+
+| Game                                           | Core mechanic                                                                               | Notes                                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Growbox** (`/growbox`)                       | Place eight items; hidden pre/post effects grow each one twice                              | Brute-force-tested perfect order, score = levels / 16                      |
+| **Copy Machine** (`/copy-machine`)             | Hand-copy a model drawing across five generations                                           | Chamfer-distance scoring, drift film, 1200×630 lineage PNG export          |
+| **Twin Tilt** (`/twin-tilt`)                   | Rotate one room to slide two marbles onto their own goals                                   | Eight BFS-verified rooms with exact pars, undo, landing previews           |
+| **Word Square Studio** (`/word-square-studio`) | Build true word squares that read the same across and down                                  | Ten exhaustive-search squares (3×3 and 4×4), decoy words, mirror solutions |
+| **Clue School** (`/clue-school`)               | Solve original cryptic clues; open the plain-language wordplay lesson                       | Eight original clues (hidden, anagram, charade, double definition)         |
+| **Backronym Studio** (`/backronym-studio`)     | Write phrases whose word initials spell a hidden word                                       | Constraint cards + fully visible rubric, daily letter pools                |
+| **Stack Ledger** (`/stack-ledger`)             | Drop swinging numbered blocks; each must sit on an equal or higher number                   | Fixed-step pendulum, practice/speed paces, topple rule                     |
+| **Lava Links** (`/lava-links`)                 | Hop one or two hex tiles; the tile you leave crumbles                                       | Seven BFS-verified levels, click-to-hop plus direction buttons             |
+| **Ice Post** (`/ice-post`)                     | Slide-to-wall across the ice while the postman walks his patrol                             | Ten BFS-verified levels, postman blocks and advances each slide            |
+| **Gate Crash** (`/gate-crash`)                 | Read the rule during its preview, then crash the one gate it describes                      | Deterministic seeded rounds, 2s/3s/5s previews + keep-visible practice     |
+| **Pocket Sand** (`/pocket-sand`)               | Falling-sand sandbox (48×32 typed-array CA) with six sculpt goals                           | Sand/water/wall materials, goal scoring with precision penalty             |
+| **Stockroom Six** (`/stockroom-six`)           | Twelve days of ordering stock against fictional demand                                      | Newsvendor scoring, fictional-numbers banner, seeded seasons               |
+| **Tiny Town Tactics** (`/tiny-town-tactics`)   | Sixteen-tile placement puzzle with a complete adjacency scoring sheet                       | Inspired by ISLANDERS (The Station), deterministic tile sequences          |
+| **Pocket Alchemist** (`/pocket-alchemist`)     | Mix twelve ingredients with hidden trait vectors                                            | Nearest-concept geometry instead of copied recipes (Little Alchemy 2)      |
+| **Orbit Orchard** (`/orbit-orchard`)           | Launch a seed through fruit rings around a toy star                                         | Fixed 1/120 s integrator, optional trajectory preview                      |
+| **Pass the Pencil** (`/pass-the-pencil`)       | Drawing telephone with memory rounds and privacy handoff notes                              | Original prompt deck (Telestrations/Gartic Phone inspired), solo dry-run   |
+| **Block Talk** (`/block-talk`)                 | Describe an A1–D4 block pattern — or beat your own memory at it                             | Overlap % scoring (intersection over union), two-player instructions       |
+| **Current Courier** (`/current-courier`)       | Draw one unbroken route through every delivery stop                                         | Flight Control-style drawing, par-length scoring, four maps                |
+| **Lane General** (`/lane-general`)             | Draft three units and watch a deterministic right-to-left resolver                          | Super Auto Pets-inspired, visible stats and traits, seeded enemies         |
+| **Light Loom** (`/light-loom`)                 | Split white light through prisms (red straight, green left, blue right) onto colour targets | Lazors-style optics, pure tracer, four hand-traced layouts                 |
 
 ## 🔒 Site Password
 

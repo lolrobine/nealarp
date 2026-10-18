@@ -16,7 +16,7 @@ function worker() {
   };
   const storage = {
     open: vi.fn().mockResolvedValue(cache),
-    keys: vi.fn().mockResolvedValue(["nealarp-v2-5", "nealarp-v2-6", "other-app"]),
+    keys: vi.fn().mockResolvedValue(["nealarp-v2-6", "nealarp-v2-7", "other-app"]),
     delete: vi.fn().mockResolvedValue(true),
   };
   const fetcher = vi.fn().mockResolvedValue(new Response("fresh page"));
@@ -83,6 +83,6 @@ describe("fresh catalogue service worker", () => {
       },
     });
     await done;
-    expect(w.storage.delete).toHaveBeenCalledExactlyOnceWith("nealarp-v2-5");
+    expect(w.storage.delete).toHaveBeenCalledExactlyOnceWith("nealarp-v2-6");
   });
 });

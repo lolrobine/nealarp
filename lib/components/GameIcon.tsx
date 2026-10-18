@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getAssetUrl } from "@/lib/utils/assets";
+import { cn } from "@/lib/utils/cn";
 
 interface GameIconProps {
   src: string;
@@ -15,7 +16,7 @@ export function GameIcon({ src, alt = "", className }: GameIconProps) {
       width={48}
       height={48}
       sizes="48px"
-      className={className}
+      className={cn("h-12 w-12", className)}
     />
   );
 }
