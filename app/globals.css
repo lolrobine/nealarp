@@ -140,3 +140,20 @@ body {
 .topple-piece {
   animation: topple-away 600ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
+
+/* Native checkboxes render at roughly 13px, well under the 24px touch target
+   every other control in the app clears. Scale them up and let them pick up the
+   theme accent instead of the browser default blue. They stay real checkboxes,
+   so keyboard behaviour and assistive tech are unchanged. */
+input[type="checkbox"] {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
