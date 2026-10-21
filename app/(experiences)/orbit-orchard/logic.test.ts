@@ -91,3 +91,16 @@ describe("orbit-orchard rings and scoring", () => {
     expect(scoreRun(10, 4)).toBe(100);
   });
 });
+
+describe("orbit-orchard hints", () => {
+  it("documents exactly one hint angle per level", () => {
+    // The board offers a "show hint direction" marker per level, so a missing entry
+    // would silently disable it on that level.
+    expect(HINT_DEGREES).toHaveLength(LEVELS.length);
+    for (const degrees of HINT_DEGREES) {
+      expect(Number.isFinite(degrees)).toBe(true);
+      expect(degrees).toBeGreaterThanOrEqual(0);
+      expect(degrees).toBeLessThan(360);
+    }
+  });
+});

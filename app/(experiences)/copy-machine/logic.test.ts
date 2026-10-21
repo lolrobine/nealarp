@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  chamfer,
+  COPY_FLOOR,
   copyScore,
+  flattenResampled,
   normalize,
   resample,
   stabilityScore,
@@ -74,5 +77,60 @@ describe("copy-machine metric", () => {
     expect(score).toBeGreaterThan(20);
     expect(score).toBeLessThan(80);
     expect(stabilityScore([circle])).toBe(0);
+  });
+});
+
+/** The "How to beat it" panel quotes the scoring curve and two worked numbers.
+ *  Pin them so the copy cannot drift away from the maths. */
+describe("copy-machine: the numbers printed in How to beat it", () => {
+  const square = [
+    [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+      { x: 0, y: 0 },
+    ],
+  ];
+  const triangle = [
+    [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 5, y: 10 },
+      { x: 0, y: 0 },
+    ],
+  ];
+  const line = [
+    [
+      { x: 0, y: 0 },
+      { x: 10, y: 10 },
+    ],
+  ];
+
+  it("is translation and scale invariant, so only the shape counts", () => {
+    const moved = square.map((stroke) => stroke.map((p) => ({ x: p.x + 37, y: p.y - 12 })));
+    const bigger = square.map((stroke) => stroke.map((p) => ({ x: p.x * 4, y: p.y * 4 })));
+    expect(copyScore(square, moved)).toBe(100);
+    expect(copyScore(square, bigger)).toBe(100);
+  });
+
+  it("follows 100 x (1 - distance / COPY_FLOOR)", () => {
+    const expected = (model: typeof square, copy: typeof square) =>
+      Math.round(
+        Math.max(
+          0,
+          Math.min(
+            100,
+            100 * (1 - chamfer(flattenResampled(model), flattenResampled(copy)) / COPY_FLOOR)
+          )
+        )
+      );
+    expect(copyScore(square, triangle)).toBe(expected(square, triangle));
+    expect(COPY_FLOOR).toBe(0.45);
+  });
+
+  it("banks the two worked examples the panel quotes", () => {
+    expect(copyScore(square, triangle)).toBe(67);
+    expect(copyScore(square, line)).toBe(35);
   });
 });

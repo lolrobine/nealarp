@@ -5,7 +5,15 @@ import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
-import { collectedRings, launch, LEVELS, scoreRun, simulate, type Body } from "./logic";
+import {
+  collectedRings,
+  HINT_DEGREES,
+  launch,
+  LEVELS,
+  scoreRun,
+  simulate,
+  type Body,
+} from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SCALE = 0.75; // world units → canvas pixels (500×500 canvas shows ±333 units)
@@ -18,6 +26,7 @@ export default function OrbitOrchardPage() {
   const [showPreview, setShowPreview] = useState(true);
   const [collected, setCollected] = useState<number[]>([]);
   const [flightDone, setFlightDone] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const level = LEVELS[levelIndex] ?? LEVELS[0]!;
 
   function toCanvas(x: number, y: number): [number, number] {
@@ -49,6 +58,27 @@ export default function OrbitOrchardPage() {
     const [ox, oy] = toCanvas(level.origin.x, level.origin.y);
     ctx.fillStyle = "#93c5fd";
     ctx.fillRect(ox - 5, oy - 5, 10, 10);
+    // hint ray: the documented winning direction, drawn but never fired for the player
+    const hintDegrees = HINT_DEGREES[levelIndex];
+    if (showHint && hintDegrees !== undefined) {
+      const rad = (hintDegrees * Math.PI) / 180;
+      ctx.save();
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ox + Math.cos(rad) * 120, oy + Math.sin(rad) * 120);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "13px system-ui, sans-serif";
+      ctx.fillText(
+        `${hintDegrees}deg`,
+        ox + Math.cos(rad) * 132 - 14,
+        oy + Math.sin(rad) * 132 + 4
+      );
+    }
     // path
     if (path.length > 1) {
       ctx.strokeStyle = "#a5b4fc";
@@ -68,7 +98,7 @@ export default function OrbitOrchardPage() {
     const previewPath = showPreview ? simulate(body, 120 * 12) : [];
     draw(flightDone ? simulate(body, 120 * 12) : previewPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [angle, levelIndex, showPreview, collected, flightDone]);
+  }, [angle, levelIndex, showPreview, collected, flightDone, showHint]);
 
   function fire() {
     const body = launch((angle * Math.PI) / 180, level.launchPower, level.origin);
@@ -140,6 +170,14 @@ export default function OrbitOrchardPage() {
             aria-pressed={showPreview}
           >
             Trajectory preview {showPreview ? "on" : "off"}
+          </Button>
+          <Button
+            variant={showHint ? "default" : "outline"}
+            onClick={() => setShowHint(!showHint)}
+            aria-pressed={showHint}
+            disabled={HINT_DEGREES[levelIndex] === undefined}
+          >
+            {showHint ? "Hide hint direction" : "Show hint direction"}
           </Button>
           <Button onClick={fire}>Launch seed</Button>
           <Button

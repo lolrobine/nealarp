@@ -483,15 +483,18 @@ export default function CopyMachinePage() {
 
       <HowToBeat summary="How five clean generations score">
         <ExampleStep n={1}>
-          Copy the faint model in one confident pass — jitter is what the 24-point shape comparison
-          penalises most.
+          Position and size are free: every drawing is centred and scaled to the same box before
+          each stroke is resampled to 24 points, so only the <em>shape</em> is compared. Draw big
+          and copy the silhouette — jitter is what the comparison punishes.
         </ExampleStep>
         <ExampleStep n={2}>
-          Your copy becomes generation 2&apos;s model. Zoom in before each round and keep the
-          silhouette: only comparisons above the 45% fidelity floor still count.
+          A round scores 100 × (1 − distance / 0.45), where distance is the mean gap between the two
+          normalised outlines. So 0.45 apart scores 0, and nothing in between is wasted: a square
+          copied as a triangle still banks 67, and as a straight line 35.
         </ExampleStep>
         <ExampleResult>
-          Stay above the floor for all five generations and the lineage score stays near 100.
+          Your copy becomes the next generation&apos;s model, so the run score is the mean of the
+          four comparisons — keep each one tight and the lineage stays near 100.
         </ExampleResult>
       </HowToBeat>
     </GameFrame>
