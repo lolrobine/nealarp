@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { BestPill, SegmentedControl } from "@/lib/components/games/SettingsRow";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
@@ -12,6 +13,7 @@ import {
   COLS,
   dropBlock,
   efficiency,
+  landing,
   makeQueue,
   nudge,
   scoreTower,
@@ -44,7 +46,12 @@ export default function StackLedgerPage() {
     false
   );
   const [state, setState] = useState<StackState>(() => newRunSafe());
-  const [falling, setFalling] = useState<{ x: number; w: number; rows: number } | null>(null);
+  const [falling, setFalling] = useState<{
+    x: number;
+    w: number;
+    rows: number;
+    debris: Array<{ col: number; dropRows: number }>;
+  } | null>(null);
   const tickRef = useRef(state.tick);
   const xRef = useRef(state.x);
   const speedRef = useRef(1);
@@ -88,9 +95,16 @@ export default function StackLedgerPage() {
     if (s.phase !== "moving" || falling) return;
     // Animate the fall first (unless reduced motion), then settle the physics.
     const width = barWidth(s);
-    let contact = 0;
-    for (let i = 0; i < width; i++) contact = Math.max(contact, s.heights[s.x + i] ?? 0);
+    const { contact, supported } = landing(s.heights, s.x, width);
     const rows = Math.max(1, ROWS - 3 - contact);
+    const debris: Array<{ col: number; dropRows: number }> = [];
+    for (let i = 0; i < width; i++) {
+      if (!supported[i]) {
+        // overhang piece tumbles past the skyline
+        const under = s.heights[s.x + i] ?? 0;
+        debris.push({ col: s.x + i, dropRows: Math.max(2, ROWS - 3 - under) });
+      }
+    }
     const settle = () => {
       const next = dropBlock(stateRef.current);
       setState(next);
@@ -103,8 +117,8 @@ export default function StackLedgerPage() {
       settle();
       return;
     }
-    setFalling({ x: s.x, w: width, rows });
-    window.setTimeout(settle, 220);
+    setFalling({ x: s.x, w: width, rows, debris });
+    window.setTimeout(settle, 360);
   }
 
   useEffect(() => {
@@ -144,45 +158,41 @@ export default function StackLedgerPage() {
       intro="Slide the bar and drop it onto the skyline. It lands rigid on the tallest column of its span; anything hanging over a lower column snaps off. The whole width queue is visible up front — plan the tower, no luck involved. Reach 20 to close the ledger."
     >
       <Card className="space-y-4 p-6">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {SPEEDS.map((s) => (
-            <Button
-              key={s.id}
-              variant={speedId === s.id ? "default" : "outline"}
-              onClick={() => setSpeedId(s.id)}
-              aria-pressed={speedId === s.id}
-            >
-              {s.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <SegmentedControl
+            label="Drop pace"
+            value={speedId}
+            onChange={(v) => setSpeedId(v)}
+            options={SPEEDS.map((s) => ({ value: s.id, label: s.label }))}
+          />
+          <SegmentedControl
+            label="Mode"
+            value={practice ? "practice" : "scored"}
+            onChange={(v) => setPractice(v === "practice")}
+            options={[
+              { value: "scored", label: "Scored" },
+              { value: "practice", label: "Practice" },
+            ]}
+          />
           {reducedMotion && speedId === "still" && (
             <p className="w-full text-center text-xs text-[var(--muted-foreground)]">
               Motion is paused because your system asks for reduced motion — pick a pace when you
               are ready.
             </p>
           )}
-          <Button
-            variant={practice ? "default" : "outline"}
-            onClick={() => setPractice(!practice)}
-            aria-pressed={practice}
-          >
-            Practice (unscored)
-          </Button>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-          <span>
-            Height <strong>{maxH}</strong> / {WIN_HEIGHT}
+          <span className="stat-pill">
+            Height <strong className="tabular-nums">{maxH}</strong> / {WIN_HEIGHT}
           </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            Kept <strong>{Math.round(eff * 100)}%</strong> of cells
+          <span className="stat-pill">
+            Kept <strong className="tabular-nums">{Math.round(eff * 100)}%</strong>
           </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            Score <strong>{score}</strong>
+          <span className="stat-pill">
+            Score <strong className="tabular-nums">{score}</strong>
           </span>
-          <PersonalBest record={record} />
+          <BestPill best={record.best} />
         </div>
 
         {/* The queue: every upcoming width, known in advance. */}
@@ -249,18 +259,38 @@ export default function StackLedgerPage() {
 
           {/* falling piece animation */}
           {falling && (
-            <div
-              className="absolute z-10 rounded-md border-2 border-[var(--primary)] bg-[var(--primary)]/80"
-              style={{
-                left: `calc(${(falling.x / COLS) * 100}% + 2px)`,
-                width: `calc(${(falling.w / COLS) * 100}% - 4px)`,
-                height: 14,
-                top: 8,
-                transition: "transform 220ms ease-in",
-                transform: `translateY(${falling.rows * 8}px)`,
-              }}
-              aria-hidden="true"
-            />
+            <>
+              <div
+                className="absolute z-10 rounded-md border-2 border-[var(--primary)] bg-[var(--primary)]/80"
+                style={{
+                  left: `calc(${(falling.x / COLS) * 100}% + 2px)`,
+                  width: `calc(${(falling.w / COLS) * 100}% - 4px)`,
+                  height: 14,
+                  top: 8,
+                  transition: "transform 260ms cubic-bezier(.55,.05,.7,.3)",
+                  transform: `translateY(${falling.rows * 14}px)`,
+                }}
+                aria-hidden="true"
+              />
+              {/* overhang debris: pieces that snap off and tumble past the skyline */}
+              {falling.debris.map((d, i) => (
+                <div
+                  key={i}
+                  className="absolute z-10 rounded-sm border border-red-400/70 bg-red-400/70"
+                  style={{
+                    left: `calc(${(d.col / COLS) * 100}% + 2px)`,
+                    width: `calc(${(1 / COLS) * 100}% - 4px)`,
+                    height: 12,
+                    top: 8,
+                    transition:
+                      "transform 360ms cubic-bezier(.45,.05,.7,.3), opacity 360ms ease-in",
+                    transform: `translate(${i % 2 === 0 ? -6 : 6}px, ${d.dropRows * 14 + 6}px) rotate(${i % 2 === 0 ? -28 : 28}deg)`,
+                    opacity: 0,
+                  }}
+                  aria-hidden="true"
+                />
+              ))}
+            </>
           )}
 
           {/* the moving bar (positioned by rAF) */}
@@ -330,6 +360,8 @@ export default function StackLedgerPage() {
           question is where it fits best.
         </p>
       </Card>
+
+      <PersonalBest record={record} />
 
       <HowToBeat summary="Closing the ledger at 20">
         <ExampleStep n={1}>

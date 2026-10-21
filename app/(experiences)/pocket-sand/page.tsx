@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { BestPill, SegmentedControl } from "@/lib/components/games/SettingsRow";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
@@ -11,14 +12,20 @@ import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, W, WATER }
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SPEEDS = [
-  { id: "slow", label: "Practice pace", ticksPerSecond: 4 },
+  { id: "slow", label: "Chill", ticksPerSecond: 4 },
   { id: "normal", label: "Normal", ticksPerSecond: 12 },
   { id: "fast", label: "Fast", ticksPerSecond: 30 },
 ];
 const MATERIALS = [
-  { id: SAND, label: "Sand" },
-  { id: WATER, label: "Water" },
-  { id: WALL, label: "Wall" },
+  { id: SAND, label: "Sand", swatch: "#fbbf24" },
+  { id: WATER, label: "Water", swatch: "#38bdf8" },
+  { id: WALL, label: "Wall", swatch: "#94a3b8" },
+  { id: EMPTY, label: "Erase", swatch: "#0f172a" },
+];
+const BRUSHES = [
+  { id: "1", label: "Fine", size: 0 },
+  { id: "2", label: "Brush", size: 1 },
+  { id: "3", label: "Pour", size: 2 },
 ];
 
 export default function PocketSandPage() {
@@ -36,6 +43,11 @@ export default function PocketSandPage() {
     "nealarp:settings:v1:pocket-sand:material",
     SAND
   );
+  const [brushId, setBrushId] = useLocalStorage<string>(
+    "nealarp:settings:v1:pocket-sand:brush",
+    "2"
+  );
+  const brush = BRUSHES.find((b) => b.id === brushId) ?? BRUSHES[1]!;
   const [goalIndex, setGoalIndex] = useState(0);
   const [score, setScore] = useState(0);
   const goal = GOALS[goalIndex] ?? GOALS[0]!;
@@ -45,25 +57,50 @@ export default function PocketSandPage() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const cell = canvas.width / W;
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = "#0b1220";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // subtle grid backdrop
+    ctx.fillStyle = "rgba(148,163,184,0.04)";
+    for (let y = 0; y < H; y += 2) {
+      for (let x = 0; x < W; x += 2) {
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
     const grid = gridRef.current;
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const mat = grid[y * W + x]!;
         if (mat === 0) continue;
-        ctx.fillStyle = mat === SAND ? "#fbbf24" : mat === WATER ? "#38bdf8" : "#94a3b8";
+        if (mat === SAND) {
+          // Sand: grainy warm shades
+          const jitter = ((x * 13 + y * 7) % 5) - 2;
+          const g = 185 + jitter * 3;
+          ctx.fillStyle = `rgb(245,${g},${60 + jitter * 4})`;
+        } else if (mat === WATER) {
+          // Water: banded blues to hint at surface height
+          const below = y + 1 < H ? grid[(y + 1) * W + x] : 0;
+          const surface = below === EMPTY;
+          ctx.fillStyle = surface ? "#7dd3fc" : (x + y) % 2 === 0 ? "#38bdf8" : "#0ea5e9";
+        } else {
+          ctx.fillStyle = "#94a3b8";
+        }
         ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
       }
     }
     // Keyboard brush marker (visible whenever the canvas is focused).
+    const b = brushRef.current;
+    const r = brush.size;
     if (document.activeElement === canvas) {
-      const b = brushRef.current;
-      ctx.strokeStyle = "#f8fafc";
+      ctx.strokeStyle = "rgba(248,250,252,0.9)";
       ctx.lineWidth = 2;
-      ctx.strokeRect(b.x * cell + 1, b.y * cell + 1, cell - 2, cell - 2);
+      ctx.strokeRect(
+        (b.x - r) * cell + 1,
+        (b.y - r) * cell + 1,
+        (r * 2 + 1) * cell - 2,
+        (r * 2 + 1) * cell - 2
+      );
     }
-  }, []);
+  }, [brush.size]);
 
   useEffect(() => {
     draw();
@@ -90,8 +127,18 @@ export default function PocketSandPage() {
   }
 
   function paintCell(x: number, y: number) {
-    brushRef.current = { x: Math.max(0, Math.min(W - 1, x)), y: Math.max(0, Math.min(H - 1, y)) };
-    set(gridRef.current, brushRef.current.x, brushRef.current.y, material);
+    const cx = Math.max(0, Math.min(W - 1, x));
+    const cy = Math.max(0, Math.min(H - 1, y));
+    brushRef.current = { x: cx, y: cy };
+    const r = brush.size;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r + 1) continue;
+        // Circular brush, soft edge for larger sizes
+        if (r > 0 && dx * dx + dy * dy === r * r + 1 && Math.random() < 0.5) continue;
+        set(gridRef.current, cx + dx, cy + dy, material);
+      }
+    }
     draw();
     setScore(sandScore(gridRef.current, goal));
   }
@@ -147,30 +194,45 @@ export default function PocketSandPage() {
         </div>
         <p className="text-sm text-[var(--muted-foreground)]">{goal.hint}</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {MATERIALS.map((m) => (
-            <Button
-              key={m.id}
-              variant={material === m.id ? "default" : "outline"}
-              onClick={() => setMaterial(m.id)}
-              aria-pressed={material === m.id}
-            >
-              {m.label}
-            </Button>
-          ))}
-          <Button onClick={() => setRunning(!running)} aria-pressed={running}>
-            {running ? "Pause" : "Play"}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <SegmentedControl
+            label="Material"
+            value={String(material)}
+            onChange={(v) => setMaterial(Number(v))}
+            options={MATERIALS.map((m) => ({
+              value: String(m.id),
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="inline-block h-3 w-3 rounded-sm"
+                    style={{ background: m.swatch }}
+                  />
+                  {m.label}
+                </span>
+              ),
+            }))}
+          />
+          <SegmentedControl
+            label="Brush size"
+            value={brushId}
+            onChange={setBrushId}
+            options={BRUSHES.map((b) => ({ value: b.id, label: b.label }))}
+          />
+          <SegmentedControl
+            label="Sim speed"
+            value={speedId}
+            onChange={setSpeedId}
+            options={SPEEDS.map((s) => ({ value: s.id, label: s.label }))}
+          />
+          <Button
+            size="sm"
+            variant={running ? "outline" : "default"}
+            onClick={() => setRunning(!running)}
+            aria-pressed={running}
+          >
+            {running ? "⏸ Pause" : "▶ Play"}
           </Button>
-          {SPEEDS.map((s) => (
-            <Button
-              key={s.id}
-              variant={speedId === s.id ? "default" : "outline"}
-              onClick={() => setSpeedId(s.id)}
-              aria-pressed={speedId === s.id}
-            >
-              {s.label}
-            </Button>
-          ))}
         </div>
 
         <canvas
@@ -194,20 +256,23 @@ export default function PocketSandPage() {
           }}
         />
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <p className="text-lg font-bold" aria-live="polite">
-            Score: {score} / 100
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <p className="stat-pill text-base">
+            Score&nbsp;<strong className="tabular-nums">{score}</strong> / 100
           </p>
+          <BestPill best={record.best} />
           <Button
             onClick={() => {
               record.save(score);
             }}
             disabled={score === 0}
+            size="sm"
           >
             Save this sculpt
           </Button>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => {
               gridRef.current = makeGrid();
               draw();
