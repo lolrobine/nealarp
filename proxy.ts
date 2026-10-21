@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Vercel-only password protection.
+ * Vercel-only gate hint.
  *
- * When deployed to Vercel (non-static), this middleware enforces the site
- * password via a cookie before HTML is served, unlike the client-side
- * PasswordGate which is the fallback for GitHub Pages static export.
+ * IMPORTANT: this does not actually block anything. It always calls
+ * NextResponse.next(); when the request is not unlocked it merely tags the
+ * response with `x-nealarp-gate: locked`. The real gate is the client-side
+ * PasswordGate, which is also the only option for the GitHub Pages static
+ * export (`output: "export"` disables this file entirely).
  *
- * Flow:
- * - If NEXT_PUBLIC_SITE_PASSWORD is not set, skip (open site)
- * - Check cookie `nealarp.site-unlock.v1` matches expected token
- * - If not, allow request to /api/*? No, protect all, but let the client
- *   PasswordGate handle UI — we just set a header for rate limiting hint.
+ * The cookie check below is effectively dead today: PasswordGate stores its
+ * unlock token in localStorage under UNLOCK_STORAGE_KEY, not in a cookie of
+ * the same name, so `expected` never matches. It is kept because it is
+ * harmless and documents the intended shape of a future server-side gate.
  *
- * For static export (GitHub Pages), middleware is ignored by Next.js
- * because `output: "export"` disables middleware. So this only runs on Vercel.
+ * Renamed from middleware.ts to proxy.ts for Next.js 16, which deprecated the
+ * old filename and the Edge runtime that came with it.
  */
 
 const UNLOCK_COOKIE = "nealarp.site-unlock.v1";
@@ -30,7 +31,7 @@ function fnv1aHex(text: string): string {
   return hash.toString(16).padStart(8, "0");
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only enforce on Vercel, not in dev unless env set
   const sitePassword = process.env.NEXT_PUBLIC_SITE_PASSWORD;
   // If no env override, let client-side gate handle default password

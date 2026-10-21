@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-export const runtime = "edge";
 export const dynamic = "force-static";
 export const alt = "⚡ Speed — Nealarp";
 export const size = { width: 1200, height: 630 };
@@ -18,7 +17,7 @@ export default async function Image() {
         color: "white",
       }}
     >
-      <div style={{ fontSize: 72, fontWeight: 800 }}>⚡ Speed</div>
+      <div style={{ fontSize: 72, fontWeight: 800 }}>Speed</div>
       <div style={{ fontSize: 28, marginTop: 16, color: "#a3a3a3" }}>Compare everything</div>
       <div style={{ fontSize: 18, marginTop: 20, color: "#6366f1" }}>Nealarp</div>
     </div>,

@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const dynamic = "force-static";
 export const alt = "Nealarp - Interactive Web Experiences";
 export const size = { width: 1200, height: 630 };
@@ -35,11 +34,15 @@ export default async function Image() {
       <div style={{ fontSize: 28, marginTop: 20, color: "#a3a3a3" }}>
         Interactive web experiences
       </div>
-      <div style={{ display: "flex", gap: 20, marginTop: 40, fontSize: 40 }}>
-        <span>🎮</span>
-        <span>📊</span>
-        <span>🧪</span>
-        <span>🧮</span>
+      {/* Plain shapes, not emoji: Satori rasterises emoji by fetching them from a
+          CDN, which makes the build depend on the network. These are pure CSS. */}
+      <div style={{ display: "flex", gap: 20, marginTop: 44 }}>
+        {["#6ee7b7", "#22d3ee", "#38bdf8", "#6366f1"].map((colour) => (
+          <div
+            key={colour}
+            style={{ width: 28, height: 28, borderRadius: 999, background: colour }}
+          />
+        ))}
       </div>
     </div>,
     { ...size }
