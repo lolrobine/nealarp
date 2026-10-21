@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  at,
   EMPTY,
   GOALS,
   H,
-  makeGrid,
+  OIL,
   SAND,
+  W,
+  WALL,
+  WATER,
+  at,
+  makeGrid,
   sandScore,
   set,
   stamp,
   step,
-  WALL,
-  WATER,
-  W,
 } from "./logic";
 
 describe("pocket-sand simulation", () => {
@@ -264,5 +265,44 @@ describe("pocket-sand water behaves like a liquid, not like sand", () => {
       .map((c) => c.x);
     // Every wet column between the two ends is wet: no dry stripes inside the puddle.
     expect(Math.max(...wet) - Math.min(...wet)).toBe(wet.length - 1);
+  });
+});
+
+describe("pocket-sand oil", () => {
+  it("floats to the top of the water instead of mixing in", () => {
+    // Oil poured underneath water has to swap its way up through it.
+    let g = makeGrid();
+    for (let y = 24; y < H; y++) {
+      set(g, 10, y, WALL);
+      set(g, 20, y, WALL);
+    }
+    for (let x = 10; x <= 20; x++) set(g, x, H - 1, WALL);
+    for (let y = 26; y < H - 1; y++) for (let x = 12; x <= 18; x++) set(g, x, y, WATER);
+    for (let x = 12; x <= 18; x++) set(g, x, H - 2, OIL); // oil trapped at the bottom
+    for (let t = 0; t < 200; t++) g = step(g, t);
+
+    let oilCells = 0;
+    let oilUnderWater = 0;
+    for (let y = 0; y < H; y++) {
+      for (let x = 11; x < 20; x++) {
+        if (g[y * W + x] !== OIL) continue;
+        oilCells++;
+        if (y > 0 && g[(y - 1) * W + x] === WATER) oilUnderWater++;
+      }
+    }
+    expect(oilCells).toBe(7); // nothing lost on the way up
+    // The layers have separated: no oil is left trapped below the waterline.
+    // (The two can share the top row, because seven cells of oil cannot cover
+    // the nine-wide surface of the tank on their own.)
+    expect(oilUnderWater).toBe(0);
+  });
+
+  it("sand sinks through oil as well as through water", () => {
+    const g = makeGrid();
+    set(g, 5, 30, SAND);
+    set(g, 5, 31, OIL);
+    const next = step(g);
+    expect(at(next, 5, 31)).toBe(SAND);
+    expect(at(next, 5, 30)).toBe(OIL);
   });
 });

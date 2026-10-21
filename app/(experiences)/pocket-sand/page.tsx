@@ -8,7 +8,20 @@ import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
-import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, step, WALL, W, WATER, stamp } from "./logic";
+import {
+  EMPTY,
+  GOALS,
+  H,
+  makeGrid,
+  OIL,
+  SAND,
+  sandScore,
+  step,
+  WALL,
+  W,
+  WATER,
+  stamp,
+} from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SPEEDS = [
@@ -19,7 +32,9 @@ const SPEEDS = [
 const MATERIALS = [
   { id: SAND, label: "Sand" },
   { id: WATER, label: "Water" },
+  { id: OIL, label: "Oil" },
   { id: WALL, label: "Wall" },
+  { id: EMPTY, label: "Eraser" },
 ];
 
 const BRUSHES = [
@@ -71,7 +86,14 @@ export default function PocketSandPage() {
       for (let x = 0; x < W; x++) {
         const mat = grid[y * W + x]!;
         if (mat === 0) continue;
-        if (mat === WATER) {
+        if (mat === OIL) {
+          // An oil slick: dark body, iridescent skin on the surface cell so the
+          // layer stays readable where it floats on top of the water.
+          const skin = y === 0 || grid[(y - 1) * W + x] === EMPTY;
+          ctx.fillStyle = skin
+            ? `hsl(${276 + Math.sin(x * 0.5 + phaseRef.current) * 14} 70% 62%)`
+            : "#4c1d95";
+        } else if (mat === WATER) {
           // The topmost water cell of a column is the surface: it catches the light,
           // and ripples slowly while the simulation runs. The waterline stays visible
           // even when still, so the hint is never animation-only.

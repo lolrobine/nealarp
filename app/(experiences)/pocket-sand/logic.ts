@@ -8,11 +8,14 @@ export const EMPTY = 0;
 export const SAND = 1;
 export const WALL = 2;
 export const WATER = 3;
+/** Lighter than water, so it floats: pour both and they separate into layers. */
+export const OIL = 4;
 
 export type Grid = Uint8Array;
 
-function isWater(m: number): boolean {
-  return m === WATER;
+/** Sand is denser than both liquids, so it sinks through either of them. */
+function isLiquid(m: number): boolean {
+  return m === WATER || m === OIL;
 }
 
 export function makeGrid(): Grid {
@@ -76,15 +79,15 @@ export function step(grid: Grid, tick = 0): Grid {
         if (below === EMPTY && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, SAND);
-        } else if (isWater(below) && isWater(belowNext)) {
-          // Sink through standing water: the water takes the grain's place.
+        } else if (isLiquid(below) && isLiquid(belowNext)) {
+          // Sink through a standing liquid: it takes the grain's place.
           set(next, x, y, belowNext);
           set(next, x, y + 1, SAND);
-        } else if (isWater(below) && unclaimed(next, x, y + 1)) {
+        } else if (isLiquid(below) && unclaimed(next, x, y + 1)) {
           // The water already moved this tick: drop into the vacated cell.
           set(next, x, y, EMPTY);
           set(next, x, y + 1, SAND);
-        } else if (!isWater(below)) {
+        } else if (!isLiquid(below)) {
           const left = x - 1,
             right = x + 1;
           if (free(grid, left, y + 1) && unclaimed(next, left, y + 1)) {
@@ -95,7 +98,7 @@ export function step(grid: Grid, tick = 0): Grid {
             set(next, right, y + 1, SAND);
           }
         }
-      } else if (isWater(mat)) {
+      } else if (isLiquid(mat)) {
         const below = y + 1 < H ? grid[(y + 1) * W + x]! : WALL;
         // 1) Fall — including into gaps that opened this tick. Checking `next`
         // rather than `grid` is what makes that true: cells are swept bottom-up,
@@ -104,6 +107,13 @@ export function step(grid: Grid, tick = 0): Grid {
         // puddle, and the puddle churning underneath never let it land.
         if (below !== WALL && y + 1 < H && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
+          set(next, x, y + 1, mat);
+          continue;
+        }
+        // Density swap: water is heavier, so it sinks through oil and the oil
+        // rises. Pour both into one tank and they sort themselves into layers.
+        if (mat === WATER && below === OIL && (y + 1 < H ? next[(y + 1) * W + x] : WALL) === OIL) {
+          set(next, x, y, OIL);
           set(next, x, y + 1, WATER);
           continue;
         }
@@ -116,7 +126,7 @@ export function step(grid: Grid, tick = 0): Grid {
         for (const s of [side, -side]) {
           if (free(grid, x + s, y + 1) && unclaimed(next, x + s, y + 1)) {
             set(next, x, y, EMPTY);
-            set(next, x + s, y + 1, WATER);
+            set(next, x + s, y + 1, mat);
             moved = true;
             break;
           }
@@ -132,7 +142,7 @@ export function step(grid: Grid, tick = 0): Grid {
         // in and trade places, so sliding out from under it would teleport the
         // puddle sideways instead of letting the sand displace it.
         if (y > 0 && grid[(y - 1) * W + x] === SAND) continue;
-        const pressed = y > 0 && grid[(y - 1) * W + x] === WATER;
+        const pressed = y > 0 && grid[(y - 1) * W + x] === mat;
         for (const s of [side, -side]) {
           if (!free(grid, x + s, y) || !unclaimed(next, x + s, y)) continue;
           // Two reasons to step sideways, and only these two. Either water is
@@ -141,10 +151,10 @@ export function step(grid: Grid, tick = 0): Grid {
           // the terraces are what used to pile up into a 45° sand pyramid.
           // A lone puddle one cell deep satisfies neither, so it stays put
           // rather than creeping across the floor into scattered droplets.
-          const ontoWater = y + 1 < H && grid[(y + 1) * W + x + s] === WATER;
+          const ontoWater = y + 1 < H && grid[(y + 1) * W + x + s] === mat;
           if (!pressed && !ontoWater) continue;
           set(next, x, y, EMPTY);
-          set(next, x + s, y, WATER);
+          set(next, x + s, y, mat);
           break;
         }
       }
