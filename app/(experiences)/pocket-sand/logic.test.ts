@@ -212,3 +212,57 @@ describe("pocket-sand brush", () => {
     expect(grid.filter((cell) => cell === WATER)).toHaveLength(painted);
   });
 });
+
+describe("pocket-sand water behaves like a liquid, not like sand", () => {
+  const depths = (g: Uint8Array): number[] => {
+    const d: number[] = [];
+    for (let x = 0; x < W; x++) {
+      let n = 0;
+      for (let y = 0; y < H; y++) if (g[y * W + x] === WATER) n++;
+      d.push(n);
+    }
+    return d;
+  };
+
+  it("finds its level in a basin instead of heaping into a pyramid", () => {
+    // Pour a tall slug of water against the left wall of a tank. Sand would
+    // keep a 45° slope; water has to end up flat.
+    let g = makeGrid();
+    for (let y = 20; y < H; y++) {
+      set(g, 12, y, WALL);
+      set(g, 24, y, WALL);
+    }
+    for (let x = 12; x <= 24; x++) set(g, x, H - 1, WALL);
+    for (let y = 22; y < H - 1; y++) for (let x = 14; x <= 16; x++) set(g, x, y, WATER);
+    const total = depths(g).reduce((a, b) => a + b, 0);
+    for (let t = 0; t < 400; t++) g = step(g, t);
+
+    const inside = depths(g).slice(13, 24);
+    expect(inside.reduce((a, b) => a + b, 0)).toBe(total); // nothing escapes the tank
+    // A flat surface on a discrete grid means neighbouring columns differ by at
+    // most one. The old simulation froze at a 6-high slope here.
+    expect(Math.max(...inside) - Math.min(...inside)).toBeLessThanOrEqual(1);
+  });
+
+  it("keeps flowing after the first few ticks", () => {
+    // The old water stopped dead around tick 10 and never changed again.
+    let g = makeGrid();
+    for (let y = H - 12; y < H; y++) for (let x = 23; x <= 25; x++) set(g, x, y, WATER);
+    for (let t = 0; t < 10; t++) g = step(g, t);
+    const atTen = depths(g).join(",");
+    for (let t = 10; t < 40; t++) g = step(g, t);
+    expect(depths(g).join(",")).not.toBe(atTen);
+  });
+
+  it("settles into a solid sheet with no checkerboard holes", () => {
+    let g = makeGrid();
+    for (let y = H - 12; y < H; y++) for (let x = 23; x <= 25; x++) set(g, x, y, WATER);
+    for (let t = 0; t < 400; t++) g = step(g, t);
+    const wet = depths(g)
+      .map((d, x) => ({ d, x }))
+      .filter((c) => c.d > 0)
+      .map((c) => c.x);
+    // Every wet column between the two ends is wet: no dry stripes inside the puddle.
+    expect(Math.max(...wet) - Math.min(...wet)).toBe(wet.length - 1);
+  });
+});

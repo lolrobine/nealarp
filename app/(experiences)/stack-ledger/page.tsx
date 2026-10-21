@@ -48,7 +48,7 @@ export default function StackLedgerPage() {
   const [state, setState] = useState<StackState>(() => newRunSafe());
   const [topple, setTopple] = useState<{ col: number; row: number; key: number }[]>([]);
   const [status, setStatus] = useState("");
-  const [falling, setFalling] = useState<{ x: number; w: number; rows: number } | null>(null);
+  const [falling, setFalling] = useState<{ x: number; w: number; from: number } | null>(null);
   const tickRef = useRef(state.tick);
   const xRef = useRef(state.x);
   const speedRef = useRef(1);
@@ -74,7 +74,7 @@ export default function StackLedgerPage() {
         const x = slideX(tickRef.current, barWidth(s));
         xRef.current = x;
         const el = document.getElementById("sl-bar");
-        if (el) el.style.left = `calc(${(x / COLS) * 100}% + 2px)`;
+        if (el) el.style.left = `${(x / COLS) * 100}%`;
       }
       raf = requestAnimationFrame(loop);
     };
@@ -84,26 +84,35 @@ export default function StackLedgerPage() {
 
   function syncX(next: StackState) {
     xRef.current = next.x;
-    tickRef.current = next.tick;
+    // Keep the slide phase in step with the position. slideX(t, w) === t on the
+    // outward leg, so seeding the tick with x means the next rAF frame carries
+    // on from here instead of recomputing the old spot and undoing a nudge.
+    tickRef.current = next.x;
   }
 
   function doDrop() {
-    const s = stateRef.current;
-    if (s.phase !== "moving" || falling) return;
-    // Animate the fall first (unless reduced motion), then settle the physics.
-    const width = barWidth(s);
+    const live = stateRef.current;
+    if (live.phase !== "moving" || falling) return;
+    // The bar is animated by rAF straight into the DOM, so state.x lags behind
+    // what the player sees. Drop where the bar actually IS, or every block lands
+    // on column 0 no matter where the player aimed.
+    const width = barWidth(live);
+    const aimed = Math.max(0, Math.min(COLS - width, Math.round(xRef.current)));
+    const s: StackState = { ...live, x: aimed };
     let contact = 0;
     for (let i = 0; i < width; i++) contact = Math.max(contact, s.heights[s.x + i] ?? 0);
-    const rows = Math.max(1, ROWS - 3 - contact);
+    const spawnRow = ROWS - 2;
     const settle = () => {
-      const current = stateRef.current;
+      // Settle the snapshot taken when the player pressed, not whatever the bar
+      // has slid to during the 220 ms fall animation.
+      const current = s;
       // Which cells of the bar hang over a lower column? Those snap off.
       const { contact, supported } = landing(current.heights, current.x, barWidth(current));
       const snapped = supported
         .map((isSupported, i) => ({ isSupported, col: current.x + i }))
         .filter((cell) => !cell.isSupported)
         .map((cell, i) => ({ col: cell.col, row: contact, key: Date.now() + i }));
-      const next = dropBlock(stateRef.current);
+      const next = dropBlock(current);
       setState(next);
       syncX(next);
       setFalling(null);
@@ -127,7 +136,10 @@ export default function StackLedgerPage() {
       settle();
       return;
     }
-    setFalling({ x: s.x, w: width, rows });
+    // Start at the top of the well, then let CSS carry it down to the
+    // column it will actually rest on.
+    setFalling({ x: s.x, w: width, from: spawnRow });
+    requestAnimationFrame(() => setFalling({ x: s.x, w: width, from: contact }));
     window.setTimeout(settle, 220);
   }
 
@@ -249,17 +261,26 @@ export default function StackLedgerPage() {
             </span>
           </div>
 
-          {/* skyline */}
-          <div className="absolute inset-x-0 bottom-0 flex items-end" style={{ height: "100%" }}>
+          {/* Skyline. Every overlay below uses this exact same percentage grid:
+              a flex row with margins drifts away from `col / COLS * 100%`, which
+              made the bar sit to the right of the column it actually filled. */}
+          <div className="absolute inset-0" aria-hidden="true">
             {state.heights.map((h, i) => (
               <div
                 key={i}
-                className="relative mx-px flex-1"
-                style={{ height: `${(h / ROWS) * 100}%`, minHeight: h > 0 ? 4 : 0 }}
+                className="absolute bottom-0"
+                data-col={i}
+                data-height={h}
+                style={{
+                  left: `${(i / COLS) * 100}%`,
+                  width: `${(1 / COLS) * 100}%`,
+                  height: `${(h / ROWS) * 100}%`,
+                  minHeight: h > 0 ? 4 : 0,
+                }}
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-t-md border border-amber-700/60 bg-gradient-to-b from-amber-300 to-amber-500"
+                  className="absolute inset-x-px inset-y-0 rounded-t-md border border-amber-700/60 bg-gradient-to-b from-amber-300 to-amber-500"
                   style={{ opacity: h > 0 ? 1 : 0 }}
                 />
                 {h > 0 && (
@@ -291,12 +312,11 @@ export default function StackLedgerPage() {
             <div
               className="absolute z-10 rounded-md border-2 border-[var(--primary)] bg-[var(--primary)]/80"
               style={{
-                left: `calc(${(falling.x / COLS) * 100}% + 2px)`,
-                width: `calc(${(falling.w / COLS) * 100}% - 4px)`,
-                height: 14,
-                top: 8,
-                transition: "transform 220ms ease-in",
-                transform: `translateY(${falling.rows * 8}px)`,
+                left: `${(falling.x / COLS) * 100}%`,
+                width: `${(falling.w / COLS) * 100}%`,
+                height: `${(1 / ROWS) * 100}%`,
+                bottom: `${(falling.from / ROWS) * 100}%`,
+                transition: "bottom 220ms cubic-bezier(0.45, 0, 0.9, 0.6)",
               }}
               aria-hidden="true"
             />
@@ -308,10 +328,10 @@ export default function StackLedgerPage() {
               id="sl-bar"
               className="absolute z-10 rounded-md border-2 border-[var(--primary)] bg-[var(--primary)]/80"
               style={{
-                left: `calc(${(state.x / COLS) * 100}% + 2px)`,
-                width: `calc(${(width / COLS) * 100}% - 4px)`,
-                height: 14,
-                top: 8,
+                left: `${(state.x / COLS) * 100}%`,
+                width: `${(width / COLS) * 100}%`,
+                height: `${(1 / ROWS) * 100}%`,
+                top: `${(1 / ROWS) * 100}%`,
               }}
               aria-hidden="true"
             />

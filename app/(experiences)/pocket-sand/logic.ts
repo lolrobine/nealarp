@@ -54,7 +54,18 @@ function unclaimed(next: Grid, x: number, y: number): boolean {
  * flows over edges, and is then equalised between neighbouring columns — a monotone
  * height levelling that fills cups flat and never drifts or freezes into checkerboards.
  * Claim checks keep every material exactly conserved. */
-export function step(grid: Grid): Grid {
+/** Deterministic pseudo-random sideways preference for a water cell.
+ * Mixing the tick in stops a cell from picking the same direction forever
+ * (which would make two neighbours trade places endlessly) and avoids the
+ * fixed checkerboard that a positional parity produces. */
+function flowDir(x: number, y: number, tick: number): number {
+  let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(tick, 2246822519)) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0;
+  h = Math.imul(h, 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) & 1 ? 1 : -1;
+}
+
+export function step(grid: Grid, tick = 0): Grid {
   const next = grid.slice();
   for (let y = H - 1; y >= 0; y--) {
     for (let x = 0; x < W; x++) {
@@ -86,80 +97,60 @@ export function step(grid: Grid): Grid {
         }
       } else if (isWater(mat)) {
         const below = y + 1 < H ? grid[(y + 1) * W + x]! : WALL;
-        // 1) Fall — including into gaps that opened this tick.
-        if (below === EMPTY && unclaimed(next, x, y + 1)) {
+        // 1) Fall — including into gaps that opened this tick. Checking `next`
+        // rather than `grid` is what makes that true: cells are swept bottom-up,
+        // so the cell underneath may already have flowed away this tick. Reading
+        // the stale grid instead left water hanging in mid-air above its own
+        // puddle, and the puddle churning underneath never let it land.
+        if (below !== WALL && y + 1 < H && unclaimed(next, x, y + 1)) {
           set(next, x, y, EMPTY);
           set(next, x, y + 1, WATER);
           continue;
         }
+        // Preferred sideways direction. A hash of (x, y, tick) keeps this
+        // reproducible while breaking up the diagonal banding that a plain
+        // (x + y) % 2 parity used to stamp across the whole body of water.
+        const side = flowDir(x, y, tick);
         // 2) Flow diagonally over open edges into holes below.
-        const side = (x + y) % 2 === 0 ? -1 : 1;
-        const dl: [number, number] = [x + side, y + 1];
-        const dr: [number, number] = [x - side, y + 1];
-        const dropSide =
-          dl[1] < H && free(grid, dl[0], dl[1]) && unclaimed(next, dl[0], dl[1])
-            ? dl
-            : dr[1] < H && free(grid, dr[0], dr[1]) && unclaimed(next, dr[0], dr[1])
-              ? dr
-              : null;
-        if (dropSide) {
+        let moved = false;
+        for (const s of [side, -side]) {
+          if (free(grid, x + s, y + 1) && unclaimed(next, x + s, y + 1)) {
+            set(next, x, y, EMPTY);
+            set(next, x + s, y + 1, WATER);
+            moved = true;
+            break;
+          }
+        }
+        if (moved) continue;
+        // 3) Spread sideways under pressure. Without this a water cell only
+        // ever moves down or diagonally — exactly like sand — so it settles
+        // into a pyramid with a 45° slope instead of finding its level.
+        // The pressure test (water resting on top of this cell) is what keeps
+        // the flow physical: a puddle that is already one cell deep has nothing
+        // pushing it, so it stays put instead of creeping off to the edges.
+        // A grain resting directly on top pins the water: it is about to sink
+        // in and trade places, so sliding out from under it would teleport the
+        // puddle sideways instead of letting the sand displace it.
+        if (y > 0 && grid[(y - 1) * W + x] === SAND) continue;
+        const pressed = y > 0 && grid[(y - 1) * W + x] === WATER;
+        for (const s of [side, -side]) {
+          if (!free(grid, x + s, y) || !unclaimed(next, x + s, y)) continue;
+          // Two reasons to step sideways, and only these two. Either water is
+          // stacked on top and pushes this cell out, or the step leads onto the
+          // surface of the body next door and so flattens a one-cell terrace —
+          // the terraces are what used to pile up into a 45° sand pyramid.
+          // A lone puddle one cell deep satisfies neither, so it stays put
+          // rather than creeping across the floor into scattered droplets.
+          const ontoWater = y + 1 < H && grid[(y + 1) * W + x + s] === WATER;
+          if (!pressed && !ontoWater) continue;
           set(next, x, y, EMPTY);
-          set(next, dropSide[0], dropSide[1], WATER);
+          set(next, x + s, y, WATER);
+          break;
         }
       }
     }
   }
-  return equaliseWater(next);
-}
-
-/** Height-based levelling: columns of standing water equalise with their neighbours.
- * Each transfer strictly lowers the sum of squared column heights, so the process
- * terminates in a flat surface — no perpetual drift, no frozen gaps. */
-function equaliseWater(grid: Grid): Grid {
-  const heights = (g: Grid): number[] => {
-    const h = Array<number>(W).fill(0);
-    for (let x = 0; x < W; x++) {
-      for (let y = 0; y < H; y++) if (g[y * W + x] === WATER) h[x]!++;
-    }
-    return h;
-  };
-  const topWater = (g: Grid, x: number): number => {
-    for (let y = 0; y < H; y++) if (g[y * W + x] === WATER) return y;
-    return H;
-  };
-  const surfaceSlot = (g: Grid, x: number): number => {
-    // The cell just above the column's topmost matter (floor counts as matter).
-    const tw = topWater(g, x);
-    if (tw < H) return tw - 1;
-    for (let y = H - 1; y >= 0; y--) {
-      if (g[y * W + x] !== EMPTY) return y - 1;
-    }
-    return H - 1;
-  };
-  for (let pass = 0; pass < 3; pass++) {
-    const h = heights(grid);
-    let moved = false;
-    for (let x = 0; x < W - 1; x++) {
-      const a = x;
-      const b = x + 1;
-      const from = h[a]! > h[b]! + 1 ? a : h[b]! > h[a]! + 1 ? b : -1;
-      if (from < 0) continue;
-      const to = from === a ? b : a;
-      const srcY = topWater(grid, from);
-      const dstY = surfaceSlot(grid, to);
-      if (srcY >= H || dstY < 0) continue;
-      if (grid[dstY * W + to] !== EMPTY) continue;
-      // The hop happens at the source's surface row: a wall on the boundary blocks it.
-      if (srcY < H && grid[srcY * W + to] === WALL) continue;
-      grid[srcY * W + from] = EMPTY;
-      grid[dstY * W + to] = WATER;
-      h[from]!--;
-      h[to]!++;
-      moved = true;
-    }
-    if (!moved) break;
-  }
-  return grid;
+  return next;
 }
 
 export type Goal = {

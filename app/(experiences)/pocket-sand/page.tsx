@@ -36,6 +36,8 @@ export default function PocketSandPage() {
   const brushRef = useRef({ x: 24, y: 16 });
   const radiusRef = useRef(1);
   const phaseRef = useRef(0);
+  // Drives the deterministic sideways-flow hash, so water does not band.
+  const tickRef = useRef(0);
   const [running, setRunning] = useState(!reducedMotion);
   const [speedId, setSpeedId] = useLocalStorage<string>(
     "nealarp:settings:v1:pocket-sand:speed",
@@ -106,7 +108,7 @@ export default function PocketSandPage() {
     if (!running) return;
     const speed = SPEEDS.find((s) => s.id === speedId)?.ticksPerSecond ?? 12;
     const interval = setInterval(() => {
-      gridRef.current = step(gridRef.current);
+      gridRef.current = step(gridRef.current, tickRef.current++);
       if (!reducedMotion) phaseRef.current += 0.3;
       draw();
       setScore(sandScore(gridRef.current, goal));
