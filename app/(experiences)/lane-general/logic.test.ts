@@ -59,3 +59,48 @@ describe("lane-general drafting and scoring", () => {
     expect(scoreStreak(2, 4)).toBe(50);
   });
 });
+
+/** The "How to beat it" panel makes three exact claims about the resolver. If the unit
+ *  stats or the resolver ever change, these must fail rather than quietly become fiction. */
+describe("lane-general: the claims printed in How to beat it", () => {
+  const by = (id: string) => UNITS.find((u) => u.id === id)!;
+  const trios: Lineup[] = [];
+  for (const a of UNITS)
+    for (const b of UNITS)
+      for (const c of UNITS) {
+        if (a.id === b.id || b.id === c.id || a.id === c.id) continue;
+        trios.push([a, b, c]);
+      }
+
+  it("the full enemy space is 504 ordered trios", () => {
+    expect(trios).toHaveLength(504);
+  });
+
+  it("Tuck + Moss + Cheep wins 501 of them and never draws", () => {
+    const main: Lineup = [by("tuck"), by("moss"), by("cheep")];
+    const results = trios.map((enemy) => resolveFight(main, enemy).winner);
+    expect(results.filter((w) => w === "player")).toHaveLength(501);
+    expect(results.filter((w) => w === "draw")).toHaveLength(0);
+    expect(results.filter((w) => w === "enemy")).toHaveLength(3);
+  });
+
+  it("the only three counters all open Cheep then Tuck", () => {
+    const main: Lineup = [by("tuck"), by("moss"), by("cheep")];
+    const losses = trios
+      .filter((enemy) => resolveFight(main, enemy).winner !== "player")
+      .map((enemy) => enemy.map((u) => u.name).join("+"));
+    expect(losses.sort()).toEqual(["Cheep+Tuck+Bumble", "Cheep+Tuck+Moss", "Cheep+Tuck+Waddle"]);
+  });
+
+  it("reordering to Tuck + Cheep + Moss beats all three counters", () => {
+    const main: Lineup = [by("tuck"), by("moss"), by("cheep")];
+    const reordered: Lineup = [by("tuck"), by("cheep"), by("moss")];
+    const losses = trios.filter((enemy) => resolveFight(main, enemy).winner !== "player");
+    expect(losses).toHaveLength(3);
+    for (const enemy of losses) {
+      expect(resolveFight(reordered, enemy).winner, enemy.map((u) => u.name).join("+")).toBe(
+        "player"
+      );
+    }
+  });
+});

@@ -150,13 +150,15 @@ export default function LaneGeneralPage() {
 
       <HowToBeat summary="A draft that almost always wins">
         <ExampleStep n={1}>
-          Draft Tuck + Moss + Cheep. Over the pure resolver&apos;s full space of 504 possible enemy
-          trios, this line-up wins 501 — the two sturdy units absorb the first exchange and
-          Cheep&apos;s jolly bonus finishes the last enemy.
+          Draft Tuck + Moss + Cheep. Over the pure resolver&apos;s full space of 504 ordered enemy
+          trios, this line-up wins 501 and never draws — the two sturdy units absorb the first
+          exchange and Cheep&apos;s jolly bonus finishes the last enemy.
         </ExampleStep>
         <ExampleStep n={2}>
-          Against fast glass cannons (e.g. Moss + Flick + Waddle), swap to Pip + Tuck + Bumble:
-          sturdy halving blunts Flick&apos;s 4-damage first strike, and Pip and Tuck survive.
+          Exactly three trios beat it, and all three lead with Cheep then Tuck: Cheep + Tuck +
+          Bumble, Cheep + Tuck + Moss and Cheep + Tuck + Waddle. Against that opening, keep the same
+          three units but reorder to Tuck + Cheep + Moss — lane order alone turns all three losses
+          into wins.
         </ExampleStep>
         <ExampleResult>Five straight round wins → score = streak / 5 × 100 = 100.</ExampleResult>
       </HowToBeat>
