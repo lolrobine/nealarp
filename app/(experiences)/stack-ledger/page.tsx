@@ -20,6 +20,7 @@ import {
   upcoming,
   WIN_HEIGHT,
   type StackState,
+  landing,
 } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
@@ -45,6 +46,7 @@ export default function StackLedgerPage() {
     false
   );
   const [state, setState] = useState<StackState>(() => newRunSafe());
+  const [topple, setTopple] = useState<{ col: number; row: number; key: number }[]>([]);
   const [falling, setFalling] = useState<{ x: number; w: number; rows: number } | null>(null);
   const tickRef = useRef(state.tick);
   const xRef = useRef(state.x);
@@ -93,10 +95,21 @@ export default function StackLedgerPage() {
     for (let i = 0; i < width; i++) contact = Math.max(contact, s.heights[s.x + i] ?? 0);
     const rows = Math.max(1, ROWS - 3 - contact);
     const settle = () => {
+      const current = stateRef.current;
+      // Which cells of the bar hang over a lower column? Those snap off.
+      const { contact, supported } = landing(current.heights, current.x, barWidth(current));
+      const snapped = supported
+        .map((isSupported, i) => ({ isSupported, col: current.x + i }))
+        .filter((cell) => !cell.isSupported)
+        .map((cell, i) => ({ col: cell.col, row: contact, key: Date.now() + i }));
       const next = dropBlock(stateRef.current);
       setState(next);
       syncX(next);
       setFalling(null);
+      if (snapped.length > 0 && !reducedMotion && speedId !== "still") {
+        setTopple(snapped);
+        window.setTimeout(() => setTopple([]), 600);
+      }
       if (next.phase === "won" && !practice) record.save(100);
       else if (!practice && next.dropped % 4 === 0) record.save(scoreTower(next.heights));
     };
@@ -243,6 +256,21 @@ export default function StackLedgerPage() {
               </div>
             ))}
           </div>
+
+          {/* overhang snapping off and tumbling away */}
+          {topple.map((cell) => (
+            <div
+              key={cell.key}
+              aria-hidden="true"
+              className="topple-piece absolute z-20 rounded-md border border-amber-700/60 bg-gradient-to-b from-amber-300 to-amber-500"
+              style={{
+                left: `${(cell.col / COLS) * 100}%`,
+                width: `${(1 / COLS) * 100}%`,
+                bottom: `${(cell.row / ROWS) * 100}%`,
+                height: `${(1 / ROWS) * 100}%`,
+              }}
+            />
+          ))}
 
           {/* falling piece animation */}
           {falling && (

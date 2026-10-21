@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { at, GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, WATER, W } from "./logic";
+import {
+  at,
+  EMPTY,
+  GOALS,
+  H,
+  makeGrid,
+  SAND,
+  sandScore,
+  set,
+  stamp,
+  step,
+  WALL,
+  WATER,
+  W,
+} from "./logic";
 
 describe("pocket-sand simulation", () => {
   it("sand falls straight down onto open floor", () => {
@@ -158,5 +172,43 @@ describe("pocket-sand goals", () => {
     set(stray, 40, 10, SAND);
     expect(sandScore(stray, goal)).toBeLessThan(sandScore(perfect, goal));
     expect(sandScore(stray, goal)).toBeGreaterThan(50);
+  });
+});
+
+describe("pocket-sand brush", () => {
+  it("radius 0 paints exactly one cell", () => {
+    const grid = makeGrid();
+    stamp(grid, 10, 10, SAND, 0);
+    expect(grid.filter((cell) => cell === SAND)).toHaveLength(1);
+    expect(grid[10 * W + 10]).toBe(SAND);
+  });
+
+  it("larger radii paint a rounded, growing blob", () => {
+    const sizes = [0, 1, 2].map((radius) => {
+      const grid = makeGrid();
+      stamp(grid, 24, 16, SAND, radius);
+      return grid.filter((cell) => cell === SAND).length;
+    });
+    expect(sizes[0]).toBe(1);
+    expect(sizes[1]).toBeGreaterThan(sizes[0]!);
+    expect(sizes[2]).toBeGreaterThan(sizes[1]!);
+    // Rounded, not a full square: radius 2 would be 25 cells if it were a box.
+    expect(sizes[2]).toBeLessThan(25);
+  });
+
+  it("clips at the edges instead of wrapping to the other side", () => {
+    const grid = makeGrid();
+    stamp(grid, 0, 0, SAND, 2);
+    // Nothing may appear on the far right column or the bottom row.
+    for (let y = 0; y < H; y++) expect(grid[y * W + (W - 1)]).toBe(EMPTY);
+    for (let x = 0; x < W; x++) expect(grid[(H - 1) * W + x]).toBe(EMPTY);
+  });
+
+  it("mass still only comes from the brush", () => {
+    const grid = makeGrid();
+    stamp(grid, 24, 16, WATER, 2);
+    const painted = grid.filter((cell) => cell === WATER).length;
+    stamp(grid, 24, 16, WATER, 2);
+    expect(grid.filter((cell) => cell === WATER)).toHaveLength(painted);
   });
 });

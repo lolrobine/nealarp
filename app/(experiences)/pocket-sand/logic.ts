@@ -28,6 +28,19 @@ export function set(grid: Grid, x: number, y: number, mat: number): void {
   grid[y * W + x] = mat;
 }
 
+/** Paint a filled, slightly rounded disc of cells centred on (cx, cy).
+ *  radius 0 is a single cell; larger radii make the sand and water tools usable
+ *  on a 48x32 grid without a hundred taps. Out-of-bounds cells are ignored. */
+export function stamp(grid: Grid, cx: number, cy: number, mat: number, radius = 0): void {
+  const reach = radius * radius + radius;
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (dx * dx + dy * dy > reach) continue;
+      set(grid, cx + dx, cy + dy, mat);
+    }
+  }
+}
+
 function free(grid: Grid, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < W && y < H && grid[y * W + x] === EMPTY;
 }

@@ -100,3 +100,37 @@ describe("stack-ledger stacking", () => {
     expect(scoreTower([99, 0])).toBe(100);
   });
 });
+
+/** The board animates the snapped-off overhang by re-reading landing(). If that ever
+ *  disagreed with what dropBlock() books as lost, the animation would show pieces the
+ *  ledger did not actually lose (or hide ones it did). */
+describe("stack-ledger overhang is exactly what the animation draws", () => {
+  it("counts the same cells as landing() reports unsupported", () => {
+    let state = newRun("topple-seed");
+    for (let drop = 0; drop < 12 && state.phase === "moving"; drop++) {
+      // Shove the bar off-centre so overhang actually happens.
+      const shifted = { ...state, x: Math.min(state.x + drop, COLS - barWidth(state)) };
+      const { supported } = landing(shifted.heights, shifted.x, barWidth(shifted));
+      const unsupported = supported.filter((s) => !s).length;
+      const before = shifted.lost;
+      const next = dropBlock(shifted);
+      expect(next.lost - before, `drop ${drop}`).toBe(unsupported);
+      state = next;
+    }
+  });
+
+  it("a bar hanging over empty ground loses every unsupported cell", () => {
+    const state = newRun("edge-seed");
+    const width = barWidth(state);
+    // Column 0 is flat ground, so a bar resting on a tall neighbour loses the rest.
+    const heights = [...state.heights];
+    heights[0] = 5;
+    const { contact, supported } = landing(heights, 0, width);
+    expect(contact).toBe(5);
+    expect(supported[0]).toBe(true);
+    expect(supported.slice(1).every((s) => !s)).toBe(true);
+    const next = dropBlock({ ...state, heights, x: 0 });
+    expect(next.lost).toBe(width - 1);
+    expect(next.heights[0]).toBe(6);
+  });
+});

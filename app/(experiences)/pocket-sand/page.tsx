@@ -8,7 +8,7 @@ import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
-import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, set, step, WALL, W, WATER } from "./logic";
+import { EMPTY, GOALS, H, makeGrid, SAND, sandScore, step, WALL, W, WATER, stamp } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const SPEEDS = [
@@ -22,16 +22,28 @@ const MATERIALS = [
   { id: WALL, label: "Wall" },
 ];
 
+const BRUSHES = [
+  { id: "0", label: "Fine" },
+  { id: "1", label: "Medium" },
+  { id: "2", label: "Wide" },
+];
+
 export default function PocketSandPage() {
   const record = usePersonalBest("pocket-sand");
   const reducedMotion = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gridRef = useRef<Uint8Array>(makeGrid());
   const brushRef = useRef({ x: 24, y: 16 });
+  const radiusRef = useRef(1);
+  const phaseRef = useRef(0);
   const [running, setRunning] = useState(!reducedMotion);
   const [speedId, setSpeedId] = useLocalStorage<string>(
     "nealarp:settings:v1:pocket-sand:speed",
     "normal"
+  );
+  const [brushId, setBrushId] = useLocalStorage<string>(
+    "nealarp:settings:v1:pocket-sand:brush",
+    "1"
   );
   const [material, setMaterial] = useLocalStorage<number>(
     "nealarp:settings:v1:pocket-sand:material",
@@ -40,6 +52,10 @@ export default function PocketSandPage() {
   const [goalIndex, setGoalIndex] = useState(0);
   const [score, setScore] = useState(0);
   const goal = GOALS[goalIndex] ?? GOALS[0]!;
+
+  const radius = Number(BRUSHES.find((b) => b.id === brushId)?.id ?? 1);
+
+  radiusRef.current = radius;
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -53,7 +69,17 @@ export default function PocketSandPage() {
       for (let x = 0; x < W; x++) {
         const mat = grid[y * W + x]!;
         if (mat === 0) continue;
-        ctx.fillStyle = mat === SAND ? "#fbbf24" : mat === WATER ? "#38bdf8" : "#94a3b8";
+        if (mat === WATER) {
+          // The topmost water cell of a column is the surface: it catches the light,
+          // and ripples slowly while the simulation runs. The waterline stays visible
+          // even when still, so the hint is never animation-only.
+          const surface = y === 0 || grid[(y - 1) * W + x] === EMPTY;
+          ctx.fillStyle = surface
+            ? `hsl(199 94% ${70 + Math.sin(x * 0.6 + phaseRef.current) * 9}%)`
+            : "#38bdf8";
+        } else {
+          ctx.fillStyle = mat === SAND ? "#fbbf24" : "#94a3b8";
+        }
         ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
       }
     }
@@ -62,7 +88,13 @@ export default function PocketSandPage() {
       const b = brushRef.current;
       ctx.strokeStyle = "#f8fafc";
       ctx.lineWidth = 2;
-      ctx.strokeRect(b.x * cell + 1, b.y * cell + 1, cell - 2, cell - 2);
+      const span = (radiusRef.current * 2 + 1) * cell;
+      ctx.strokeRect(
+        (b.x - radiusRef.current) * cell + 1,
+        (b.y - radiusRef.current) * cell + 1,
+        span - 2,
+        span - 2
+      );
     }
   }, []);
 
@@ -75,11 +107,12 @@ export default function PocketSandPage() {
     const speed = SPEEDS.find((s) => s.id === speedId)?.ticksPerSecond ?? 12;
     const interval = setInterval(() => {
       gridRef.current = step(gridRef.current);
+      if (!reducedMotion) phaseRef.current += 0.3;
       draw();
       setScore(sandScore(gridRef.current, goal));
     }, 1000 / speed);
     return () => clearInterval(interval);
-  }, [running, speedId, goal, draw]);
+  }, [running, speedId, goal, draw, reducedMotion]);
 
   function paintAt(clientX: number, clientY: number) {
     const canvas = canvasRef.current;
@@ -92,7 +125,7 @@ export default function PocketSandPage() {
 
   function paintCell(x: number, y: number) {
     brushRef.current = { x: Math.max(0, Math.min(W - 1, x)), y: Math.max(0, Math.min(H - 1, y)) };
-    set(gridRef.current, brushRef.current.x, brushRef.current.y, material);
+    stamp(gridRef.current, brushRef.current.x, brushRef.current.y, material, radius);
     draw();
     setScore(sandScore(gridRef.current, goal));
   }
@@ -121,7 +154,7 @@ export default function PocketSandPage() {
       paintCell(x, y);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      set(gridRef.current, x, y, EMPTY);
+      stamp(gridRef.current, x, y, EMPTY, radius);
       draw();
       setScore(sandScore(gridRef.current, goal));
     }
@@ -154,6 +187,12 @@ export default function PocketSandPage() {
             value={String(material)}
             options={MATERIALS.map((m) => ({ id: String(m.id), label: m.label }))}
             onChange={(id) => setMaterial(Number(id))}
+          />
+          <SegmentedControl
+            label="Brush"
+            value={brushId}
+            options={BRUSHES.map((b) => ({ id: b.id, label: b.label }))}
+            onChange={setBrushId}
           />
           <SegmentedControl
             label="Pace"

@@ -62,7 +62,7 @@ export default function BlockTalkPage() {
         </div>
 
         <div
-          className="mx-auto grid gap-1"
+          className="board grid-texture mx-auto grid gap-1 p-3"
           style={{ width: "min(92vw, 380px)", gridTemplateColumns: "repeat(4, 1fr)" }}
           role="grid"
           aria-label="A1 to D4 block grid"

@@ -130,7 +130,7 @@ export default function GateCrashPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="board grid grid-cols-1 gap-3 p-3 sm:grid-cols-3">
           {round.gates.map((gate, i) => (
             <button
               key={i}

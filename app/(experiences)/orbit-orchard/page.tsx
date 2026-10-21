@@ -139,7 +139,7 @@ export default function OrbitOrchardPage() {
           ref={canvasRef}
           width={500}
           height={500}
-          className="mx-auto w-full rounded-xl border border-[var(--border)]"
+          className="board mx-auto w-full"
           style={{ maxWidth: 500, aspectRatio: "1 / 1" }}
           role="img"
           aria-label={`Level ${level.name}. ${collected.length} of ${level.rings.length} rings threaded.`}
