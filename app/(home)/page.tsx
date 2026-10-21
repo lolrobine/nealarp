@@ -227,6 +227,14 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Filtering rewrites the grid silently, so say how many results there are.
+          Polite, so it never cuts across what a screen reader is already saying. */}
+      <p role="status" aria-live="polite" className="mb-4 text-sm text-[var(--muted-foreground)]">
+        {filtered.length === allExperiences.length
+          ? `Showing all ${filtered.length} experiences`
+          : `${filtered.length} of ${allExperiences.length} experiences match`}
+      </p>
+
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-[var(--muted-foreground)]">
           <p className="text-4xl mb-4">🔍</p>
