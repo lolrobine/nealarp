@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
@@ -144,17 +145,13 @@ export default function StackLedgerPage() {
       intro="Slide the bar and drop it onto the skyline. It lands rigid on the tallest column of its span; anything hanging over a lower column snaps off. The whole width queue is visible up front — plan the tower, no luck involved. Reach 20 to close the ledger."
     >
       <Card className="space-y-4 p-6">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {SPEEDS.map((s) => (
-            <Button
-              key={s.id}
-              variant={speedId === s.id ? "default" : "outline"}
-              onClick={() => setSpeedId(s.id)}
-              aria-pressed={speedId === s.id}
-            >
-              {s.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <SegmentedControl
+            label="Pace"
+            value={speedId}
+            options={SPEEDS.map((s) => ({ id: s.id, label: s.label }))}
+            onChange={setSpeedId}
+          />
           {reducedMotion && speedId === "still" && (
             <p className="w-full text-center text-xs text-[var(--muted-foreground)]">
               Motion is paused because your system asks for reduced motion — pick a pace when you

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
@@ -147,30 +148,22 @@ export default function PocketSandPage() {
         </div>
         <p className="text-sm text-[var(--muted-foreground)]">{goal.hint}</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {MATERIALS.map((m) => (
-            <Button
-              key={m.id}
-              variant={material === m.id ? "default" : "outline"}
-              onClick={() => setMaterial(m.id)}
-              aria-pressed={material === m.id}
-            >
-              {m.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <SegmentedControl
+            label="Tool"
+            value={String(material)}
+            options={MATERIALS.map((m) => ({ id: String(m.id), label: m.label }))}
+            onChange={(id) => setMaterial(Number(id))}
+          />
+          <SegmentedControl
+            label="Pace"
+            value={speedId}
+            options={SPEEDS.map((s) => ({ id: s.id, label: s.label }))}
+            onChange={setSpeedId}
+          />
           <Button onClick={() => setRunning(!running)} aria-pressed={running}>
             {running ? "Pause" : "Play"}
           </Button>
-          {SPEEDS.map((s) => (
-            <Button
-              key={s.id}
-              variant={speedId === s.id ? "default" : "outline"}
-              onClick={() => setSpeedId(s.id)}
-              aria-pressed={speedId === s.id}
-            >
-              {s.label}
-            </Button>
-          ))}
         </div>
 
         <canvas

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { correctGateIndex, generateRound, scoreStreak, type Gate } from "./logic";
@@ -93,17 +94,13 @@ export default function GateCrashPage() {
       intro="Study the rule while it is previewed, then crash the one gate it describes. Three gates, one winner, no second guesses."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {PREVIEW_MS.map((p) => (
-            <Button
-              key={p.id}
-              variant={speedId === p.id ? "default" : "outline"}
-              onClick={() => setSpeedId(p.id)}
-              aria-pressed={speedId === p.id}
-            >
-              {p.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <SegmentedControl
+            label="Preview"
+            value={speedId}
+            options={PREVIEW_MS.map((p) => ({ id: p.id, label: p.label }))}
+            onChange={setSpeedId}
+          />
           <Button
             variant={showRuleAlways ? "default" : "outline"}
             onClick={() => setShowRuleAlways(!showRuleAlways)}

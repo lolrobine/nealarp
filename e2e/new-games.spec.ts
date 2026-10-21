@@ -81,3 +81,32 @@ test("gate-crash reveals its rule then accepts a pick", async ({ page }) => {
   await expect(page.getByText(/Crash the/i)).toBeVisible();
   await page.getByRole("button", { name: /Gate 1:/ }).click();
 });
+
+/** Interaction tests for the games whose boards were rebuilt. These assert real play,
+ *  not just that copy is visible. NOTE: they have never been executed in this sandbox —
+ *  the Chromium download is blocked here, so run them locally before trusting them. */
+test("light-loom starts unsolved and is won by placing the tray optic", async ({ page }) => {
+  await page.goto("/light-loom");
+  await expect(page.getByRole("heading", { name: /Light Loom/i }).first()).toBeVisible({
+    timeout: 15_000,
+  });
+  // Nothing is solved before the player acts.
+  await expect(page.getByText(/Every target coloured/)).toHaveCount(0);
+  // Level 1 ships a single mirror that belongs on the last square of the lamp's row.
+  await page.getByRole("button", { name: /^Column 6, row 1:/ }).click();
+  await expect(page.getByText(/Every target coloured/)).toBeVisible();
+});
+
+test("current-courier draws its streets and pays 100 for a par route", async ({ page }) => {
+  await page.goto("/current-courier");
+  await expect(page.getByRole("heading", { name: /Current Courier/i }).first()).toBeVisible({
+    timeout: 15_000,
+  });
+  // The map is drawn as streets, not loose dots.
+  await expect(page.locator("svg line").first()).toBeVisible();
+  for (const node of ["A1", "B1", "C1", "C2", "C3", "B3", "A3"]) {
+    await page.getByRole("gridcell", { name: new RegExp(`^${node}\\b`) }).click();
+  }
+  await expect(page.getByText(/Route length: 6 \/ par 6/)).toBeVisible();
+  await page.getByRole("button", { name: "Finish route" }).click();
+});

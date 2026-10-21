@@ -23,6 +23,13 @@ export default function CurrentCourierPage() {
     }
   }
 
+  /** Centre of a node inside the (gapless) grid, in SVG percent units. */
+  const nodeCentre = (node: NodeId) => {
+    const col = node.charCodeAt(0) - 65;
+    const row = Number(node.slice(1)) - 1;
+    return { x: ((col + 0.5) / mapCols) * 100, y: ((row + 0.5) / mapRows) * 100 };
+  };
+
   const neighbours = (node: NodeId): NodeId[] =>
     map.edges.filter((e) => e.a === node || e.b === node).map((e) => (e.a === node ? e.b : e.a));
 
@@ -76,41 +83,84 @@ export default function CurrentCourierPage() {
           ))}
         </div>
 
-        <div
-          className="mx-auto grid gap-2"
-          style={{
-            width: "min(92vw, 420px)",
-            gridTemplateColumns: `repeat(${mapCols}, 1fr)`,
-          }}
-          role="group"
-          aria-label="Delivery map"
-        >
-          {mapCells.map((node) => {
-            const exists = map.nodes.includes(node);
-            const isStop = map.stops.includes(node);
-            const index = route.indexOf(node);
-            return (
-              <button
-                key={node}
-                type="button"
-                role="gridcell"
-                disabled={!exists}
-                onClick={() => tapNode(node)}
-                aria-label={`${node}${isStop ? " stop" : ""}${index >= 0 ? ` route step ${index + 1}` : ""}`}
-                className={`flex aspect-square items-center justify-center rounded-full border text-xs font-mono ${
-                  !exists
-                    ? "border-transparent"
-                    : index >= 0
-                      ? "bg-indigo-500 text-white border-indigo-600"
-                      : isStop
-                        ? "bg-amber-300 border-amber-500 text-amber-950"
-                        : "bg-[var(--secondary)] border-[var(--border)]"
-                }`}
-              >
-                {exists ? node : ""}
-              </button>
-            );
-          })}
+        <div className="board mx-auto p-3" style={{ width: "min(92vw, 420px)" }}>
+          <div className="relative">
+            <svg
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              {/* Every street, so an empty map reads as a city rather than loose dots. */}
+              {map.edges.map((edge) => {
+                const a = nodeCentre(edge.a);
+                const b = nodeCentre(edge.b);
+                return (
+                  <line
+                    key={`${edge.a}-${edge.b}`}
+                    x1={a.x}
+                    y1={a.y}
+                    x2={b.x}
+                    y2={b.y}
+                    stroke="var(--border)"
+                    strokeWidth={6}
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              })}
+              {/* The route the courier has drawn so far. */}
+              {route.length > 1 && (
+                <polyline
+                  points={route
+                    .map((n) => {
+                      const c = nodeCentre(n);
+                      return `${c.x},${c.y}`;
+                    })
+                    .join(" ")}
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth={5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </svg>
+            <div
+              className="relative grid"
+              style={{ gridTemplateColumns: `repeat(${mapCols}, 1fr)` }}
+              role="group"
+              aria-label="Delivery map"
+            >
+              {mapCells.map((node) => {
+                const exists = map.nodes.includes(node);
+                const isStop = map.stops.includes(node);
+                const index = route.indexOf(node);
+                return (
+                  <button
+                    key={node}
+                    type="button"
+                    role="gridcell"
+                    disabled={!exists}
+                    onClick={() => tapNode(node)}
+                    aria-label={`${node}${isStop ? " stop" : ""}${index >= 0 ? ` route step ${index + 1}` : ""}`}
+                    className={`m-0.5 flex aspect-square items-center justify-center rounded-full border text-xs font-mono transition-colors ${
+                      !exists
+                        ? "border-transparent"
+                        : index >= 0
+                          ? "bg-indigo-500 text-white border-indigo-600"
+                          : isStop
+                            ? "bg-amber-300 border-amber-500 text-amber-950"
+                            : "bg-[var(--secondary)] border-[var(--border)]"
+                    }`}
+                  >
+                    {exists ? node : ""}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <p className="text-center text-sm text-[var(--muted-foreground)]" aria-live="polite">
