@@ -41,20 +41,41 @@ export function GameFrame({
     </div>
   );
 }
+/** Plain-language band for a 0-100 score. The label is always rendered next to
+ *  the number, so the meter's colour is never the only carrier of meaning. */
+export function scoreBand(score: number): string {
+  if (score >= 100) return "Perfect";
+  if (score >= 90) return "Excellent";
+  if (score >= 75) return "Strong";
+  if (score >= 50) return "Solid";
+  return "Getting started";
+}
+
 export function PersonalBest({ record }: { record: ReturnType<typeof usePersonalBest> }) {
   return (
     <Card className="p-6 space-y-3">
       <h2 className="font-bold">Your personal best</h2>
-      <p className="flex items-baseline gap-2">
-        {record.best === null ? (
-          <span className="text-[var(--muted-foreground)]">No completed attempt yet.</span>
-        ) : (
-          <>
-            <span className="text-3xl font-bold tabular-nums">{record.best.toFixed(1)}</span>
+      {record.best === null ? (
+        <p className="text-[var(--muted-foreground)]">No completed attempt yet.</p>
+      ) : (
+        <div className="space-y-2">
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="text-4xl font-bold tabular-nums leading-none">
+              {record.best.toFixed(1)}
+            </span>
             <span className="text-[var(--muted-foreground)]">/ 100</span>
-          </>
-        )}
-      </p>
+            <span className="ml-auto text-sm font-semibold uppercase tracking-wide">
+              {scoreBand(record.best)}
+            </span>
+          </p>
+          <div className="score-meter" aria-hidden="true">
+            <div
+              className="score-meter-fill"
+              style={{ width: `${Math.max(0, Math.min(100, record.best))}%` }}
+            />
+          </div>
+        </div>
+      )}
       <Button variant="secondary" onClick={record.clear}>
         Reset personal best
       </Button>
