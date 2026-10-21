@@ -14,9 +14,18 @@ export type Cell = {
   /** For targets: which single colour wins the cell. */
   needs?: Exclude<Color, "w">;
 };
+/** The optics the player places. Fixed cells (emitter, wall, target) are never in a tray. */
+export type PieceKind = "prism" | "mirrorA" | "mirrorB";
+export type Placement = { x: number; y: number; kind: PieceKind };
+
 export type Level = {
   name: string;
+  /** Fixed board: emitters, walls, targets and empty cells. Never contains tray pieces. */
   grid: Cell[][];
+  /** Optics the player has to place to light every target. */
+  tray: PieceKind[];
+  /** One proven placement set that solves the level (verified in logic.test.ts). */
+  solution: Placement[];
 };
 
 export type Beam = { x: number; y: number; dir: Dir; color: Exclude<Color, "w"> };
@@ -125,56 +134,88 @@ export function isSolved(level: Level): boolean {
   return true;
 }
 
+/** True when (x, y) is a free square the player may drop an optic onto. */
+export function canPlace(level: Level, x: number, y: number): boolean {
+  if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return false;
+  return level.grid[y]?.[x]?.kind === "empty";
+}
+
+/** Compose the fixed board with the player's optics into a traceable level. */
+export function withPlacements(level: Level, placements: Placement[]): Level {
+  const grid = level.grid.map((row) => row.map((cell) => ({ ...cell })));
+  for (const placement of placements) {
+    if (!canPlace(level, placement.x, placement.y)) continue;
+    grid[placement.y]![placement.x] = { kind: placement.kind };
+  }
+  return { ...level, grid };
+}
+
 const e = (dir: Dir): Cell => ({ kind: "emitter", dir });
-const p: Cell = { kind: "prism" };
-const m = (k: "mirrorA" | "mirrorB"): Cell => ({ kind: k });
 const t = (needs: Exclude<Color, "w">): Cell => ({ kind: "target", needs });
 const w: Cell = { kind: "wall" };
 const o: Cell = { kind: "empty" };
 
 export const LEVELS: Level[] = [
   {
+    // One mirror: the beam runs east along row 1, then must be bent south to the target.
     name: "Straight and narrow",
     grid: [
-      [e(1), o, o, t("r"), o, o],
+      [e(1), o, o, o, o, o],
       [o, o, o, o, o, o],
       [o, o, o, o, o, o],
       [o, o, o, o, o, o],
+      [o, o, o, o, o, o],
+      [o, o, o, o, o, t("r")],
+    ],
+    tray: ["mirrorB"],
+    solution: [{ x: 5, y: 0, kind: "mirrorB" }],
+  },
+  {
+    // One prism: red carries straight to the east target, blue turns south to the low target.
+    name: "First refraction",
+    grid: [
+      [e(1), o, o, o, o, t("r")],
+      [o, o, o, o, o, o],
+      [o, o, o, o, o, o],
+      [o, o, t("b"), o, o, o],
+      [o, o, o, o, o, o],
+      [o, o, o, o, o, o],
+    ],
+    tray: ["prism"],
+    solution: [{ x: 2, y: 0, kind: "prism" }],
+  },
+  {
+    // Two mirrors: south at the top wall, then west along row 4 to the target.
+    name: "Corner shop",
+    grid: [
+      [e(1), o, o, o, o, o],
+      [o, o, o, o, o, o],
+      [o, o, o, o, o, o],
+      [t("r"), o, o, o, o, o],
       [o, o, o, o, o, o],
       [o, o, o, o, o, w],
     ],
-  },
-  {
-    name: "First refraction",
-    grid: [
-      [e(1), o, p, o, o, t("r")],
-      [o, o, o, o, o, o],
-      [o, o, o, o, o, o],
-      [o, o, t("b"), o, o, o],
-      [o, o, o, o, o, o],
-      [o, o, o, o, o, o],
+    tray: ["mirrorB", "mirrorA"],
+    solution: [
+      { x: 3, y: 0, kind: "mirrorB" },
+      { x: 3, y: 3, kind: "mirrorA" },
     ],
   },
   {
-    name: "Corner shop",
-    grid: [
-      [e(1), o, o, m("mirrorB"), o, o],
-      [o, o, o, o, o, o],
-      [o, o, o, o, o, o],
-      [o, o, o, o, o, o],
-      [o, o, o, o, o, o],
-      [o, o, o, t("r"), o, w],
-    ],
-  },
-  {
+    // Mirror into a prism: one split feeds three targets at once.
     name: "Prism trio",
     grid: [
-      [o, o, t("g"), o, o, o],
+      [e(2), o, t("g"), o, o, o],
       [o, o, o, o, o, o],
-      [e(1), o, p, o, o, t("r")],
+      [o, o, o, o, o, t("r")],
       [o, o, o, o, o, o],
       [o, o, o, o, o, o],
       [o, o, t("b"), o, o, o],
+    ],
+    tray: ["mirrorB", "prism"],
+    solution: [
+      { x: 0, y: 2, kind: "mirrorB" },
+      { x: 2, y: 2, kind: "prism" },
     ],
   },
 ];

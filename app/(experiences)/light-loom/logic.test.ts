@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   emitterBeams,
+  canPlace,
   isSolved,
   LEVELS,
   reflect,
   traceBeams,
   turnLeft,
   turnRight,
+  withPlacements,
   type Cell,
   type Level,
 } from "./logic";
@@ -18,7 +20,7 @@ const w: Cell = { kind: "wall" };
 const p: Cell = { kind: "prism" };
 
 function levelFrom(grid: Cell[][]): Level {
-  return { name: "test", grid };
+  return { name: "test", grid, tray: [], solution: [] };
 }
 
 describe("light-loom optics", () => {
@@ -81,11 +83,61 @@ describe("light-loom optics", () => {
 });
 
 describe("light-loom levels", () => {
-  it("ships four solvable levels", () => {
+  it("ships four levels that start unsolved", () => {
     expect(LEVELS).toHaveLength(4);
     for (const level of LEVELS) {
       expect(level.grid).toHaveLength(6);
-      expect(isSolved(level), level.name).toBe(true);
+      // Regression: levels used to ship with their optics already placed, which
+      // handed out a free 100. An empty board must never light every target.
+      expect(isSolved(level), level.name).toBe(false);
+    }
+  });
+
+  it("every authored solution lights every target", () => {
+    for (const level of LEVELS) {
+      expect(isSolved(withPlacements(level, level.solution)), level.name).toBe(true);
+    }
+  });
+
+  it("the tray holds exactly the optics a solution needs", () => {
+    for (const level of LEVELS) {
+      const tray = [...level.tray].sort();
+      const used = level.solution.map((s) => s.kind).sort();
+      expect(tray, level.name).toEqual(used);
+      expect(level.tray.length, level.name).toBeGreaterThan(0);
+    }
+  });
+
+  it("solutions only use free squares, and occupied squares reject optics", () => {
+    for (const level of LEVELS) {
+      for (const placement of level.solution) {
+        expect(
+          canPlace(level, placement.x, placement.y),
+          `${level.name} ${placement.x},${placement.y}`
+        ).toBe(true);
+      }
+      // Fixed cells and out-of-bounds stay untouchable.
+      const fixed = level.grid.flatMap((row, y) =>
+        row.flatMap((cell, x) => (cell.kind === "empty" ? [] : [{ x, y }]))
+      );
+      for (const cell of fixed) expect(canPlace(level, cell.x, cell.y), level.name).toBe(false);
+      expect(canPlace(level, -1, 0)).toBe(false);
+      expect(canPlace(level, 0, 99)).toBe(false);
+    }
+  });
+
+  it("withPlacements never mutates the shipped level", () => {
+    const level = LEVELS[0]!;
+    const before = JSON.stringify(level.grid);
+    withPlacements(level, level.solution);
+    expect(JSON.stringify(level.grid)).toBe(before);
+  });
+
+  it("a partial solution does not count as solved", () => {
+    const multi = LEVELS.filter((l) => l.solution.length > 1);
+    expect(multi.length).toBeGreaterThan(0);
+    for (const level of multi) {
+      expect(isSolved(withPlacements(level, level.solution.slice(0, 1))), level.name).toBe(false);
     }
   });
 });

@@ -244,7 +244,7 @@
   {
     "id": "light-loom",
     "title": "Light Loom",
-    "description": "Split white light through prisms and mirrors to colour every target.",
+    "description": "Place prisms and mirrors so the lamp splits white light onto every target.",
     "category": "game",
     "icon": "/experiences/light-loom/icon.svg",
     "thumbnail": "/experiences/light-loom/realistic.webp",
