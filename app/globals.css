@@ -78,21 +78,25 @@ body {
 }
 
 /* Shared game-board chrome */
-.board {
-  position: relative;
-  overflow: hidden;
-  border-radius: 0.9rem;
-  border: 1px solid var(--border);
-  background:
-    radial-gradient(
-      1200px 500px at 50% -10%,
-      color-mix(in oklab, var(--ring) 10%, transparent),
-      transparent
-    ),
-    var(--card);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 6%),
-    0 12px 32px -18px rgb(0 0 0 / 35%);
+/* In @layer components so a Tailwind bg-* utility on the same element still
+   wins. Utilities live in a later layer; unlayered CSS would beat them. */
+@layer components {
+  .board {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(
+        1200px 500px at 50% -10%,
+        color-mix(in oklab, var(--ring) 10%, transparent),
+        transparent
+      ),
+      var(--card);
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 6%),
+      0 12px 32px -18px rgb(0 0 0 / 35%);
+  }
 }
 
 /* Small stat pill used across game status rows */

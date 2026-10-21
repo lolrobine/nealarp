@@ -47,6 +47,7 @@ export default function StackLedgerPage() {
   );
   const [state, setState] = useState<StackState>(() => newRunSafe());
   const [topple, setTopple] = useState<{ col: number; row: number; key: number }[]>([]);
+  const [status, setStatus] = useState("");
   const [falling, setFalling] = useState<{ x: number; w: number; rows: number } | null>(null);
   const tickRef = useRef(state.tick);
   const xRef = useRef(state.x);
@@ -106,6 +107,15 @@ export default function StackLedgerPage() {
       setState(next);
       syncX(next);
       setFalling(null);
+      // Sighted players watch the overhang tumble away; this says the same thing
+      // out loud, so the information is never carried by the animation alone.
+      const tallest = Math.max(...next.heights);
+      const lostNow = snapped.length;
+      setStatus(
+        next.phase === "won"
+          ? `Tower complete at height ${tallest}. Final score ${scoreTower(next.heights)}.`
+          : `${lostNow === 0 ? "Clean landing" : `${lostNow} cell${lostNow === 1 ? "" : "s"} snapped off`}. Tallest column ${tallest} of ${WIN_HEIGHT}.`
+      );
       if (snapped.length > 0 && !reducedMotion && speedId !== "still") {
         setTopple(snapped);
         window.setTimeout(() => setTopple([]), 600);
@@ -180,6 +190,10 @@ export default function StackLedgerPage() {
           </Button>
         </div>
 
+        <p role="status" aria-live="polite" className="min-h-6 text-center text-sm font-medium">
+          {status}
+        </p>
+
         <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
           <span>
             Height <strong>{maxH}</strong> / {WIN_HEIGHT}
@@ -219,7 +233,7 @@ export default function StackLedgerPage() {
         </div>
 
         <div
-          className="relative mx-auto overflow-hidden rounded-xl border border-[var(--border)] bg-sky-100/50"
+          className="board relative mx-auto bg-sky-100/50"
           style={{ width: "min(92vw, 420px)", height: "min(78vw, 380px)" }}
           role="img"
           aria-label={`Tower of ${COLS} columns, tallest ${maxH} blocks. Moving bar width ${width} at column ${state.x}.`}
