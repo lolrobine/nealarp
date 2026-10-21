@@ -2,6 +2,14 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { describe, it, expect, vi } from "vitest";
 
+/** The project rule is to bump CACHE_NAME whenever assets change, so this test reads the
+ *  current name out of sw.js instead of hard-coding it — otherwise every correct bump
+ *  breaks the suite. Only the stale name below is a fixture. */
+const CURRENT_CACHE = /const CACHE_NAME = "([^"]+)"/.exec(
+  readFileSync("public/sw.js", "utf8")
+)![1]!;
+const STALE_CACHE = "nealarp-v2-stale";
+
 type WorkerEvent = {
   request?: { url: string; method: string; mode: string; headers: Headers };
   respondWith?: (response: Promise<Response>) => void;
@@ -16,7 +24,7 @@ function worker() {
   };
   const storage = {
     open: vi.fn().mockResolvedValue(cache),
-    keys: vi.fn().mockResolvedValue(["nealarp-v2-6", "nealarp-v2-7", "other-app"]),
+    keys: vi.fn().mockResolvedValue([STALE_CACHE, CURRENT_CACHE, "other-app"]),
     delete: vi.fn().mockResolvedValue(true),
   };
   const fetcher = vi.fn().mockResolvedValue(new Response("fresh page"));
@@ -83,6 +91,8 @@ describe("fresh catalogue service worker", () => {
       },
     });
     await done;
-    expect(w.storage.delete).toHaveBeenCalledExactlyOnceWith("nealarp-v2-6");
+    // The live cache survives, another app's cache is untouched, stale nealarp caches go.
+    expect(w.storage.delete).toHaveBeenCalledExactlyOnceWith(STALE_CACHE);
+    expect(CURRENT_CACHE).toMatch(/^nealarp-/);
   });
 });
