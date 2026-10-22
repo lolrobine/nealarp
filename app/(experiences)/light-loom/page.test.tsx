@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LightLoom from "./page";
 import { LEVELS } from "./logic";
 
@@ -77,5 +77,68 @@ describe("light-loom page", () => {
       }
     });
     expect(localStorage.getItem("nealarp:best:v1:light-loom")).toBe("100");
+  });
+});
+
+describe("light-loom drag and drop", () => {
+  /** jsdom reports a zero-sized board, so hit-testing needs a real rectangle. */
+  function sizeTheBoard() {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 480,
+      height: 480,
+      right: 480,
+      bottom: 480,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+  }
+  const centre = (n: number) => n * 80 + 40;
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("places an optic by pressing and releasing on one square", () => {
+    sizeTheBoard();
+    render(<LightLoom />);
+    const [placement] = LEVELS[0]!.solution;
+    const square = screen.getByRole("button", {
+      name: new RegExp(`^Column ${placement!.x + 1}, row ${placement!.y + 1}:`),
+    });
+    fireEvent.pointerDown(square, { button: 0 });
+    fireEvent.pointerUp(window);
+    expect(screen.getByText(/Every target coloured/)).toBeTruthy();
+  });
+
+  it("follows the pointer, so the optic lands where the finger lifts", () => {
+    sizeTheBoard();
+    render(<LightLoom />);
+    const [placement] = LEVELS[0]!.solution;
+    // Grab on a different free square, then slide onto the solving one.
+    const start = screen.getByRole("button", { name: /^Column 3, row 3:/ });
+    fireEvent.pointerDown(start, { button: 0 });
+    expect(screen.queryByText(/Every target coloured/)).toBeNull();
+    fireEvent.pointerMove(window, {
+      clientX: centre(placement!.x),
+      clientY: centre(placement!.y),
+    });
+    fireEvent.pointerUp(window);
+    expect(screen.getByText(/Every target coloured/)).toBeTruthy();
+  });
+
+  it("returns the optic to the tray when it is dropped off the board", () => {
+    sizeTheBoard();
+    render(<LightLoom />);
+    const [placement] = LEVELS[0]!.solution;
+    const square = screen.getByRole("button", {
+      name: new RegExp(`^Column ${placement!.x + 1}, row ${placement!.y + 1}:`),
+    });
+    fireEvent.pointerDown(square, { button: 0 });
+    fireEvent.pointerMove(window, { clientX: 2000, clientY: 2000 });
+    fireEvent.pointerUp(window);
+    expect(screen.queryByText(/Every target coloured/)).toBeNull();
+    // Nothing was consumed, so the full tray is still available.
+    expect(screen.getByText(/Optics left/).textContent).toContain(String(LEVELS[0]!.tray.length));
   });
 });

@@ -62,15 +62,34 @@ export function emitterBeams(level: Level): Beam[] {
   return beams.flatMap((b) => (["r", "g", "b"] as const).map((color) => ({ ...b, color })));
 }
 
+/** One straight hop of a beam, in cell coordinates, for drawing continuous light. */
+export type Segment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: Exclude<Color, "w">;
+};
+
 export type TraceResult = {
   /** cell key "x,y" → set of colours that land there. */
   lit: Map<string, Set<string>>;
   litTargets: { x: number; y: number; color: string }[];
+  /** Every hop the light makes, so a renderer can stroke it as lines. */
+  segments: Segment[];
 };
 
 export function traceBeams(level: Level): TraceResult {
   const lit = new Map<string, Set<string>>();
   const litTargets: { x: number; y: number; color: string }[] = [];
+  const segments: Segment[] = [];
+  const segmentKeys = new Set<string>();
+  const hop = (x1: number, y1: number, x2: number, y2: number, color: Exclude<Color, "w">) => {
+    const key = `${x1},${y1},${x2},${y2},${color}`;
+    if (segmentKeys.has(key)) return;
+    segmentKeys.add(key);
+    segments.push({ x1, y1, x2, y2, color });
+  };
   const queue: Beam[] = emitterBeams(level);
   const seen = new Set<string>();
   while (queue.length) {
@@ -95,6 +114,7 @@ export function traceBeams(level: Level): TraceResult {
 
     const nextCell = level.grid[ny]?.[nx];
     if (!nextCell) continue;
+    hop(beam.x, beam.y, nx, ny, beam.color);
 
     if (nextCell.kind === "prism") {
       // White components split: red continues, green turns left, blue turns right.
@@ -118,7 +138,7 @@ export function traceBeams(level: Level): TraceResult {
     }
     queue.push({ x: nx, y: ny, dir: beam.dir, color: beam.color });
   }
-  return { lit, litTargets };
+  return { lit, litTargets, segments };
 }
 
 export function isSolved(level: Level): boolean {

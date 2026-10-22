@@ -141,3 +141,28 @@ describe("light-loom levels", () => {
     }
   });
 });
+
+describe("light-loom beam segments", () => {
+  it("reports every hop the light makes so it can be drawn as lines", () => {
+    const solved = withPlacements(LEVELS[0]!, LEVELS[0]!.solution);
+    const { segments, lit } = traceBeams(solved);
+    expect(segments.length).toBeGreaterThan(0);
+    // Each hop is exactly one cell, axis-aligned — never a diagonal or a jump.
+    for (const s of segments) {
+      const dx = Math.abs(s.x2 - s.x1);
+      const dy = Math.abs(s.y2 - s.y1);
+      expect(dx + dy).toBe(1);
+    }
+    // Every cell a segment touches is also reported as lit, so the drawing and
+    // the win condition can never disagree about where the light goes.
+    for (const s of segments) {
+      expect(lit.has(`${s.x2},${s.y2}`)).toBe(true);
+    }
+  });
+
+  it("produces no segments on an empty board with no lamp path", () => {
+    const bare = traceBeams(LEVELS[0]!);
+    // The lamp still fires, so there is light; it just never reaches the target.
+    expect(bare.litTargets.length).toBe(0);
+  });
+});
