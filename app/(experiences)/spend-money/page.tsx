@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
@@ -79,7 +80,7 @@ export default function SpendMoneyPage() {
       ctx.fillText(line, 20, y);
       y += lineH;
     });
-    ctx.fillStyle = "#6366f1";
+    ctx.fillStyle = "#5b5bd6";
     ctx.font = "bold 14px sans-serif";
     ctx.fillText(`Remaining: ${formatMoney(remaining)}`, 20, y + 10);
     const url = canvas.toDataURL("image/png");
@@ -174,7 +175,7 @@ export default function SpendMoneyPage() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+        <ChoiceStrip label="Categories" className="mb-6">
           <motion.button
             onClick={() => setActiveCategory("all")}
             aria-pressed={activeCategory === "all"}
@@ -204,7 +205,7 @@ export default function SpendMoneyPage() {
               {cat.icon} {cat.name}
             </motion.button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

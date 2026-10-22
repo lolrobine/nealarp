@@ -261,7 +261,7 @@ export default function DeepSeaPage() {
                 <button
                   key={z.name}
                   onClick={() => jumpToDepth((z.minDepth + z.maxDepth) / 2)}
-                  className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/70"
+                  className="min-h-6 inline-flex items-center justify-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/70"
                 >
                   {z.name.split(" ")[0]}
                 </button>

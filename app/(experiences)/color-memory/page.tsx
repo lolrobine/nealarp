@@ -1,4 +1,5 @@
 "use client";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { localDayKey } from "@/lib/games/daily";
 import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
@@ -65,6 +66,7 @@ export default function ColorMemory() {
       if (!dailyDay) history.save({ scores: [...history.value.scores, finalScore].slice(-10) });
     }
   }
+  const midRound = ["look", "blank", "guess"].includes(phase);
   return (
     <GameFrame
       id="color-memory"
@@ -72,36 +74,21 @@ export default function ColorMemory() {
       intro="Look. Remember. Rebuild the color from memory."
     >
       <Card className="p-6 space-y-5">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={dailyDay ? "secondary" : "default"}
-            aria-pressed={!dailyDay}
-            disabled={["look", "blank", "guess"].includes(phase)}
-            onClick={() => {
-              setDailyDay(null);
-              setRound(0);
-              setScores([]);
-              setPhase("ready");
-              setOffset(0);
-            }}
-          >
-            Standard session
-          </Button>
-          <Button
-            variant={dailyDay ? "default" : "secondary"}
-            aria-pressed={!!dailyDay}
-            disabled={["look", "blank", "guess"].includes(phase)}
-            onClick={() => {
-              setDailyDay(localDayKey());
-              setRound(0);
-              setScores([]);
-              setPhase("ready");
-              setOffset(0);
-            }}
-          >
-            Play today&apos;s challenge
-          </Button>
-        </div>
+        <SegmentedControl
+          label="Mode"
+          value={dailyDay ? "daily" : "standard"}
+          options={[
+            { id: "standard", label: "Standard session", disabled: midRound },
+            { id: "daily", label: "Play today's challenge", disabled: midRound },
+          ]}
+          onChange={(id) => {
+            setDailyDay(id === "daily" ? localDayKey() : null);
+            setRound(0);
+            setScores([]);
+            setPhase("ready");
+            setOffset(0);
+          }}
+        />
         {dailyDay && (
           <p className="rounded-lg bg-[var(--primary)]/10 p-3 text-sm">
             Daily task · {dailyDay}. Five date-seeded colors, your own local record. The day is

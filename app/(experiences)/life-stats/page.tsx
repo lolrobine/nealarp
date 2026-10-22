@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { Picto } from "@/lib/components/games/Picto";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -144,7 +145,7 @@ export default function LifeStatsPage() {
     toShow.forEach((stat) => {
       const val = stat.getValue(ageMs);
       const formatted = stat.format(val);
-      ctx.fillStyle = "#6366f1";
+      ctx.fillStyle = "#5b5bd6";
       ctx.font = "20px sans-serif";
       ctx.fillText(`${stat.label}:`, 40, y);
       ctx.fillStyle = "#ffffff";
@@ -208,7 +209,7 @@ export default function LifeStatsPage() {
         {/* Categories */}
         {showStats && (
           <>
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <ChoiceStrip label="Categories" className="mb-6">
               <button
                 onClick={() => setActiveCategory("all")}
                 aria-pressed={activeCategory === "all"}
@@ -234,7 +235,7 @@ export default function LifeStatsPage() {
                   <Picto name={cat.icon} /> {cat.name}
                 </button>
               ))}
-            </div>
+            </ChoiceStrip>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

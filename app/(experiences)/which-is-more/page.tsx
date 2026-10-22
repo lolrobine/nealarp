@@ -1,4 +1,5 @@
 "use client";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { useState } from "react";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -67,30 +68,24 @@ export default function WhichIsMore() {
           }
         }}
       >
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={dailyDay ? "secondary" : "default"}
-            aria-pressed={!dailyDay}
-            onClick={() => {
-              setDailyDay(null);
-              reset();
-            }}
-          >
-            Standard quiz
-          </Button>
-          <Button
-            variant={dailyDay ? "default" : "secondary"}
-            aria-pressed={!!dailyDay}
-            onClick={() => {
+        <SegmentedControl
+          label="Mode"
+          value={dailyDay ? "daily" : "standard"}
+          options={[
+            { id: "standard", label: "Standard quiz" },
+            { id: "daily", label: "Play today's challenge" },
+          ]}
+          onChange={(id) => {
+            if (id === "daily") {
               setDailyDay(localDayKey());
               setCategory("all");
               setPractice(false);
-              reset();
-            }}
-          >
-            Play today&apos;s challenge
-          </Button>
-        </div>
+            } else {
+              setDailyDay(null);
+            }
+            reset();
+          }}
+        />
         {dailyDay && (
           <p className="rounded-lg bg-[var(--primary)]/10 p-3 text-sm">
             Daily task · {dailyDay}. Ten date-seeded comparisons with shuffled order and sides. This

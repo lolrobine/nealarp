@@ -283,7 +283,7 @@ export default function PerfectCirclePage() {
       if (isComplete) {
         ctx.closePath();
       }
-      ctx.strokeStyle = isComplete ? "#6366f1" : "#818cf8";
+      ctx.strokeStyle = isComplete ? "#5b5bd6" : "#818cf8";
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";

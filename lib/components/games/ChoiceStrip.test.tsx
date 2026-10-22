@@ -9,7 +9,7 @@ function renderStrip() {
       <button type="button">2. Second</button>
     </ChoiceStrip>
   );
-  const strip = screen.getByRole("tablist", { name: "Levels" });
+  const strip = screen.getByRole("group", { name: "Levels" });
   return { ...view, strip };
 }
 
@@ -58,7 +58,7 @@ describe("ChoiceStrip", () => {
         <button type="button">1. Hall</button>
       </ChoiceStrip>
     );
-    const strip = screen.getByRole("tablist", { name: "Rooms" });
+    const strip = screen.getByRole("group", { name: "Rooms" });
     makeItOverflow(strip);
     expect(screen.getByRole("button", { name: "Scroll rooms right" })).toBeTruthy();
   });

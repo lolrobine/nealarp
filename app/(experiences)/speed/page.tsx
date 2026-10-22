@@ -1,5 +1,7 @@
 "use client";
 
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
+import { SegmentedControl } from "@/lib/components/ui/segmented-control";
 import { Picto, type PictoName } from "@/lib/components/games/Picto";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -247,20 +249,16 @@ export default function SpeedPage() {
               />
             </div>
             <div className="flex gap-2 items-center flex-wrap">
-              {(["kmh", "mph", "ms"] as SpeedUnit[]).map((u) => (
-                <button
-                  key={u}
-                  onClick={() => setUnit(u)}
-                  aria-pressed={unit === u}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
-                    unit === u
-                      ? "bg-[var(--primary)] text-white"
-                      : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {u === "kmh" ? "km/h" : u === "mph" ? "mph" : "m/s"}
-                </button>
-              ))}
+              <SegmentedControl
+                label="Unit"
+                value={unit}
+                options={[
+                  { id: "kmh", label: "km/h" },
+                  { id: "mph", label: "mph" },
+                  { id: "ms", label: "m/s" },
+                ]}
+                onChange={(id) => setUnit(id as SpeedUnit)}
+              />
               <button
                 onClick={() => {
                   setRaceProgress({});
@@ -371,7 +369,7 @@ export default function SpeedPage() {
         )}
 
         {/* Categories */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        <ChoiceStrip label="Categories" className="mb-8">
           <motion.button
             onClick={() => setSelectedCategory("all")}
             aria-pressed={selectedCategory === "all"}
@@ -401,7 +399,7 @@ export default function SpeedPage() {
               <Picto name={CATEGORY_PICTO[cat.id] ?? "nature"} /> {cat.name}
             </motion.button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         {/* Speed Visualization - log scale */}
         <div className="space-y-3">

@@ -14,8 +14,21 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
  *
  * Children are passed through untouched, so every button keeps its own label,
  * aria-pressed state and handler.
+ *
+ * The container is a `group`, not a `tablist`: the children are toggle buttons
+ * carrying `aria-pressed`, and a tablist whose children are not tabs is a
+ * broken ARIA relationship that makes screen readers announce a tab list with
+ * no tabs in it.
  */
-export function ChoiceStrip({ label, children }: { label: string; children: ReactNode }) {
+export function ChoiceStrip({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   const stripRef = useRef<HTMLDivElement | null>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
 
@@ -45,12 +58,12 @@ export function ChoiceStrip({ label, children }: { label: string; children: Reac
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <div
         ref={stripRef}
         onScroll={updateEdges}
         className="flex snap-x gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:thin] [&>*]:shrink-0 [&>*]:snap-start"
-        role="tablist"
+        role="group"
         aria-label={label}
       >
         {children}

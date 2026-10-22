@@ -13,7 +13,7 @@ afterEach(() => {
 it("stores the daily quiz independently and resets its badges with its record", () => {
   render(<WhichIsMore />);
   const day = localDayKey();
-  fireEvent.click(screen.getByRole("button", { name: "Play today's challenge" }));
+  fireEvent.click(screen.getByRole("radio", { name: "Play today's challenge" }));
   const questions = dailyQuestions(day);
   questions.forEach((q, i) => {
     fireEvent.click(screen.getByRole("button", { name: q.a > q.b ? q.left : q.right }));
@@ -24,14 +24,14 @@ it("stores the daily quiz independently and resets its badges with its record", 
   expect(screen.getByLabelText("Perfect unlocked")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Reset personal best" }));
   expect(screen.getByLabelText("Perfect locked")).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Standard quiz" }));
+  fireEvent.click(screen.getByRole("radio", { name: "Standard quiz" }));
   expect(screen.getByText("No completed attempt yet.")).toBeTruthy();
 });
 it("pins the daily color session across midnight and leaves standard history alone", () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 9, 16, 23, 59));
   render(<ColorMemory />);
-  fireEvent.click(screen.getByRole("button", { name: "Play today's challenge" }));
+  fireEvent.click(screen.getByRole("radio", { name: "Play today's challenge" }));
   vi.setSystemTime(new Date(2026, 9, 17, 0, 1));
   for (let i = 0; i < 5; i++) {
     fireEvent.click(screen.getByRole("button", { name: "Show color" }));

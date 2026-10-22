@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { Picto } from "@/lib/components/games/Picto";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -170,7 +171,7 @@ export default function SizeOfSpacePage() {
       // Dot
       ctx.beginPath();
       ctx.arc(x, y, isBase ? 8 : isSelected ? 6 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = isBase ? "#6366f1" : isSelected ? "#22c55e" : "rgba(255,255,255,0.6)";
+      ctx.fillStyle = isBase ? "#5b5bd6" : isSelected ? "#22c55e" : "rgba(255,255,255,0.6)";
       ctx.fill();
 
       // Label for base and selected
@@ -294,7 +295,7 @@ export default function SizeOfSpacePage() {
                 <button
                   onClick={() => setJourneyActive(!journeyActive)}
                   aria-pressed={journeyActive}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${journeyActive ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
+                  className={`min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium border ${journeyActive ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                 >
                   {journeyActive ? (
                     <>
@@ -362,7 +363,7 @@ export default function SizeOfSpacePage() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        <ChoiceStrip label="Categories" className="mb-8">
           <button
             onClick={() => setSelectedCategory("all")}
             aria-pressed={selectedCategory === "all"}
@@ -388,7 +389,7 @@ export default function SizeOfSpacePage() {
               {cat.name}
             </button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         {/* Objects List */}
         <div className="space-y-3">

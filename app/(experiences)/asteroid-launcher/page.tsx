@@ -243,7 +243,7 @@ export default function AsteroidLauncherPage() {
                 <div className="flex gap-1.5 mb-3 flex-wrap">
                   <button
                     onClick={() => setSelectedCountryIds(countries.slice(0, 8).map((c) => c.id))}
-                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
+                    className="min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)] hover:bg-[var(--muted)]"
                   >
                     Top 8
                   </button>
@@ -260,7 +260,7 @@ export default function AsteroidLauncherPage() {
                         "uk",
                       ])
                     }
-                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                    className="min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
                     Biggest
                   </button>
@@ -277,13 +277,13 @@ export default function AsteroidLauncherPage() {
                         "ireland",
                       ])
                     }
-                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                    className="min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
                     Europe
                   </button>
                   <button
                     onClick={() => setSelectedCountryIds(["usa"])}
-                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                    className="min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
                     Only USA
                   </button>
@@ -291,7 +291,7 @@ export default function AsteroidLauncherPage() {
                     onClick={() =>
                       setSelectedCountryIds(filteredCountries.slice(0, 8).map((c) => c.id))
                     }
-                    className="px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+                    className="min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
                   >
                     Select filtered
                   </button>
@@ -445,7 +445,7 @@ export default function AsteroidLauncherPage() {
                       </button>
                       <button
                         onClick={() => handleRemoveSingle(impact.id)}
-                        className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[10px] shrink-0"
+                        className="min-h-6 inline-flex items-center justify-center gap-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[10px] shrink-0"
                       >
                         <Picto name="cross" size={16} />
                       </button>

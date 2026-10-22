@@ -170,7 +170,7 @@ export function CountryMap({
                 setZoom(1);
                 setPan({ x: 0, y: 0 });
               }}
-              className="px-2 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
+              className="min-h-6 inline-flex items-center justify-center gap-1 px-2 py-1 text-[10px] rounded-full border bg-[var(--secondary)]"
             >
               Reset
             </button>
