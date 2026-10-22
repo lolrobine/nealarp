@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -246,7 +247,7 @@ export default function LavaLinksPage() {
       intro="Hop one or two tiles across the hex chain. The tile you leave crumbles into lava — plan every landing."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Levels">
+        <ChoiceStrip label="Levels">
           {LEVELS.map((l, i) => (
             <Button
               key={l.name}
@@ -258,7 +259,7 @@ export default function LavaLinksPage() {
               {solved[i] !== undefined ? " ✓" : ""}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <div className="board relative mx-auto p-3" style={{ width: `min(92vw, ${BOARD_W}px)` }}>
           <canvas

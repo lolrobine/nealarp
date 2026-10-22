@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -66,7 +67,7 @@ export default function WordSquareStudioPage() {
       intro="Place the words so the square reads the same across and down. The word list holds everything you need plus a couple of decoys."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Levels">
+        <ChoiceStrip label="Levels">
           {SQUARES.map((s, i) => (
             <Button
               key={s.id}
@@ -77,7 +78,7 @@ export default function WordSquareStudioPage() {
               {s.size}×{s.size} · {i + 1}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <div className="mx-auto grid gap-2" style={{ width: "min(92vw, 380px)" }}>
           {placed.map((word, i) => (

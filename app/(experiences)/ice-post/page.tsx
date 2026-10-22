@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -342,7 +343,7 @@ export default function IcePostPage() {
       intro="Slide until something stops you: walls, edges, or the postman on his round. He moves one step after every slide — deliver to the green postbox."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Levels">
+        <ChoiceStrip label="Levels">
           {LEVELS.map((l, i) => (
             <Button
               key={l.name}
@@ -354,7 +355,7 @@ export default function IcePostPage() {
               {solved[i] !== undefined ? " ✓" : ""}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <div className="board mx-auto p-3" style={{ width: "min(92vw, 444px)" }}>
           <canvas

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { SegmentedControl } from "@/lib/components/ui/segmented-control";
@@ -191,7 +192,7 @@ export default function PocketSandPage() {
       intro="A tiny falling-sand sandbox. Sculpt each goal with the pouring tools — sand piles, water spreads, walls hold the shape."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Goals">
+        <ChoiceStrip label="Goals">
           {GOALS.map((g, i) => (
             <Button
               key={g.id}
@@ -202,7 +203,7 @@ export default function PocketSandPage() {
               {g.name}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
         <p className="text-sm text-[var(--muted-foreground)]">{goal.hint}</p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">

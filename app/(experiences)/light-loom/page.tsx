@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -482,7 +483,7 @@ export default function LightLoomPage() {
       intro="Drag prisms and mirrors onto the grid so the lamp colours every target. Prisms split white light: red travels straight on, green turns left, blue turns right (Lazors-style optics, original layouts)."
     >
       <Card className="p-6 space-y-5">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Levels">
+        <ChoiceStrip label="Levels">
           {LEVELS.map((entry, index) => (
             <Button
               key={entry.name}
@@ -494,7 +495,7 @@ export default function LightLoomPage() {
               {solved[index] ? " ✓" : ""}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <SegmentedControl
           label="Optic"

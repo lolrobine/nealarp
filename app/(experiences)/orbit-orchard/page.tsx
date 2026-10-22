@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -249,7 +250,7 @@ export default function OrbitOrchardPage() {
       intro="Launch a seed around the star and thread it through every fruit ring. Toggle the trajectory preview to plan each shot. Simulated in fixed steps — identical on every device."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Levels">
+        <ChoiceStrip label="Levels">
           {LEVELS.map((l, i) => (
             <Button
               key={l.name}
@@ -263,7 +264,7 @@ export default function OrbitOrchardPage() {
               {i + 1}. {l.name}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <canvas
           ref={canvasRef}

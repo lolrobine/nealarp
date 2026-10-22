@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -45,7 +46,7 @@ export default function ClueSchoolPage() {
       intro="Every clue hides its answer inside honest wordplay. Guess the answer, or open the lesson to see exactly how the clue is built. All clues are original to this app."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Clues">
+        <ChoiceStrip label="Clues">
           {CLUES.map((c, i) => (
             <Button
               key={c.id}
@@ -56,7 +57,7 @@ export default function ClueSchoolPage() {
               Clue {i + 1}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <blockquote className="rounded-xl border border-[var(--border)] bg-[var(--secondary)] p-6 text-xl">
           {level.clue} <span className="text-[var(--muted-foreground)]">{level.enumeration}</span>

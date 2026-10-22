@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -423,7 +424,7 @@ export default function TwinTiltPage() {
       intro="Hold a turn control and the whole room swings round; gravity keeps pointing down, so both marbles roll when you let go. Land ball A and ball B on their own goals at the same time."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Rooms">
+        <ChoiceStrip label="Rooms">
           {ROOMS.map((r, i) => (
             <Button
               key={r.name}
@@ -435,7 +436,7 @@ export default function TwinTiltPage() {
               {solved[i] !== undefined ? " ✓" : ""}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <div className="flex flex-col items-center gap-4">
           <div

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { ChoiceStrip } from "@/lib/components/games/ChoiceStrip";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -111,7 +112,7 @@ export default function CurrentCourierPage() {
       intro="Draw one unbroken delivery route through every stop. Tap node to node along the streets — the shorter the route, the higher the pay (Flight Control's draw-a-route language, original maps)."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Maps">
+        <ChoiceStrip label="Maps">
           {MAPS.map((m, i) => (
             <Button
               key={m.name}
@@ -125,7 +126,7 @@ export default function CurrentCourierPage() {
               {i + 1}. {m.name}
             </Button>
           ))}
-        </div>
+        </ChoiceStrip>
 
         <div className="board mx-auto p-3" style={{ width: "min(92vw, 420px)" }}>
           <div className="relative">
