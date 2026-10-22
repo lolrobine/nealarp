@@ -5,8 +5,103 @@ import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
-import { dailySeed, DAYS, MAX_ORDER, playDay, scoreRun, type DayResult } from "./logic";
+import {
+  dailySeed,
+  dayProfit,
+  DAYS,
+  MAX_ORDER,
+  playDay,
+  scoreRun,
+  SALVAGE,
+  UNIT_COST,
+  UNIT_PRICE,
+  type DayResult,
+} from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
+
+const CHART_W = 320;
+const CHART_H = 150;
+
+/** What today's order pays against every demand it could meet. The kink is the
+ *  whole game: past it you are buying stock you will have to salvage. */
+function PayoffChart({ order, history }: { order: number; history: number[] }) {
+  const points = Array.from({ length: MAX_ORDER + 1 }, (_, d) => ({
+    d,
+    profit: dayProfit(order, d).profit,
+  }));
+  const profits = points.map((p) => p.profit);
+  const lo = Math.min(0, ...profits);
+  const hi = Math.max(1, ...profits);
+  const px = (d: number) => 30 + (d / MAX_ORDER) * (CHART_W - 44);
+  const py = (p: number) => CHART_H - 26 - ((p - lo) / (hi - lo)) * (CHART_H - 50);
+  const best = points.reduce((a, b) => (b.profit > a.profit ? b : a));
+
+  return (
+    <svg
+      viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+      className="mx-auto block h-auto w-full max-w-sm"
+      role="img"
+      aria-label={`Ordering ${order} units pays between ${Math.min(...profits)} and ${Math.max(
+        ...profits
+      )} coins depending on demand, peaking when demand reaches ${best.d}.`}
+    >
+      <line
+        x1={30}
+        y1={py(0)}
+        x2={CHART_W - 14}
+        y2={py(0)}
+        stroke="var(--border)"
+        strokeWidth={1}
+        strokeDasharray="4 4"
+      />
+      <text x={4} y={py(0) + 4} className="fill-[var(--muted-foreground)]" fontSize={9}>
+        0
+      </text>
+      {/* demand you have already seen, as ticks along the bottom */}
+      {history.map((d, i) => (
+        <line
+          key={`${d}-${i}`}
+          x1={px(d)}
+          y1={CHART_H - 22}
+          x2={px(d)}
+          y2={CHART_H - 14}
+          stroke="var(--muted-foreground)"
+          strokeWidth={2}
+          strokeOpacity={0.6}
+        />
+      ))}
+      <polyline
+        points={points.map((p) => `${px(p.d)},${py(p.profit)}`).join(" ")}
+        fill="none"
+        stroke="var(--primary)"
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+      />
+      <circle cx={px(best.d)} cy={py(best.profit)} r={4} fill="var(--primary)" />
+      <text
+        x={px(best.d)}
+        y={py(best.profit) - 8}
+        textAnchor="middle"
+        fontSize={9}
+        className="fill-[var(--foreground)]"
+      >
+        +{best.profit}
+      </text>
+      <text x={30} y={CHART_H - 4} fontSize={9} className="fill-[var(--muted-foreground)]">
+        demand 0
+      </text>
+      <text
+        x={CHART_W - 14}
+        y={CHART_H - 4}
+        textAnchor="end"
+        fontSize={9}
+        className="fill-[var(--muted-foreground)]"
+      >
+        {MAX_ORDER}
+      </text>
+    </svg>
+  );
+}
 
 export default function StockroomSixPage() {
   const record = usePersonalBest("stockroom-six");
@@ -17,6 +112,7 @@ export default function StockroomSixPage() {
 
   const total = useMemo(() => log.reduce((sum, r) => sum + r.profit, 0), [log]);
   const finished = log.length >= DAYS;
+  const last = log[log.length - 1];
 
   function openDay() {
     if (finished) return;
@@ -71,6 +167,11 @@ export default function StockroomSixPage() {
                 aria-label={`Order quantity ${order}`}
               />
             </label>
+            <PayoffChart order={order} history={log.map((r) => r.demand)} />
+            <p className="text-center text-xs text-[var(--muted-foreground)]">
+              The line is what {order} units pay you at each possible demand. Ticks along the bottom
+              are the demands you have already seen.
+            </p>
             <div className="flex flex-wrap justify-center gap-2">
               {[0, 4, 8, 12, 16, 20].map((n) => (
                 <Button
@@ -85,6 +186,40 @@ export default function StockroomSixPage() {
               <Button onClick={openDay}>Open the day</Button>
             </div>
           </>
+        )}
+
+        {last && (
+          <div
+            className="rounded-xl border border-[var(--border)] bg-[var(--secondary)] p-4"
+            aria-live="polite"
+          >
+            <p className="font-semibold">
+              Day {last.day + 1}: you ordered {last.order}, {last.demand} customers came.
+            </p>
+            <ul className="mt-1 grid gap-0.5 text-sm text-[var(--muted-foreground)] sm:grid-cols-2">
+              <li>
+                Stock bought: {last.order} × {UNIT_COST} ={" "}
+                <strong className="text-[var(--foreground)]">−{last.order * UNIT_COST}</strong>
+              </li>
+              <li>
+                Sold: {last.sold} × {UNIT_PRICE} ={" "}
+                <strong className="text-[var(--foreground)]">+{last.sold * UNIT_PRICE}</strong>
+              </li>
+              <li>
+                Salvaged: {last.leftover} × {SALVAGE} ={" "}
+                <strong className="text-[var(--foreground)]">+{last.leftover * SALVAGE}</strong>
+              </li>
+              <li>
+                {last.demand > last.order
+                  ? `Turned away: ${last.demand - last.order} customers`
+                  : "Turned away: nobody"}
+              </li>
+            </ul>
+            <p className="mt-1 text-lg font-bold">
+              Day profit {last.profit >= 0 ? "+" : ""}
+              {last.profit} coins
+            </p>
+          </div>
         )}
 
         {log.length > 0 && (
