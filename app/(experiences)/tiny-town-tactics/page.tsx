@@ -5,16 +5,68 @@ import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
-import { makeBoard, place, PLACEMENTS, scoreRun, SIZE, tileSequence, type Tile } from "./logic";
+import {
+  makeBoard,
+  place,
+  placementScore,
+  PLACEMENTS,
+  scoreRun,
+  SIZE,
+  tileSequence,
+  type Tile,
+} from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
-const TILE_EMOJI: Record<string, string> = {
-  house: "🏠",
-  park: "🌳",
-  shop: "🏪",
-  factory: "🏭",
-  pond: "💧",
+const TILE_COLOUR: Record<string, string> = {
+  house: "#f59e0b",
+  park: "#22c55e",
+  shop: "#a855f7",
+  factory: "#64748b",
+  pond: "#38bdf8",
 };
+
+/** Drawn tiles, not emoji: each kind has its own silhouette, so the board is
+ *  readable in greyscale and at thumbnail size. */
+function TileGlyph({ kind, size = 26 }: { kind: string; size?: number }) {
+  const colour = TILE_COLOUR[kind] ?? "#94a3b8";
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
+      {kind === "house" && (
+        <>
+          <path d="M3 11 12 4l9 7v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z" fill={colour} />
+          <rect x="10" y="14" width="4" height="6" fill="rgba(0,0,0,0.35)" />
+        </>
+      )}
+      {kind === "park" && (
+        <>
+          <rect x="11" y="15" width="2" height="6" fill="#78350f" />
+          <path d="M12 3 19 15H5Z" fill={colour} />
+          <path d="M12 7.5 17 15H7Z" fill="rgba(255,255,255,0.22)" />
+        </>
+      )}
+      {kind === "shop" && (
+        <>
+          <rect x="4" y="10" width="16" height="11" rx="1" fill={colour} />
+          <path d="M3 10 5 5h14l2 5Z" fill="rgba(255,255,255,0.35)" />
+          <rect x="9" y="14" width="6" height="7" fill="rgba(0,0,0,0.35)" />
+        </>
+      )}
+      {kind === "factory" && (
+        <>
+          <path d="M3 21V12l6 3V12l6 3V8h6v13Z" fill={colour} />
+          <rect x="16" y="3" width="3" height="6" fill={colour} />
+          <circle cx="17.5" cy="2" r="2" fill="rgba(255,255,255,0.3)" />
+        </>
+      )}
+      {kind === "pond" && (
+        <>
+          <ellipse cx="12" cy="14" rx="9" ry="6" fill={colour} />
+          <ellipse cx="9" cy="12" rx="3" ry="1.6" fill="rgba(255,255,255,0.45)" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 export default function TinyTownTacticsPage() {
   const record = usePersonalBest("tiny-town-tactics");
@@ -52,9 +104,16 @@ export default function TinyTownTacticsPage() {
             Tile {Math.min(placedCount + 1, PLACEMENTS)} of {PLACEMENTS}
           </p>
           {!finished && currentTile && (
-            <p className="text-2xl" aria-live="polite">
-              {TILE_EMOJI[currentTile]} <strong className="capitalize">{currentTile}</strong> — pick
-              a free cell
+            <p
+              className="flex items-center justify-center gap-2 text-xl"
+              aria-live="polite"
+              aria-label={`Place a ${currentTile}. Each free cell shows what it would score.`}
+            >
+              <TileGlyph kind={currentTile} size={30} />
+              <strong className="capitalize">{currentTile}</strong>
+              <span className="text-sm text-[var(--muted-foreground)]">
+                — the numbers show what it scores there
+              </span>
             </p>
           )}
           <p className="text-lg font-bold" aria-live="polite">
@@ -72,6 +131,10 @@ export default function TinyTownTacticsPage() {
           {board.map((tile, i) => {
             const x = i % SIZE;
             const y = Math.floor(i / SIZE);
+            // What this cell would be worth right now — the whole scoring sheet,
+            // shown where the decision is made instead of hidden in a details tag.
+            const preview =
+              tile || finished || !currentTile ? null : placementScore(board, x, y, currentTile);
             return (
               <button
                 key={i}
@@ -79,14 +142,39 @@ export default function TinyTownTacticsPage() {
                 role="gridcell"
                 disabled={finished || tile !== null}
                 onClick={() => handlePlace(x, y)}
-                aria-label={`Cell ${x + 1},${y + 1}: ${tile ?? "empty"}`}
-                className={`flex aspect-square items-center justify-center rounded-md border text-lg ${
+                aria-label={
+                  tile
+                    ? `Cell ${x + 1},${y + 1}: ${tile}`
+                    : preview === null
+                      ? `Cell ${x + 1},${y + 1}: empty`
+                      : `Cell ${x + 1},${y + 1}: empty, placing ${currentTile} here scores ${
+                          preview > 0 ? "plus " : "minus "
+                        }${Math.abs(preview)}`
+                }
+                className={`flex aspect-square items-center justify-center rounded-md border text-sm font-bold tabular-nums ${
                   tile
                     ? "border-[var(--border)] bg-[var(--secondary)]"
                     : "border-[var(--border)] bg-[var(--card)] hover:border-amber-400"
+                } ${
+                  preview === null
+                    ? ""
+                    : preview >= 6
+                      ? "text-emerald-500"
+                      : preview >= 1
+                        ? "text-[var(--muted-foreground)]"
+                        : "text-rose-500"
                 }`}
               >
-                {tile ? TILE_EMOJI[tile] : ""}
+                {tile ? (
+                  <TileGlyph kind={tile} />
+                ) : preview === null ? (
+                  ""
+                ) : (
+                  <span>
+                    {preview > 0 ? "+" : ""}
+                    {preview}
+                  </span>
+                )}
               </button>
             );
           })}
