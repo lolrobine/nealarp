@@ -31,3 +31,35 @@ describe("orbit-orchard hint marker", () => {
     expect(screen.getByRole("button", { name: "Show hint direction" })).toBeTruthy();
   });
 });
+
+describe("orbit-orchard flight", () => {
+  const replayButton = () => screen.getByRole("button", { name: "Replay flight" });
+
+  it("keeps the outcome hidden until a seed has actually been launched", () => {
+    render(<OrbitOrchard />);
+    expect(screen.getByText(/launch to find out/)).toBeTruthy();
+    expect(screen.queryByText(/Rings threaded/)).toBeNull();
+  });
+
+  it("offers a replay only once there is a flight to replay", () => {
+    render(<OrbitOrchard />);
+    expect(replayButton().hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Launch seed" }));
+    expect(replayButton().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("reports the outcome after the flight has played out", () => {
+    render(<OrbitOrchard />);
+    fireEvent.click(screen.getByRole("button", { name: "Launch seed" }));
+    // Reduced motion is the default in jsdom, so the flight resolves at once.
+    expect(screen.getByText(/Rings threaded/)).toBeTruthy();
+  });
+
+  it("drops the old flight when the aim changes", () => {
+    render(<OrbitOrchard />);
+    fireEvent.click(screen.getByRole("button", { name: "Launch seed" }));
+    fireEvent.change(screen.getByLabelText(/Launch angle/), { target: { value: "20" } });
+    expect(screen.getByText(/launch to find out/)).toBeTruthy();
+    expect(replayButton().hasAttribute("disabled")).toBe(true);
+  });
+});
