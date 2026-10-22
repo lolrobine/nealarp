@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { SegmentedControl } from "@/lib/components/ui/segmented-control";
@@ -157,17 +158,9 @@ export default function GateCrashPage() {
         )}
 
         {effectivePhase === "over" && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
-          >
-            <p className="text-xl font-bold">
-              Streak of {streak} · {scoreStreak(streak)} / 100
-            </p>
-            <Button className="mt-2" onClick={restart}>
-              Play again
-            </Button>
-          </div>
+          <WinScreen headline={`Streak of ${streak}`} score={scoreStreak(streak)}>
+            <Button onClick={restart}>Play again</Button>
+          </WinScreen>
         )}
       </Card>
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -136,17 +137,11 @@ export default function WordSquareStudioPage() {
           </p>
         )}
         {result?.solved && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
-          >
-            <p className="text-xl font-bold">
-              Square complete · {scoreSquare(wrongChecks, hints)} / 100
-            </p>
-            <p className="text-sm text-[var(--muted-foreground)]">
-              {level.rows.join(" / ").toUpperCase()}
-            </p>
-          </div>
+          <WinScreen
+            headline="Square complete"
+            score={scoreSquare(wrongChecks, hints)}
+            detail={level.rows.join(" / ").toUpperCase()}
+          />
         )}
       </Card>
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -511,25 +512,19 @@ export default function TwinTiltPage() {
         </div>
 
         {won && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline={`Room solved in ${moves} move${moves === 1 ? "" : "s"}`}
+            score={roomScore(moves, room.par)}
+            detail={
+              Object.keys(solved).length === ROOMS.length
+                ? "All eight rooms solved — run score saved."
+                : `Par for this room is ${room.par}.`
+            }
           >
-            <p className="text-xl font-bold">
-              Room solved in {moves} move{moves === 1 ? "" : "s"} ·{" "}
-              {roomScore(moves, room.par).toFixed(0)} / 100
-            </p>
             {roomIndex + 1 < ROOMS.length && (
-              <Button className="mt-2" onClick={() => selectRoom(roomIndex + 1)}>
-                Next room
-              </Button>
+              <Button onClick={() => selectRoom(roomIndex + 1)}>Next room</Button>
             )}
-            {Object.keys(solved).length === ROOMS.length && (
-              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                All eight rooms solved — run score saved.
-              </p>
-            )}
-          </div>
+          </WinScreen>
         )}
       </Card>
 

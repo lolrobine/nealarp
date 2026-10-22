@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -250,20 +251,12 @@ export default function StockroomSixPage() {
         )}
 
         {finished && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
-          >
-            <p className="text-xl font-bold">
-              Fortnight profit {total} coins · {scoreRun(total)} / 100
-            </p>
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
-              <Button onClick={() => reset(false)}>Replay same season</Button>
-              <Button variant="outline" onClick={() => reset(true)}>
-                New season
-              </Button>
-            </div>
-          </div>
+          <WinScreen headline={`Fortnight profit ${total} coins`} score={scoreRun(total)}>
+            <Button onClick={() => reset(false)}>Replay same season</Button>
+            <Button variant="outline" onClick={() => reset(true)}>
+              New season
+            </Button>
+          </WinScreen>
         )}
       </Card>
 

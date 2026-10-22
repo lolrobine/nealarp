@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -135,14 +136,11 @@ export default function LaneGeneralPage() {
         )}
 
         {finished && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
-          >
-            <p className="text-xl font-bold">
-              Campaign over · streak {streak} · {scoreStreak(streak, ROUNDS)} / 100
-            </p>
-          </div>
+          <WinScreen
+            headline="Campaign over"
+            score={scoreStreak(streak, ROUNDS)}
+            detail={`Best streak: ${streak} of ${ROUNDS} rounds.`}
+          />
         )}
       </Card>
 

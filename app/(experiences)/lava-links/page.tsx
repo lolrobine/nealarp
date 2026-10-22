@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -325,19 +326,15 @@ export default function LavaLinksPage() {
         </div>
 
         {won && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline={`Crossed in ${moves} move${moves === 1 ? "" : "s"}`}
+            score={scoreRun(moves, level.par)}
+            detail={`Par for this crossing is ${level.par}.`}
           >
-            <p className="text-xl font-bold">
-              Crossed in {moves} move{moves === 1 ? "" : "s"} · {scoreRun(moves, level.par)} / 100
-            </p>
             {levelIndex + 1 < LEVELS.length && (
-              <Button className="mt-2" onClick={() => selectLevel(levelIndex + 1)}>
-                Next level
-              </Button>
+              <Button onClick={() => selectLevel(levelIndex + 1)}>Next level</Button>
             )}
-          </div>
+          </WinScreen>
         )}
       </Card>
 

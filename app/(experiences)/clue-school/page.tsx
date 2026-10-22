@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -99,20 +100,15 @@ export default function ClueSchoolPage() {
         {hints >= 2 && !solved && <p className="text-sm">{level.annotation}</p>}
 
         {solved && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline={level.answer}
+            score={scoreClues(wrong, hints)}
+            detail={level.annotation}
           >
-            <p className="text-xl font-bold">
-              {level.answer} · {scoreClues(wrong, hints)} / 100
-            </p>
-            <p className="text-sm text-[var(--muted-foreground)]">{level.annotation}</p>
             {clueIndex + 1 < CLUES.length && (
-              <Button className="mt-2" onClick={() => selectClue(clueIndex + 1)}>
-                Next clue
-              </Button>
+              <Button onClick={() => selectClue(clueIndex + 1)}>Next clue</Button>
             )}
-          </div>
+          </WinScreen>
         )}
       </Card>
 

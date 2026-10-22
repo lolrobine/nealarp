@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -342,14 +343,9 @@ export default function OrbitOrchardPage() {
         )}
 
         {flightDone && collected.length === level.rings.length && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
-          >
-            <p className="text-xl font-bold">Perfect orbit!</p>
+          <WinScreen headline="Perfect orbit" score={100} detail="Every ring threaded on one shot.">
             {levelIndex + 1 < LEVELS.length && (
               <Button
-                className="mt-2"
                 onClick={() => {
                   setLevelIndex(levelIndex + 1);
                   clearShot();
@@ -359,11 +355,9 @@ export default function OrbitOrchardPage() {
               </Button>
             )}
             {levelIndex + 1 === LEVELS.length && (
-              <Button className="mt-2" onClick={() => record.save(100)}>
-                Save perfect run
-              </Button>
+              <Button onClick={() => record.save(100)}>Save perfect run</Button>
             )}
-          </div>
+          </WinScreen>
         )}
       </Card>
 

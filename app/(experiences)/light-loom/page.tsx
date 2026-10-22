@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { SegmentedControl } from "@/lib/components/ui/segmented-control";
@@ -578,21 +579,16 @@ export default function LightLoomPage() {
         </div>
 
         {solvedNow && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline="Every target coloured"
+            detail={`${Object.keys(solved).length} / ${LEVELS.length} levels solved`}
           >
-            <p className="text-xl font-bold">
-              Every target coloured · {Object.keys(solved).length} / {LEVELS.length} levels
-            </p>
             {levelIndex + 1 < LEVELS.length && (
-              <div className="mt-2 flex justify-center">
-                <Button variant="outline" onClick={() => selectLevel(levelIndex + 1)}>
-                  Next layout
-                </Button>
-              </div>
+              <Button variant="outline" onClick={() => selectLevel(levelIndex + 1)}>
+                Next layout
+              </Button>
             )}
-          </div>
+          </WinScreen>
         )}
       </Card>
 

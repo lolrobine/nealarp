@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -188,18 +189,13 @@ export default function PassThePencilPage() {
         )}
 
         {finished && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline="Game complete"
+            score={scoreRun(scores)}
+            detail={`Round scores: ${scores.map((s) => scoreRound(s.match, s.effort)).join(" · ")}`}
           >
-            <p className="text-xl font-bold">Game complete · {scoreRun(scores)} / 100</p>
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Round scores: {scores.map((s) => scoreRound(s.match, s.effort)).join(" · ")}
-            </p>
-            <Button className="mt-2" onClick={restart}>
-              New prompt deck
-            </Button>
-          </div>
+            <Button onClick={restart}>New prompt deck</Button>
+          </WinScreen>
         )}
       </Card>
 

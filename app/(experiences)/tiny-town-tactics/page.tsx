@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
+import { WinScreen } from "@/lib/components/games/WinScreen";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
@@ -193,15 +194,12 @@ export default function TinyTownTacticsPage() {
         </details>
 
         {finished && (
-          <div
-            className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-center"
-            aria-live="polite"
+          <WinScreen
+            headline={`Town complete · ${total} points`}
+            score={scoreRun(total)}
+            detail={`${PLACEMENTS} tiles laid.`}
           >
-            <p className="text-xl font-bold">
-              Town complete · {total} points · {scoreRun(total)} / 100
-            </p>
             <Button
-              className="mt-2"
               onClick={() => {
                 setBoard(makeBoard());
                 setPlacedCount(0);
@@ -211,7 +209,7 @@ export default function TinyTownTacticsPage() {
             >
               Build again
             </Button>
-          </div>
+          </WinScreen>
         )}
       </Card>
 
