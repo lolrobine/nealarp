@@ -445,6 +445,7 @@ export default function AsteroidLauncherPage() {
                       </button>
                       <button
                         onClick={() => handleRemoveSingle(impact.id)}
+                        aria-label={`Remove impact at ${impact.lat.toFixed(1)}°, ${impact.lng.toFixed(1)}°`}
                         className="min-h-6 inline-flex items-center justify-center gap-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[10px] shrink-0"
                       >
                         <Picto name="cross" size={16} />
