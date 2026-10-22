@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -108,6 +108,35 @@ export default function Home() {
     return allExperiences.filter((exp) => ids.includes(exp.id));
   }, [played, allExperiences]);
 
+  // Scroll affordances for the category strip.
+  const filterStripRef = useRef<HTMLDivElement | null>(null);
+  const [filterEdges, setFilterEdges] = useState({ left: false, right: false });
+
+  const updateFilterEdges = useCallback(() => {
+    const strip = filterStripRef.current;
+    if (!strip) return;
+    const overflowRight = strip.scrollWidth - strip.clientWidth - strip.scrollLeft > 4;
+    setFilterEdges((prev) => {
+      const next = { left: strip.scrollLeft > 4, right: overflowRight };
+      return prev.left === next.left && prev.right === next.right ? prev : next;
+    });
+  }, []);
+
+  useEffect(() => {
+    updateFilterEdges();
+    window.addEventListener("resize", updateFilterEdges);
+    return () => window.removeEventListener("resize", updateFilterEdges);
+  }, [updateFilterEdges]);
+
+  function nudgeFilters(direction: -1 | 1) {
+    const strip = filterStripRef.current;
+    if (!strip || typeof strip.scrollBy !== "function") return;
+    strip.scrollBy({
+      left: direction * Math.max(160, strip.clientWidth * 0.7),
+      behavior: "smooth",
+    });
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-10">
@@ -184,21 +213,62 @@ export default function Home() {
       )}
 
       <div className="flex flex-wrap gap-2 mb-8 items-center">
-        <div className="flex gap-2 overflow-x-auto pb-2 flex-1">
-          {allCategories.map((cat) => (
+        {/* The category strip scrolls sideways on narrow screens. Without an
+            edge fade and arrows there was nothing to tell you more filters
+            existed past the right-hand edge. */}
+        <div className="relative flex-1 min-w-0">
+          {filterEdges.left && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[var(--background)] to-transparent"
+            />
+          )}
+          {filterEdges.right && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[var(--background)] to-transparent"
+            />
+          )}
+          {filterEdges.left && (
             <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              aria-pressed={activeCategory === cat.id}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
-                activeCategory === cat.id
-                  ? "bg-[var(--primary)] text-white"
-                  : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              }`}
+              type="button"
+              onClick={() => nudgeFilters(-1)}
+              aria-label="Scroll filters left"
+              className="absolute left-0 top-1/2 z-20 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full border border-[var(--border)] bg-[var(--card)] text-sm shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
-              {cat.emoji} {cat.name}
+              ‹
             </button>
-          ))}
+          )}
+          {filterEdges.right && (
+            <button
+              type="button"
+              onClick={() => nudgeFilters(1)}
+              aria-label="Scroll filters right"
+              className="absolute right-0 top-1/2 z-20 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full border border-[var(--border)] bg-[var(--card)] text-sm shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+            >
+              ›
+            </button>
+          )}
+          <div
+            ref={filterStripRef}
+            onScroll={updateFilterEdges}
+            className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]"
+          >
+            {allCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                aria-pressed={activeCategory === cat.id}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
+                  activeCategory === cat.id
+                    ? "bg-[var(--primary)] text-white"
+                    : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                {cat.emoji} {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex gap-2 items-center">
           <select

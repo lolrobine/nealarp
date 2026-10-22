@@ -55,3 +55,21 @@ describe("catalogue", () => {
     expect(screen.getByRole("status").textContent).toBe(`Showing all ${TOTAL} experiences`);
   });
 });
+
+describe("home filter strip", () => {
+  it("shows a scroll arrow only once the categories overflow", () => {
+    const { container } = render(<Home />);
+    expect(screen.queryByRole("button", { name: "Scroll filters right" })).toBeNull();
+
+    // jsdom lays nothing out, so the overflow has to be declared.
+    const strip = container.querySelector(".overflow-x-auto") as HTMLElement;
+    expect(strip).toBeTruthy();
+    Object.defineProperty(strip, "scrollWidth", { value: 800, configurable: true });
+    Object.defineProperty(strip, "clientWidth", { value: 320, configurable: true });
+    fireEvent.scroll(strip);
+
+    expect(screen.getByRole("button", { name: "Scroll filters right" })).toBeTruthy();
+    // Nothing is scrolled off to the left yet, so that arrow stays hidden.
+    expect(screen.queryByRole("button", { name: "Scroll filters left" })).toBeNull();
+  });
+});
