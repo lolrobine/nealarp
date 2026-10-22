@@ -43,6 +43,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🕰️",
     category: "earth",
     description: "Clock tower in London",
+    image: "/experiences/size-of-space/objects/big-ben.jpg",
   },
   {
     name: "Eiffel Tower",
@@ -112,6 +113,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "⭐",
     category: "stars",
     description: "Nearest star to the Sun",
+    image: "/experiences/size-of-space/objects/proxima-centauri.jpg",
   },
   {
     name: "Betelgeuse",
@@ -119,6 +121,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌟",
     category: "stars",
     description: "Red supergiant, 700x the Sun's radius",
+    image: "/experiences/size-of-space/objects/betelgeuse.jpg",
   },
   {
     name: "UY Scuti",
@@ -126,6 +129,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "💫",
     category: "stars",
     description: "One of the largest known stars",
+    image: "/experiences/size-of-space/objects/uy-scuti.jpg",
   },
 
   // Solar system distances (for scale)
@@ -135,6 +139,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🚀",
     category: "distances",
     description: "Average distance from Earth",
+    image: "/experiences/size-of-space/objects/distance-moon.jpg",
   },
   {
     name: "Distance to Sun",
@@ -142,6 +147,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌞",
     category: "distances",
     description: "1 Astronomical Unit (AU)",
+    image: "/experiences/size-of-space/objects/distance-sun.jpg",
   },
   {
     name: "Distance to Jupiter",
@@ -172,6 +178,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌌",
     category: "galaxies",
     description: "Out to the Oort Cloud",
+    image: "/experiences/size-of-space/objects/solar-system.jpg",
   },
   {
     name: "Milky Way Galaxy",
@@ -179,6 +186,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌀",
     category: "galaxies",
     description: "100,000 light-years across",
+    image: "/experiences/size-of-space/objects/milky-way.jpg",
   },
   {
     name: "Andromeda Galaxy",
@@ -186,6 +194,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌠",
     category: "galaxies",
     description: "220,000 light-years across",
+    image: "/experiences/size-of-space/objects/andromeda.jpg",
   },
   {
     name: "Observable Universe",
@@ -193,6 +202,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🔮",
     category: "galaxies",
     description: "93 billion light-years in diameter",
+    image: "/experiences/size-of-space/objects/observable-universe.jpg",
   },
 ];
 

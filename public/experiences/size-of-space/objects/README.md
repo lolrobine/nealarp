@@ -29,5 +29,10 @@ player is never shown one of these believing it is a photograph.
 | `jupiter.jpg`           | Jupiter                     |
 | `sun.jpg`               | Sun                         |
 
-The remaining objects in the catalogue (stars, distances, galaxies) have no
-picture yet and fall back to a drawn disc.
+The three remaining `Distance to ...` entries (Jupiter, Pluto, Proxima Centauri)
+have no picture yet and fall back to a drawn disc.
+
+A note on the `distance-*.jpg` images in particular: a distance is not an
+object, so these are _scenes_ — two bodies with the gap between them as the
+subject. The gap in the picture is not drawn to scale and must not be read as
+one. The honest number is the one the page prints beside it.

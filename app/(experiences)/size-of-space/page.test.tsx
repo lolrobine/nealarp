@@ -48,11 +48,17 @@ describe("size-of-space data", () => {
     }
   });
 
-  it("has a picture for every Earth-scale and Solar System object", () => {
-    const missing = spaceObjects
-      .filter((o) => o.category === "earth" || o.category === "solar")
-      .filter((o) => !o.image)
-      .map((o) => o.name);
-    expect(missing).toEqual(["Big Ben"]);
+  it("knows exactly which objects are still waiting for a picture", () => {
+    const missing = spaceObjects.filter((o) => !o.image).map((o) => o.name);
+    expect(missing).toEqual([
+      "Distance to Jupiter",
+      "Distance to Pluto",
+      "Distance to Proxima Centauri",
+    ]);
+  });
+
+  it("gives every object that is a thing rather than a gap a picture", () => {
+    const missing = spaceObjects.filter((o) => o.category !== "distances").filter((o) => !o.image);
+    expect(missing).toEqual([]);
   });
 });
