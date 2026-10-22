@@ -3,8 +3,146 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
-import { speedItems, categories, formatSpeed, type SpeedUnit } from "./data";
+import { speedItems, categories, formatSpeed, type SpeedItem, type SpeedUnit } from "./data";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+
+const LAP_MS = 3200;
+const TRACK_W = 640;
+const TRACK_H = 168;
+const LANE_X0 = 18;
+const LANE_X1 = TRACK_W - 18;
+const LANE_SPAN = LANE_X1 - LANE_X0;
+
+/** One runner: a capsule with streaks whose length follows how fast it is going. */
+function drawRunner(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  colour: string,
+  speedShare: number
+) {
+  const streak = 10 + speedShare * 70;
+  const trail = ctx.createLinearGradient(x - streak, y, x, y);
+  trail.addColorStop(0, "rgba(255,255,255,0)");
+  trail.addColorStop(1, colour);
+  ctx.strokeStyle = trail;
+  ctx.lineCap = "round";
+  for (const [dy, w] of [
+    [-7, 2],
+    [0, 3],
+    [7, 2],
+  ] as const) {
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x - streak, y + dy);
+    ctx.lineTo(x - 11, y + dy);
+    ctx.stroke();
+  }
+  ctx.fillStyle = colour;
+  ctx.beginPath();
+  ctx.ellipse(x - 2, y, 15, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x + 11, y - 7);
+  ctx.lineTo(x + 24, y);
+  ctx.lineTo(x + 11, y + 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.beginPath();
+  ctx.ellipse(x - 5, y - 3, 6, 2.6, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawLane(ctx: CanvasRenderingContext2D, y: number) {
+  ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+  ctx.beginPath();
+  ctx.roundRect(LANE_X0 - 8, y - 30, LANE_SPAN + 16, 60, 14);
+  ctx.fill();
+  ctx.save();
+  ctx.setLineDash([14, 14]);
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(LANE_X0, y);
+  ctx.lineTo(LANE_X1, y);
+  ctx.stroke();
+  ctx.restore();
+  // start line and chequered finish
+  ctx.fillStyle = "rgba(226, 232, 240, 0.45)";
+  ctx.fillRect(LANE_X0 - 3, y - 26, 3, 52);
+  for (let i = 0; i < 6; i += 1) {
+    ctx.fillStyle = i % 2 === 0 ? "rgba(241,245,249,0.85)" : "rgba(30,41,59,0.9)";
+    ctx.fillRect(LANE_X1, y - 26 + i * 9, 10, 9);
+  }
+}
+
+/** The two speeds, run side by side in real proportion. */
+function CompareRace({
+  slower,
+  faster,
+  still,
+}: {
+  slower: SpeedItem;
+  faster: SpeedItem;
+  still: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ratio = faster.speed / Math.max(slower.speed, 1e-9);
+
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const paint = (t: number) => {
+      ctx.clearRect(0, 0, TRACK_W, TRACK_H);
+      const laneY = [56, 124];
+      laneY.forEach((y) => drawLane(ctx, y));
+      // The faster one crosses in one lap; the slower one covers 1/ratio of it.
+      drawRunner(
+        ctx,
+        LANE_X0 + LANE_SPAN * Math.min(t / ratio, 1),
+        laneY[0]!,
+        "#38bdf8",
+        1 / ratio
+      );
+      drawRunner(ctx, LANE_X0 + LANE_SPAN * t, laneY[1]!, "#f472b6", 1);
+    };
+
+    if (still) {
+      paint(1);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      paint(((now - start) % LAP_MS) / LAP_MS);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [ratio, still]);
+
+  const share = 100 / ratio;
+  return (
+    <div>
+      <canvas
+        ref={canvasRef}
+        width={TRACK_W}
+        height={TRACK_H}
+        aria-hidden="true"
+        className="block h-auto w-full rounded-xl"
+      />
+      <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]" role="status">
+        Top lane: {slower.name}. Bottom lane: {faster.name}. In the time {faster.name} crosses the
+        track, {slower.name} covers{" "}
+        {share < 0.01 ? "less than 0.01%" : `${share < 1 ? share.toFixed(2) : share.toFixed(1)}%`}{" "}
+        of it.
+        {still ? " Animation is off because your system asks for reduced motion." : ""}
+      </p>
+    </div>
+  );
+}
 
 export default function SpeedPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -159,7 +297,7 @@ export default function SpeedPage() {
         {comparePair && (
           <div className="mb-8 bg-[var(--card)] border border-[var(--primary)]/30 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">⚖️ Comparison</h3>
+              <h3 className="font-bold">Head to head</h3>
               <button
                 onClick={() => setComparePair(null)}
                 className="text-xs px-2 py-1 bg-[var(--secondary)] rounded-full"
@@ -177,29 +315,35 @@ export default function SpeedPage() {
               const timeAroundEarth = (40075 / faster.speed).toFixed(1); // hours
               return (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-4 text-center">
+                  <div className="flex items-center justify-center gap-6 text-center">
                     <div>
-                      <div className="text-3xl">{slower.emoji}</div>
-                      <div className="text-sm font-medium">{slower.name}</div>
+                      <div className="flex items-center justify-center gap-2 text-sm font-medium">
+                        <span className="h-3 w-3 rounded-full bg-sky-400" aria-hidden="true" />
+                        {slower.name}
+                      </div>
                       <div className="text-xs text-[var(--muted-foreground)]">
                         {formatSpeed(slower.speed, unit)}
                       </div>
                     </div>
                     <div className="text-[var(--muted-foreground)]">vs</div>
                     <div>
-                      <div className="text-3xl">{faster.emoji}</div>
-                      <div className="text-sm font-medium">{faster.name}</div>
+                      <div className="flex items-center justify-center gap-2 text-sm font-medium">
+                        <span className="h-3 w-3 rounded-full bg-pink-400" aria-hidden="true" />
+                        {faster.name}
+                      </div>
                       <div className="text-xs text-[var(--primary)]">
                         {formatSpeed(faster.speed, unit)}
                       </div>
                     </div>
                   </div>
+
+                  <CompareRace slower={slower} faster={faster} still={prefersReducedMotion} />
                   <p className="text-center text-sm">
                     <span className="font-bold text-[var(--primary)]">{faster.name}</span> is{" "}
                     <span className="font-bold">{ratio.toFixed(1)}x</span> faster than {slower.name}
                   </p>
                   <p className="text-center text-xs text-[var(--muted-foreground)]">
-                    {faster.emoji} would circle Earth in {timeAroundEarth}h at{" "}
+                    {faster.name} would circle Earth in {timeAroundEarth}h at{" "}
                     {formatSpeed(faster.speed, unit)}
                   </p>
                 </div>
@@ -282,7 +426,13 @@ export default function SpeedPage() {
                             setComparePair([comparePair[0], item.name]);
                           else setComparePair([item.name, comparePair[1]]);
                         }}
-                        className="text-[10px] px-2 py-1 rounded-full bg-[var(--secondary)] hover:bg-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`Compare ${item.name}`}
+                        aria-pressed={isInCompare}
+                        className={`min-h-[24px] rounded-full px-2 py-1 text-[10px] transition-colors ${
+                          isInCompare
+                            ? "bg-[var(--primary)] text-white"
+                            : "bg-[var(--secondary)] hover:bg-[var(--muted)]"
+                        }`}
                       >
                         Compare
                       </button>
