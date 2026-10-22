@@ -1,5 +1,6 @@
 "use client";
 
+import { Picto } from "@/lib/components/games/Picto";
 import { useRef, useState, useCallback, useEffect } from "react";
 import { ImpactBurst } from "./ImpactBurst";
 import { motion, useAnimationControls } from "framer-motion";
@@ -138,7 +139,9 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
     <div className="relative w-full bg-[var(--secondary)] rounded-xl overflow-hidden border border-[var(--border)]">
       <div className="px-3 py-2 bg-[var(--card)] border-b border-[var(--border)] flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">🌍 World</span>
+          <span className="flex items-center gap-1.5 text-sm font-semibold">
+            <Picto name="globe" size={14} /> World
+          </span>
           <span className="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
             {impacts.length} impacts
           </span>

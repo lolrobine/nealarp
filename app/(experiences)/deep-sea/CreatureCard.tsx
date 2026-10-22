@@ -1,5 +1,6 @@
 "use client";
 
+import { creatureShape, Picto } from "@/lib/components/games/Picto";
 import { useState, memo } from "react";
 import type { Creature } from "./data";
 
@@ -29,7 +30,7 @@ function CreatureCardComponent({ creature, isVisible }: CreatureCardProps) {
       className="bg-[var(--card)]/90 backdrop-blur-sm border border-[var(--border)] rounded-xl p-4 cursor-pointer hover:border-[var(--primary)]/50 transition-all shadow-lg max-w-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
     >
       <div className="flex items-start gap-3">
-        <div className="text-4xl">{creature.emoji}</div>
+        <Picto name={creatureShape(creature.name)} size={36} className="text-[var(--primary)]" />
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-sm text-[var(--foreground)]">{creature.name}</h3>
           <p className="text-xs text-[var(--primary)] font-mono">
@@ -44,7 +45,8 @@ function CreatureCardComponent({ creature, isVisible }: CreatureCardProps) {
       {expanded && creature.funFact && (
         <div className="mt-3 pt-3 border-t border-[var(--border)]">
           <p className="text-xs text-[var(--muted-foreground)]">
-            💡 <span className="text-[var(--foreground)]">{creature.funFact}</span>
+            <Picto name="bulb" size={13} />{" "}
+            <span className="text-[var(--foreground)]">{creature.funFact}</span>
           </p>
         </div>
       )}

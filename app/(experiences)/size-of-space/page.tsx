@@ -1,5 +1,6 @@
 "use client";
 
+import { Picto } from "@/lib/components/games/Picto";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -176,7 +177,7 @@ export default function SizeOfSpacePage() {
       if (isBase || isSelected) {
         ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.font = "11px sans-serif";
-        ctx.fillText(`${obj.emoji} ${obj.name}`, x + 10, y - 6);
+        ctx.fillText(obj.name, x + 10, y - 6);
       }
     });
 
@@ -265,7 +266,7 @@ export default function SizeOfSpacePage() {
             >
               {spaceObjects.map((obj) => (
                 <option key={obj.name} value={obj.name}>
-                  {obj.emoji} {obj.name}
+                  {obj.name}
                 </option>
               ))}
             </select>
@@ -295,7 +296,15 @@ export default function SizeOfSpacePage() {
                   aria-pressed={journeyActive}
                   className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${journeyActive ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                 >
-                  {journeyActive ? "⏸️ Stop journey" : "🚀 Journey"}
+                  {journeyActive ? (
+                    <>
+                      <Picto name="pause" /> Stop journey
+                    </>
+                  ) : (
+                    <>
+                      <Picto name="rocket" /> Journey
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -363,7 +372,7 @@ export default function SizeOfSpacePage() {
                 : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             }`}
           >
-            🌟 All
+            All
           </button>
           {categories.map((cat) => (
             <button
@@ -376,7 +385,7 @@ export default function SizeOfSpacePage() {
                   : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               }`}
             >
-              {cat.emoji} {cat.name}
+              {cat.name}
             </button>
           ))}
         </div>

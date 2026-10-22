@@ -1,5 +1,6 @@
 "use client";
 
+import { Picto } from "@/lib/components/games/Picto";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
@@ -145,7 +146,7 @@ export default function LifeStatsPage() {
       const formatted = stat.format(val);
       ctx.fillStyle = "#6366f1";
       ctx.font = "20px sans-serif";
-      ctx.fillText(`${stat.emoji} ${stat.label}:`, 40, y);
+      ctx.fillText(`${stat.label}:`, 40, y);
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 20px sans-serif";
       ctx.fillText(formatted, 350, y);
@@ -217,7 +218,7 @@ export default function LifeStatsPage() {
                     : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                 }`}
               >
-                🌟 All
+                All
               </button>
               {statCategories.map((cat) => (
                 <button
@@ -230,7 +231,7 @@ export default function LifeStatsPage() {
                       : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                   }`}
                 >
-                  {cat.emoji} {cat.name}
+                  <Picto name={cat.icon} /> {cat.name}
                 </button>
               ))}
             </div>
@@ -243,7 +244,7 @@ export default function LifeStatsPage() {
                   className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-[var(--primary)]/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-3xl">{stat.emoji}</span>
+                    <Picto name={stat.icon} size={28} className="text-[var(--primary)]" />
                     <div className="flex-1">
                       <p className="text-sm text-[var(--muted-foreground)] mb-1">{stat.label}</p>
                       <p className="text-2xl font-bold text-[var(--primary)]">
@@ -279,13 +280,21 @@ export default function LifeStatsPage() {
                 onClick={handleShare}
                 className="px-6 py-2.5 bg-[var(--primary)] text-white rounded-full text-sm font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                {copied ? "✓ Copied!" : "📤 Share my stats"}
+                {copied ? (
+                  <>
+                    <Picto name="check" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Picto name="share" /> Share my stats
+                  </>
+                )}
               </button>
               <button
                 onClick={handleShareAsImage}
                 className="px-6 py-2.5 bg-[var(--secondary)] rounded-full text-sm font-medium hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                🖼️ Export as image
+                <Picto name="image" /> Export as image
               </button>
             </div>
 

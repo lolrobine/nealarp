@@ -1,10 +1,20 @@
 "use client";
 
+import { Picto, type PictoName } from "@/lib/components/games/Picto";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { speedItems, categories, formatSpeed, type SpeedItem, type SpeedUnit } from "./data";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+
+/** Thirty items, four categories: each row shows the silhouette of its family
+ *  rather than a per-item emoji. */
+const CATEGORY_PICTO: Record<string, PictoName> = {
+  animals: "animals",
+  vehicles: "vehicles",
+  tech: "tech",
+  nature: "nature",
+};
 
 const LAP_MS = 3200;
 const TRACK_W = 640;
@@ -259,7 +269,13 @@ export default function SpeedPage() {
                 disabled={raceActive || prefersReducedMotion}
                 className="px-4 py-1.5 rounded-full text-sm font-medium bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
-                {raceActive ? "Racing..." : "🏁 Race"}
+                {raceActive ? (
+                  "Racing..."
+                ) : (
+                  <>
+                    <Picto name="flag" /> Race
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -271,7 +287,9 @@ export default function SpeedPage() {
         {/* Race Track Visualization */}
         {(raceActive || Object.keys(raceProgress).length > 0) && (
           <div className="mb-8 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 overflow-hidden">
-            <h3 className="text-sm font-medium mb-3">🏁 Live Race Track (log scale)</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
+              <Picto name="flag" /> Live Race Track (log scale)
+            </h3>
             <div className="space-y-2">
               {filteredItems.slice(-8).map((item) => (
                 <div
@@ -282,10 +300,10 @@ export default function SpeedPage() {
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--primary)] to-cyan-400 rounded-full transition-none flex items-center justify-end pr-2"
                     style={{ width: `${Math.min(100, raceProgress[item.name] || 0)}%` }}
                   >
-                    <span className="text-[10px]">{item.emoji}</span>
+                    <Picto name={CATEGORY_PICTO[item.category] ?? "nature"} size={10} />
                   </div>
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-medium truncate max-w-[60%]">
-                    {item.emoji} {item.name}
+                    {item.name}
                   </span>
                 </div>
               ))}
@@ -365,7 +383,7 @@ export default function SpeedPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            🌟 All
+            All
           </motion.button>
           {categories.map((cat) => (
             <motion.button
@@ -380,7 +398,7 @@ export default function SpeedPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {cat.emoji} {cat.name}
+              <Picto name={CATEGORY_PICTO[cat.id] ?? "nature"} /> {cat.name}
             </motion.button>
           ))}
         </div>
@@ -404,7 +422,7 @@ export default function SpeedPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{item.emoji}</span>
+                      <Picto name={CATEGORY_PICTO[item.category] ?? "nature"} size={24} />
                       <span className="font-semibold">{item.name}</span>
                       {isInCompare && (
                         <span className="text-[10px] bg-[var(--primary)] text-white px-1.5 py-0.5 rounded-full">
@@ -451,11 +469,14 @@ export default function SpeedPage() {
                   {isSelected && (
                     <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
                       {item.funFact && (
-                        <p className="text-sm text-[var(--muted-foreground)]">💡 {item.funFact}</p>
+                        <p className="text-sm text-[var(--muted-foreground)]">
+                          <Picto name="bulb" size={14} /> {item.funFact}
+                        </p>
                       )}
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        🌍 Time to circle Earth: {(40075 / item.speed).toFixed(2)}h • 🌙 To Moon:{" "}
-                        {(384400 / item.speed).toFixed(1)}h
+                        <Picto name="globe" size={13} /> Time to circle Earth:{" "}
+                        {(40075 / item.speed).toFixed(2)}h • <Picto name="moon" size={13} /> To
+                        Moon: {(384400 / item.speed).toFixed(1)}h
                       </p>
                     </div>
                   )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Picto, type PictoName } from "@/lib/components/games/Picto";
 import { useState, useMemo, useCallback } from "react";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { calculateImpact, presets } from "./data";
@@ -9,13 +10,13 @@ import { CountryMap } from "./CountryMap";
 import { countries, isInBounds } from "./countryMaps";
 import { getAssetUrl } from "@/lib/utils/assets";
 
-const locations = [
-  { id: "ocean", name: "Ocean", density: 10, emoji: "🌊", desc: "Ocean" },
-  { id: "desert", name: "Desert", density: 5, emoji: "🏜️", desc: "Desert" },
-  { id: "rural", name: "Rural", density: 50, emoji: "🌾", desc: "Rural" },
-  { id: "suburban", name: "Suburb", density: 500, emoji: "🏘️", desc: "Suburb" },
-  { id: "city", name: "City", density: 5000, emoji: "🏙️", desc: "City" },
-  { id: "megacity", name: "Megacity", density: 20000, emoji: "🌆", desc: "Megacity" },
+const locations: { id: string; name: string; density: number; icon: PictoName; desc: string }[] = [
+  { id: "ocean", name: "Ocean", density: 10, icon: "ocean", desc: "Ocean" },
+  { id: "desert", name: "Desert", density: 5, icon: "desert", desc: "Desert" },
+  { id: "rural", name: "Rural", density: 50, icon: "rural", desc: "Rural" },
+  { id: "suburban", name: "Suburb", density: 500, icon: "suburb", desc: "Suburb" },
+  { id: "city", name: "City", density: 5000, icon: "city", desc: "City" },
+  { id: "megacity", name: "Megacity", density: 20000, icon: "megacity", desc: "Megacity" },
 ];
 
 function latLngToWorldPct(lat: number, lng: number) {
@@ -185,13 +186,13 @@ export default function AsteroidLauncherPage() {
               onClick={() => setMapMode("world")}
               className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "world" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
             >
-              🌍 World
+              <Picto name="globe" /> World
             </button>
             <button
               onClick={() => setMapMode("countries")}
               className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "countries" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
             >
-              🗺️ Countries ({countries.length})
+              <Picto name="map" /> Countries ({countries.length})
             </button>
           </div>
         </div>
@@ -227,7 +228,7 @@ export default function AsteroidLauncherPage() {
                         className="w-full px-3 py-1.5 pr-8 rounded-full border bg-[var(--background)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] opacity-50">
-                        🔍
+                        <Picto name="search" size={16} />
                       </span>
                     </div>
                     <button
@@ -321,7 +322,7 @@ export default function AsteroidLauncherPage() {
                             </span>
                             {isSelected && (
                               <span className="text-[9px] bg-white text-black rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                                ✓
+                                <Picto name="check" size={14} />
                               </span>
                             )}
                           </div>
@@ -446,7 +447,7 @@ export default function AsteroidLauncherPage() {
                         onClick={() => handleRemoveSingle(impact.id)}
                         className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[10px] shrink-0"
                       >
-                        ✕
+                        <Picto name="cross" size={16} />
                       </button>
                     </div>
                   );
@@ -458,7 +459,9 @@ export default function AsteroidLauncherPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 space-y-5">
-            <h3 className="font-semibold">☄️ Asteroid</h3>
+            <h3 className="flex items-center gap-2 font-semibold">
+              <Picto name="asteroid" /> Asteroid
+            </h3>
             <div>
               <label htmlFor="asteroid-diameter" className="block text-sm font-medium mb-1">
                 Diameter: {diameter < 1000 ? `${diameter} m` : `${(diameter / 1000).toFixed(1)} km`}
@@ -518,7 +521,7 @@ export default function AsteroidLauncherPage() {
             </div>
             <div>
               <div className="text-sm font-medium mb-2">
-                Target: {loc.emoji} {loc.name}
+                Target: <Picto name={loc.icon} /> {loc.name}
               </div>
               <div className="grid grid-cols-3 gap-1">
                 {locations.map((l) => (
@@ -527,7 +530,7 @@ export default function AsteroidLauncherPage() {
                     onClick={() => setLocation(l.id)}
                     className={`px-2 py-1.5 rounded-lg text-[11px] border ${location === l.id ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                   >
-                    {l.emoji} {l.name}
+                    <Picto name={l.icon} size={14} /> {l.name}
                   </button>
                 ))}
               </div>

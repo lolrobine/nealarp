@@ -3,7 +3,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import SizeOfSpace from "./page";
 import { spaceObjects } from "./data";
 
-const pick = (name: string) => fireEvent.click(screen.getByText(name));
+// The dropdown lists the same names, so target the card label specifically.
+const pick = (name: string) =>
+  fireEvent.click(screen.getByText(name, { selector: "span.font-semibold" }));
 
 describe("size-of-space scale stage", () => {
   it("shows nothing until a second object is chosen", () => {
@@ -48,13 +50,8 @@ describe("size-of-space data", () => {
     }
   });
 
-  it("knows exactly which objects are still waiting for a picture", () => {
-    const missing = spaceObjects.filter((o) => !o.image).map((o) => o.name);
-    expect(missing).toEqual([
-      "Distance to Jupiter",
-      "Distance to Pluto",
-      "Distance to Proxima Centauri",
-    ]);
+  it("now has a picture for every single object", () => {
+    expect(spaceObjects.filter((o) => !o.image).map((o) => o.name)).toEqual([]);
   });
 
   it("gives every object that is a thing rather than a gap a picture", () => {

@@ -1,7 +1,6 @@
 export type SpaceObject = {
   name: string;
   size: number; // in meters
-  emoji: string;
   category: string;
   description: string;
   /** Path to a picture of this object. Every one of these is AI-generated
@@ -16,7 +15,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Human",
     size: 1.7,
-    emoji: "🧍",
     category: "earth",
     description: "Average human height",
     image: "/experiences/size-of-space/objects/human.jpg",
@@ -24,7 +22,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Blue Whale",
     size: 30,
-    emoji: "🐋",
     category: "earth",
     description: "Largest animal on Earth",
     image: "/experiences/size-of-space/objects/blue-whale.jpg",
@@ -32,7 +29,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Statue of Liberty",
     size: 93,
-    emoji: "🗽",
     category: "earth",
     description: "Ground to torch",
     image: "/experiences/size-of-space/objects/statue-of-liberty.jpg",
@@ -40,7 +36,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Big Ben",
     size: 96,
-    emoji: "🕰️",
     category: "earth",
     description: "Clock tower in London",
     image: "/experiences/size-of-space/objects/big-ben.jpg",
@@ -48,7 +43,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Eiffel Tower",
     size: 330,
-    emoji: "🗼",
     category: "earth",
     description: "Iconic Paris landmark",
     image: "/experiences/size-of-space/objects/eiffel-tower.jpg",
@@ -58,7 +52,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "International Space Station",
     size: 109,
-    emoji: "🛰️",
     category: "earth",
     description: "Largest human-made object in space",
     image: "/experiences/size-of-space/objects/iss.jpg",
@@ -66,7 +59,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Mount Everest",
     size: 8849,
-    emoji: "🏔️",
     category: "earth",
     description: "Tallest mountain on Earth",
     image: "/experiences/size-of-space/objects/mount-everest.jpg",
@@ -74,7 +66,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Moon",
     size: 3_474_000,
-    emoji: "🌙",
     category: "solar",
     description: "Earth's only natural satellite",
     image: "/experiences/size-of-space/objects/moon.jpg",
@@ -82,7 +73,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Earth",
     size: 12_742_000,
-    emoji: "🌍",
     category: "solar",
     description: "Our home planet",
     image: "/experiences/size-of-space/objects/earth.jpg",
@@ -92,7 +82,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Jupiter",
     size: 139_820_000,
-    emoji: "🪐",
     category: "solar",
     description: "Largest planet in our solar system",
     image: "/experiences/size-of-space/objects/jupiter.jpg",
@@ -100,7 +89,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Sun",
     size: 1_392_700_000,
-    emoji: "☀️",
     category: "solar",
     description: "Our star",
     image: "/experiences/size-of-space/objects/sun.jpg",
@@ -110,7 +98,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Proxima Centauri",
     size: 200_000_000,
-    emoji: "⭐",
     category: "stars",
     description: "Nearest star to the Sun",
     image: "/experiences/size-of-space/objects/proxima-centauri.jpg",
@@ -118,7 +105,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Betelgeuse",
     size: 1_235_000_000_000,
-    emoji: "🌟",
     category: "stars",
     description: "Red supergiant, 700x the Sun's radius",
     image: "/experiences/size-of-space/objects/betelgeuse.jpg",
@@ -126,7 +112,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "UY Scuti",
     size: 3_430_000_000_000,
-    emoji: "💫",
     category: "stars",
     description: "One of the largest known stars",
     image: "/experiences/size-of-space/objects/uy-scuti.jpg",
@@ -136,7 +121,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Distance to Moon",
     size: 384_400_000,
-    emoji: "🚀",
     category: "distances",
     description: "Average distance from Earth",
     image: "/experiences/size-of-space/objects/distance-moon.jpg",
@@ -144,7 +128,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Distance to Sun",
     size: 149_600_000_000,
-    emoji: "🌞",
     category: "distances",
     description: "1 Astronomical Unit (AU)",
     image: "/experiences/size-of-space/objects/distance-sun.jpg",
@@ -152,30 +135,29 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Distance to Jupiter",
     size: 778_500_000_000,
-    emoji: "🪐",
     category: "distances",
     description: "When closest to Earth",
+    image: "/experiences/size-of-space/objects/distance-jupiter.jpg",
   },
   {
     name: "Distance to Pluto",
     size: 5_900_000_000_000,
-    emoji: "🔭",
     category: "distances",
     description: "At closest approach",
+    image: "/experiences/size-of-space/objects/distance-pluto.jpg",
   },
   {
     name: "Distance to Proxima Centauri",
     size: 40_141_000_000_000_000,
-    emoji: "✨",
     category: "distances",
     description: "4.24 light-years",
+    image: "/experiences/size-of-space/objects/distance-proxima.jpg",
   },
 
   // Galaxies and beyond
   {
     name: "Solar System (diameter)",
     size: 9_000_000_000_000_000,
-    emoji: "🌌",
     category: "galaxies",
     description: "Out to the Oort Cloud",
     image: "/experiences/size-of-space/objects/solar-system.jpg",
@@ -183,7 +165,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Milky Way Galaxy",
     size: 946_073_047_258_080_000,
-    emoji: "🌀",
     category: "galaxies",
     description: "100,000 light-years across",
     image: "/experiences/size-of-space/objects/milky-way.jpg",
@@ -191,7 +172,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Andromeda Galaxy",
     size: 200_000 * 9.46e15,
-    emoji: "🌠",
     category: "galaxies",
     description: "220,000 light-years across",
     image: "/experiences/size-of-space/objects/andromeda.jpg",
@@ -199,7 +179,6 @@ export const spaceObjects: SpaceObject[] = [
   {
     name: "Observable Universe",
     size: 8.8e26,
-    emoji: "🔮",
     category: "galaxies",
     description: "93 billion light-years in diameter",
     image: "/experiences/size-of-space/objects/observable-universe.jpg",
@@ -207,11 +186,11 @@ export const spaceObjects: SpaceObject[] = [
 ];
 
 export const categories = [
-  { id: "earth", name: "Earth Scale", emoji: "🌍" },
-  { id: "solar", name: "Solar System", emoji: "☀️" },
-  { id: "stars", name: "Stars", emoji: "⭐" },
-  { id: "distances", name: "Distances", emoji: "🚀" },
-  { id: "galaxies", name: "Galaxies & Beyond", emoji: "🌌" },
+  { id: "earth", name: "Earth Scale" },
+  { id: "solar", name: "Solar System" },
+  { id: "stars", name: "Stars" },
+  { id: "distances", name: "Distances" },
+  { id: "galaxies", name: "Galaxies & Beyond" },
 ];
 
 export function formatSize(size: number): string {

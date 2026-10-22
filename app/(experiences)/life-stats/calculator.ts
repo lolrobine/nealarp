@@ -1,7 +1,9 @@
+import type { PictoName } from "@/lib/components/games/Picto";
+
 export type LifeStat = {
   id: string;
   label: string;
-  emoji: string;
+  icon: PictoName;
   getValue: (ageMs: number) => number;
   format: (value: number) => string;
   category: string;
@@ -22,7 +24,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "heartbeats",
     label: "Heartbeats",
-    emoji: "❤️",
+    icon: "heart",
     getValue: (ageMs) => {
       const minutes = Math.max(0, ageMs) / 1000 / 60;
       return Math.round(minutes * 72); // ~72 bpm avg
@@ -33,7 +35,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "breaths",
     label: "Breaths Taken",
-    emoji: "🫁",
+    icon: "lungs",
     getValue: (ageMs) => {
       const minutes = Math.max(0, ageMs) / 1000 / 60;
       return Math.round(minutes * 16); // ~16 per minute
@@ -44,7 +46,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "blinks",
     label: "Times You've Blinked",
-    emoji: "👁️",
+    icon: "eye",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       const wakingHours = days * 16; // 16 waking hours
@@ -56,7 +58,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "sleep",
     label: "Days Asleep",
-    emoji: "😴",
+    icon: "bed",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days * 0.33); // ~8h per day
@@ -67,7 +69,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "steps",
     label: "Steps Taken",
-    emoji: "👟",
+    icon: "footprint",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       // Babies don't walk first ~1 year, then ramp up
@@ -84,7 +86,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "meals",
     label: "Meals Eaten",
-    emoji: "🍽️",
+    icon: "meal",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days * 3);
@@ -95,7 +97,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "full-moons",
     label: "Full Moons Seen",
-    emoji: "🌕",
+    icon: "moon",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days / 29.53); // lunar cycle
@@ -106,7 +108,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "earth-distance",
     label: "Distance Earth Traveled Around Sun",
-    emoji: "🌍",
+    icon: "orbit",
     getValue: (ageMs) => {
       const years = yearsFromMs(ageMs);
       return Math.round(years * 940_000_000); // km per year
@@ -117,7 +119,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "earth-orbits",
     label: "Earth Orbits Around Sun",
-    emoji: "🪐",
+    icon: "orbit",
     getValue: (ageMs) => {
       const years = yearsFromMs(ageMs);
       return Math.round(years * 100) / 100;
@@ -128,7 +130,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "sunsets",
     label: "Sunsets Witnessed",
-    emoji: "🌅",
+    icon: "sunrise",
     getValue: (ageMs) => {
       return Math.round(daysFromMs(ageMs));
     },
@@ -138,7 +140,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "words",
     label: "Words Spoken",
-    emoji: "💬",
+    icon: "speech",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       // No words first year, then ramp: ~7000/day avg adult, less for child
@@ -160,7 +162,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "laugh",
     label: "Times Laughed",
-    emoji: "😄",
+    icon: "smile",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days * 17); // avg 17 times per day
@@ -171,7 +173,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "hair",
     label: "Hair Grown (meters, net)",
-    emoji: "💇",
+    icon: "scissors",
     getValue: (ageMs) => {
       // ~0.44mm per day = 0.00044 m/day, minus haircuts ~50%
       const days = daysFromMs(ageMs);
@@ -185,7 +187,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "blood",
     label: "Blood Pumped (liters)",
-    emoji: "🩸",
+    icon: "droplet",
     getValue: (ageMs) => {
       const minutes = Math.max(0, ageMs) / 1000 / 60;
       return Math.round(minutes * 5); // ~5 L/min
@@ -200,7 +202,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "jupiter-orbits",
     label: "Jupiter Orbits Completed",
-    emoji: "♃",
+    icon: "planet",
     getValue: (ageMs) => {
       const years = yearsFromMs(ageMs);
       return Math.round((years / 11.86) * 1000) / 1000;
@@ -211,7 +213,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "milky-way",
     label: "Distance Around Milky Way",
-    emoji: "🌌",
+    icon: "galaxy",
     getValue: (ageMs) => {
       const years = yearsFromMs(ageMs);
       return Math.round((years / 225_000_000) * 10000) / 10000;
@@ -222,7 +224,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "mars-years",
     label: "Mars Years Lived",
-    emoji: "🔴",
+    icon: "planet",
     getValue: (ageMs) => {
       const years = yearsFromMs(ageMs);
       return Math.round((years / 1.88) * 100) / 100;
@@ -233,7 +235,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "moon-orbits",
     label: "Moon Orbits Around Earth",
-    emoji: "🌙",
+    icon: "orbit",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days / 27.3);
@@ -244,7 +246,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "earth-rotations",
     label: "Earth Rotations Experienced",
-    emoji: "🔄",
+    icon: "refresh",
     getValue: (ageMs) => Math.round(daysFromMs(ageMs)),
     format: (v) => v.toLocaleString(),
     category: "world",
@@ -252,7 +254,7 @@ export const lifeStats: LifeStat[] = [
   {
     id: "water-drunk",
     label: "Water Drunk (liters)",
-    emoji: "💧",
+    icon: "droplet",
     getValue: (ageMs) => {
       const days = daysFromMs(ageMs);
       return Math.round(days * 2);
@@ -266,8 +268,8 @@ export const lifeStats: LifeStat[] = [
 ];
 
 export const statCategories = [
-  { id: "body", name: "Body", emoji: "🫀" },
-  { id: "life", name: "Life", emoji: "🌱" },
-  { id: "world", name: "World", emoji: "🌍" },
-  { id: "space", name: "Space", emoji: "🚀" },
+  { id: "body", name: "Body", icon: "heart" as PictoName },
+  { id: "life", name: "Life", icon: "sprout" as PictoName },
+  { id: "world", name: "World", icon: "globe" as PictoName },
+  { id: "space", name: "Space", icon: "rocket" as PictoName },
 ];

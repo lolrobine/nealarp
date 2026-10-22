@@ -1,5 +1,6 @@
 "use client";
 
+import { Picto } from "@/lib/components/games/Picto";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
@@ -108,7 +109,8 @@ export default function PasswordGamePage() {
             </div>
             <div className="mt-2 flex items-center justify-center gap-4 text-xs text-[var(--muted-foreground)]">
               <span>
-                ⏱️ {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+                <Picto name="timer" /> {Math.floor(elapsed / 60)}:
+                {String(elapsed % 60).padStart(2, "0")}
               </span>
               <span>
                 {unlockedRules}/{rules.length} rules
@@ -131,7 +133,15 @@ export default function PasswordGamePage() {
               disabled={!password}
               className="text-xs px-2.5 py-1 rounded-full bg-[var(--secondary)] hover:bg-[var(--muted)] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
-              {copied ? "✓ Copied" : "📋 Copy"}
+              {copied ? (
+                <>
+                  <Picto name="check" /> Copied
+                </>
+              ) : (
+                <>
+                  <Picto name="copy" /> Copy
+                </>
+              )}
             </button>
           </div>
           <div className="relative">
@@ -199,7 +209,7 @@ export default function PasswordGamePage() {
                       rule.passed ? "bg-green-500 text-white" : "bg-red-500/20 text-red-400"
                     }`}
                   >
-                    {rule.passed ? "✓" : "✗"}
+                    <Picto name={rule.passed ? "check" : "cross"} size={16} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -215,7 +225,9 @@ export default function PasswordGamePage() {
                       {rule.text}
                     </p>
                     {!rule.passed && rule.hint && (
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1">💡 {rule.hint}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                        <Picto name="bulb" size={14} /> {rule.hint}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -234,7 +246,7 @@ export default function PasswordGamePage() {
               transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
               className="text-6xl mb-4"
             >
-              🎉
+              <Picto name="trophy" size={40} />
             </motion.div>
             <h2 className="text-3xl font-bold text-green-400 mb-2">Congratulations!</h2>
             <p className="text-[var(--muted-foreground)]">

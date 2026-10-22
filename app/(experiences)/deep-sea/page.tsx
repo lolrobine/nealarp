@@ -1,5 +1,6 @@
 "use client";
 
+import { creatureShape, Picto } from "@/lib/components/games/Picto";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
@@ -276,7 +277,15 @@ export default function DeepSeaPage() {
                 : "bg-black/70 border-white/10 text-white/60 hover:text-white"
             }`}
           >
-            {soundEnabled ? "🔊 Sound on" : "🔇 Sound off"}
+            {soundEnabled ? (
+              <>
+                <Picto name="sound-on" /> Sound on
+              </>
+            ) : (
+              <>
+                <Picto name="sound-off" /> Sound off
+              </>
+            )}
           </button>
         </div>
       )}
@@ -318,7 +327,7 @@ export default function DeepSeaPage() {
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-5xl">{selectedCreature.emoji}</span>
+                <Picto name={creatureShape(selectedCreature.name)} size={52} />
                 <div>
                   <h3 className="text-xl font-bold">{selectedCreature.name}</h3>
                   <p className="text-sm text-[var(--primary)] font-mono">
@@ -332,7 +341,7 @@ export default function DeepSeaPage() {
                 aria-label="Close modal"
                 className="w-8 h-8 rounded-full bg-[var(--secondary)] flex items-center justify-center hover:bg-[var(--muted)]"
               >
-                ✕
+                <Picto name="cross" size={16} />
               </button>
             </div>
             <p className="text-sm text-[var(--muted-foreground)] mb-4">
@@ -341,7 +350,7 @@ export default function DeepSeaPage() {
             {selectedCreature.funFact && (
               <div className="bg-[var(--secondary)] rounded-xl p-3 mb-4">
                 <p className="text-xs text-[var(--muted-foreground)]">
-                  💡{" "}
+                  <Picto name="bulb" size={14} />{" "}
                   <span className="text-[var(--foreground)] font-medium">
                     {selectedCreature.funFact}
                   </span>
@@ -362,7 +371,7 @@ export default function DeepSeaPage() {
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(
-                      `${selectedCreature.emoji} ${selectedCreature.name} lives at ${selectedCreature.depth}m deep — ${selectedCreature.description}`
+                      `${selectedCreature.name} lives at ${selectedCreature.depth}m deep — ${selectedCreature.description}`
                     );
                   } catch {}
                 }}
@@ -422,7 +431,7 @@ export default function DeepSeaPage() {
                     discoveredCreatures.has(c.name) ? "bg-emerald-400" : "bg-white/40"
                   }`}
                   style={{ top: `${(c.depth / MAX_DEPTH) * 100}%` }}
-                  title={`${c.emoji} ${c.name} @ ${c.depth}m`}
+                  title={`${c.name} @ ${c.depth}m`}
                 />
               ))}
             </div>
@@ -461,7 +470,9 @@ export default function DeepSeaPage() {
       {currentDepth > MAX_DEPTH - 100 && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white/90 mb-2">🏆 Challenger Deep</h2>
+            <h2 className="mb-2 flex items-center justify-center gap-2 text-3xl font-bold text-white/90">
+              <Picto name="trophy" size={28} /> Challenger Deep
+            </h2>
             <p className="text-white/60">11,034 meters — The deepest point on Earth</p>
           </div>
         </div>
