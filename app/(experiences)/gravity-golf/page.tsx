@@ -88,6 +88,35 @@ function Course({ level, index }: { level: GolfLevel; index: number }) {
               <stop offset=".35" stopColor="#818cf8" />
               <stop offset="1" stopColor="#312e81" />
             </radialGradient>
+            {PLANET_SKINS.map((skin, i) => (
+              <radialGradient
+                key={`body-${i}`}
+                id={`${gradientId}-body${i}`}
+                cx="32%"
+                cy="28%"
+                r="78%"
+              >
+                <stop offset="0" stopColor={skin.core} />
+                <stop offset=".45" stopColor={skin.mid} />
+                <stop offset="1" stopColor={skin.edge} />
+              </radialGradient>
+            ))}
+            {PLANET_SKINS.map((skin, i) => (
+              <radialGradient key={`air-${i}`} id={`${gradientId}-air${i}`}>
+                <stop offset=".58" stopColor={skin.air} stopOpacity="0" />
+                <stop offset=".84" stopColor={skin.air} stopOpacity=".32" />
+                <stop offset="1" stopColor={skin.air} stopOpacity="0" />
+              </radialGradient>
+            ))}
+            <radialGradient id={`${gradientId}-term`} cx="32%" cy="28%" r="86%">
+              <stop offset=".42" stopColor="#000000" stopOpacity="0" />
+              <stop offset="1" stopColor="#000000" stopOpacity=".62" />
+            </radialGradient>
+            <radialGradient id={`${gradientId}-ball`} cx="34%" cy="30%" r="76%">
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset=".6" stopColor="#e2e8f0" />
+              <stop offset="1" stopColor="#64748b" />
+            </radialGradient>
             <marker
               id={`${gradientId}-arrow`}
               viewBox="0 0 10 10"
@@ -136,54 +165,164 @@ function Course({ level, index }: { level: GolfLevel; index: number }) {
               })}
             </g>
           )}
-          <circle cx={level.start.x} cy={level.start.y} r="7" fill="white" />
-          <text x={level.start.x - 15} y={level.start.y + 25} fill="white" fontSize="14">
-            TEE
-          </text>
-          <circle
-            cx={level.goal.x}
-            cy={level.goal.y}
-            r="22"
-            fill="none"
-            stroke="#4ade80"
-            strokeWidth="3"
-            strokeDasharray="5"
-          />
-          <text x={level.goal.x - 20} y={level.goal.y - 30} fill="white" fontSize="14">
-            GOAL
-          </text>
-          {level.planets.map((p, i) => (
-            <g key={i}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={p.radius + 15}
-                fill="none"
-                stroke="#818cf8"
-                strokeOpacity=".15"
-                strokeWidth="10"
-              />
-              <circle cx={p.x} cy={p.y} r={p.radius} fill={`url(#${gradientId})`} />
-              <ellipse
-                cx={p.x}
-                cy={p.y}
-                rx={p.radius * 1.35}
-                ry={p.radius * 0.3}
-                fill="none"
-                stroke="#c4b5fd"
-                strokeWidth="2"
-                opacity=".6"
-                transform={`rotate(-22 ${p.x} ${p.y})`}
-              />
-            </g>
-          ))}
+          <g>
+            <ellipse
+              cx={level.start.x}
+              cy={level.start.y + 9}
+              rx="15"
+              ry="5"
+              fill="#0f766e"
+              opacity=".55"
+            />
+            <rect
+              x={level.start.x - 2}
+              y={level.start.y + 2}
+              width="4"
+              height="8"
+              rx="1.5"
+              fill="#94a3b8"
+            />
+            <text
+              x={level.start.x}
+              y={level.start.y + 30}
+              fill="#cbd5e1"
+              fontSize="11"
+              fontWeight="700"
+              textAnchor="middle"
+              letterSpacing="1.5"
+            >
+              TEE
+            </text>
+          </g>
+          <g>
+            <circle
+              cx={level.goal.x}
+              cy={level.goal.y}
+              r="22"
+              fill="none"
+              stroke="#4ade80"
+              strokeWidth="2"
+              strokeDasharray="5"
+              opacity=".75"
+            />
+            <ellipse cx={level.goal.x} cy={level.goal.y + 5} rx="14" ry="5" fill="#022c22" />
+            <ellipse
+              cx={level.goal.x}
+              cy={level.goal.y + 3}
+              rx="10"
+              ry="3.6"
+              fill="#052e16"
+              stroke="#4ade80"
+              strokeWidth="1.5"
+            />
+            <line
+              x1={level.goal.x}
+              y1={level.goal.y + 2}
+              x2={level.goal.x}
+              y2={level.goal.y - 36}
+              stroke="#e2e8f0"
+              strokeWidth="2"
+            />
+            <path
+              d={`M${level.goal.x} ${level.goal.y - 36} L${level.goal.x + 24} ${level.goal.y - 29} L${level.goal.x} ${level.goal.y - 22} Z`}
+              fill="#4ade80"
+            />
+            <text
+              x={level.goal.x}
+              y={level.goal.y + 34}
+              fill="#86efac"
+              fontSize="11"
+              fontWeight="700"
+              textAnchor="middle"
+              letterSpacing="1.5"
+            >
+              GOAL
+            </text>
+          </g>
+          {level.planets.map((p, i) => {
+            const skin = PLANET_SKINS[i % PLANET_SKINS.length]!;
+            return (
+              <g key={i}>
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.radius * 1.6}
+                  fill={`url(#${gradientId}-air${i % PLANET_SKINS.length})`}
+                />
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.radius}
+                  fill={`url(#${gradientId}-body${i % PLANET_SKINS.length})`}
+                />
+                {craters(p, i).map((c, k) => (
+                  <circle key={k} cx={c.x} cy={c.y} r={c.r} fill="#000000" opacity=".16" />
+                ))}
+                <circle cx={p.x} cy={p.y} r={p.radius} fill={`url(#${gradientId}-term)`} />
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.radius}
+                  fill="none"
+                  stroke={skin.air}
+                  strokeWidth="1.2"
+                  opacity=".55"
+                />
+                {i % 2 === 1 && (
+                  <ellipse
+                    cx={p.x}
+                    cy={p.y}
+                    rx={p.radius * 1.5}
+                    ry={p.radius * 0.32}
+                    fill="none"
+                    stroke={skin.core}
+                    strokeWidth="2.5"
+                    opacity=".5"
+                    transform={`rotate(-22 ${p.x} ${p.y})`}
+                  />
+                )}
+              </g>
+            );
+          })}
           {level.walls.map((w, i) => (
             <rect key={i} {...w} width={w.w} height={w.h} fill="#fbbf24" />
           ))}
           {shownPath && (
-            <polyline points={points(shownPath)} fill="none" stroke="#fbbf24" strokeWidth="2" />
+            <g>
+              <polyline
+                points={points(shownPath)}
+                fill="none"
+                stroke="#fbbf24"
+                strokeOpacity=".28"
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <polyline
+                points={points(shownPath)}
+                fill="none"
+                stroke="#fde68a"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </g>
           )}
-          <circle cx={ball.x} cy={ball.y} r="6" fill="#f8fafc" stroke="#38bdf8" strokeWidth="3" />
+          <g>
+            <circle cx={ball.x} cy={ball.y} r="11" fill="#38bdf8" opacity=".18" />
+            <circle cx={ball.x} cy={ball.y} r="7" fill={`url(#${gradientId}-ball)`} />
+            {DIMPLES.map(([dx, dy], i) => (
+              <circle
+                key={i}
+                cx={ball.x + dx! * 7}
+                cy={ball.y + dy! * 7}
+                r="1.05"
+                fill="#94a3b8"
+                opacity=".75"
+              />
+            ))}
+            <circle cx={ball.x - 2.3} cy={ball.y - 2.6} r="1.9" fill="#ffffff" opacity=".95" />
+          </g>
           <polyline
             points={points(preview)}
             fill="none"
@@ -279,6 +418,38 @@ function Course({ level, index }: { level: GolfLevel; index: number }) {
     </>
   );
 }
+/** Each world gets its own skin, so "the amber giant" is a thing you can say.
+ * Lit from the upper left; a shared terminator overlay darkens the far limb. */
+const PLANET_SKINS = [
+  { core: "#fde68a", mid: "#f59e0b", edge: "#7c2d12", air: "#fbbf24" },
+  { core: "#bfdbfe", mid: "#3b82f6", edge: "#172554", air: "#60a5fa" },
+  { core: "#ddd6fe", mid: "#8b5cf6", edge: "#3b0764", air: "#a78bfa" },
+  { core: "#bbf7d0", mid: "#10b981", edge: "#064e3b", air: "#34d399" },
+];
+
+/** Deterministic surface pocks — same planet, same craters, every render. */
+function craters(p: { x: number; y: number; radius: number }, seed: number) {
+  return Array.from({ length: 5 }, (_, k) => {
+    const angle = (((k * 73 + seed * 29) % 360) * Math.PI) / 180;
+    const distance = (0.22 + ((k * 37 + seed * 11) % 48) / 100) * p.radius;
+    return {
+      x: p.x + Math.cos(angle) * distance,
+      y: p.y + Math.sin(angle) * distance,
+      r: p.radius * (0.07 + ((k * 17 + seed * 7) % 9) / 100),
+    };
+  });
+}
+
+/** Dimple field for the ball, in units of its radius. */
+const DIMPLES = [
+  [-0.38, -0.3],
+  [0.12, -0.46],
+  [0.46, -0.06],
+  [-0.12, 0.2],
+  [0.3, 0.42],
+  [-0.46, 0.22],
+];
+
 export default function GravityGolf() {
   const [level, setLevel] = useState(0);
   return (
