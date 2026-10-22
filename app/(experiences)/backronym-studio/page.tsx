@@ -8,6 +8,7 @@ import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import {
   CONSTRAINTS,
   coverage,
+  coverageTrail,
   dailyLetters,
   scoreBackronym,
   splitWords,
@@ -24,6 +25,7 @@ export default function BackronymStudioPage() {
   const words = useMemo(() => splitWords(text), [text]);
   const score = useMemo(() => scoreBackronym(letters, text, active), [letters, text, active]);
   const covered = coverage(words, letters.toLowerCase());
+  const trail = useMemo(() => coverageTrail(words, letters.toLowerCase()), [words, letters]);
 
   function toggleConstraint(id: ConstraintId) {
     setActive((list) => (list.includes(id) ? list.filter((c) => c !== id) : [...list, id]));
@@ -36,26 +38,72 @@ export default function BackronymStudioPage() {
       intro="Write a phrase whose words spell a hidden word through their first letters. Pick your constraint cards — the rubric below is exactly how you are scored."
     >
       <Card className="p-6 space-y-4">
-        <div className="text-center">
-          <p className="text-sm text-[var(--muted-foreground)]">Today&apos;s letters</p>
-          <p className="font-mono text-3xl uppercase tracking-[0.4em]" aria-live="polite">
-            {letters.split("").join(" ")}
+        <div>
+          <p className="text-center text-sm text-[var(--muted-foreground)]">
+            Today&apos;s hidden word. Each slot is claimed by the next word in your phrase that
+            starts with that letter.
           </p>
-          <p className="text-sm text-[var(--muted-foreground)]">
+          <ol
+            className="mt-3 flex flex-wrap justify-center gap-2"
+            aria-label={`Hidden word ${letters.toUpperCase().split("").join(" ")}`}
+          >
+            {letters.split("").map((letter, i) => {
+              const word = trail[i];
+              const isNext = !word && trail.slice(0, i).every(Boolean);
+              return (
+                <li
+                  key={`${letter}-${i}`}
+                  className={`flex min-w-[4.5rem] flex-col items-center rounded-xl border-2 px-2 py-2 ${
+                    word
+                      ? "border-amber-500/70 bg-amber-500/10"
+                      : isNext
+                        ? "border-dashed border-[var(--primary)] bg-[var(--primary)]/5"
+                        : "border-dashed border-[var(--border)]"
+                  }`}
+                >
+                  <span className="font-mono text-2xl font-bold uppercase leading-none">
+                    {letter}
+                  </span>
+                  <span
+                    className={`mt-1 max-w-[7rem] truncate text-xs ${
+                      word ? "font-medium" : "text-[var(--muted-foreground)]"
+                    }`}
+                  >
+                    {word ?? (isNext ? "write this word next" : "empty")}
+                  </span>
+                  <span className="sr-only">
+                    {word
+                      ? `claimed by ${word}`
+                      : isNext
+                        ? "next letter to claim"
+                        : "not reached yet"}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-2 text-center text-sm text-[var(--muted-foreground)]" aria-live="polite">
             Covered {covered} / {letters.length} letters in order
           </p>
         </div>
 
-        <label className="block">
-          <span className="sr-only">Your backronym phrase</span>
+        <div>
+          <label htmlFor="backronym-phrase" className="text-sm font-semibold">
+            Your phrase
+          </label>
           <textarea
+            id="backronym-phrase"
+            aria-describedby="backronym-phrase-hint"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
             placeholder="Silent poets always rhyme, keeping…"
-            className="w-full rounded-lg border border-[var(--border)] bg-transparent p-3"
+            className="mt-1 w-full rounded-lg border border-[var(--border)] bg-transparent p-3"
           />
-        </label>
+          <p id="backronym-phrase-hint" className="text-xs text-[var(--muted-foreground)]">
+            Words that do not match the next letter are still counted for the constraint cards.
+          </p>
+        </div>
 
         <fieldset>
           <legend className="text-sm font-semibold">Constraint cards</legend>

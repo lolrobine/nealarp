@@ -87,6 +87,21 @@ export function coverage(words: string[], letters: string): number {
   return i;
 }
 
+/** Which word claims each target letter, using the same greedy left-to-right
+ *  walk as coverage(). The board shows this so the rule is visible rather than
+ *  summarised as a count. */
+export function coverageTrail(words: string[], letters: string): (string | null)[] {
+  const trail: (string | null)[] = letters.split("").map(() => null);
+  let i = 0;
+  for (const word of words) {
+    if (i < letters.length && word[0] === letters[i]) {
+      trail[i] = word;
+      i += 1;
+    }
+  }
+  return trail;
+}
+
 export type BackronymScore = {
   total: number;
   coveragePoints: number;
