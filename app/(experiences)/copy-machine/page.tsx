@@ -83,37 +83,104 @@ const GLYPHS: { name: string; drawing: Drawing }[] = [
       ],
     ],
   },
+  {
+    name: "Leaf",
+    drawing: [
+      [
+        ...Array.from({ length: 22 }, (_, i) => {
+          const t = i / 21;
+          return { x: 70 + t * 180, y: 160 - Math.sin(t * Math.PI) * 68 };
+        }),
+        ...Array.from({ length: 22 }, (_, i) => {
+          const t = 1 - i / 21;
+          return { x: 70 + t * 180, y: 160 + Math.sin(t * Math.PI) * 68 };
+        }),
+      ],
+      [
+        { x: 70, y: 160 },
+        { x: 250, y: 160 },
+      ],
+    ],
+  },
+  {
+    name: "Bolt",
+    drawing: [
+      [
+        { x: 182, y: 48 },
+        { x: 108, y: 172 },
+        { x: 154, y: 172 },
+        { x: 128, y: 272 },
+        { x: 214, y: 146 },
+        { x: 166, y: 146 },
+        { x: 202, y: 48 },
+        { x: 182, y: 48 },
+      ],
+    ],
+  },
+  {
+    name: "Fish",
+    drawing: [
+      Array.from({ length: 30 }, (_, i) => {
+        const t = (i / 29) * Math.PI * 2;
+        return { x: 148 + Math.cos(t) * 84, y: 165 + Math.sin(t) * 48 };
+      }),
+      [
+        { x: 232, y: 165 },
+        { x: 288, y: 118 },
+        { x: 288, y: 212 },
+        { x: 232, y: 165 },
+      ],
+      Array.from({ length: 10 }, (_, i) => {
+        const t = (i / 9) * Math.PI * 2;
+        return { x: 104 + Math.cos(t) * 9, y: 150 + Math.sin(t) * 9 };
+      }),
+    ],
+  },
+  {
+    name: "Key",
+    drawing: [
+      Array.from({ length: 26 }, (_, i) => {
+        const t = (i / 25) * Math.PI * 2;
+        return { x: 104 + Math.cos(t) * 46, y: 160 + Math.sin(t) * 46 };
+      }),
+      [
+        { x: 150, y: 160 },
+        { x: 268, y: 160 },
+      ],
+      [
+        { x: 230, y: 160 },
+        { x: 230, y: 198 },
+      ],
+      [
+        { x: 256, y: 160 },
+        { x: 256, y: 190 },
+      ],
+    ],
+  },
+  {
+    name: "Boat",
+    drawing: [
+      [
+        { x: 58, y: 202 },
+        { x: 90, y: 252 },
+        { x: 228, y: 252 },
+        { x: 262, y: 202 },
+        { x: 58, y: 202 },
+      ],
+      [
+        { x: 160, y: 202 },
+        { x: 160, y: 68 },
+      ],
+      [
+        { x: 160, y: 80 },
+        { x: 240, y: 186 },
+        { x: 160, y: 186 },
+      ],
+    ],
+  },
 ];
 
 const GENERATIONS = 5;
-
-function stampDrawing(kind: "circle" | "square" | "spiral" | "zigzag"): Drawing {
-  switch (kind) {
-    case "circle":
-      return [
-        Array.from({ length: 32 }, (_, i) => {
-          const t = (i / 31) * Math.PI * 2;
-          return { x: 160 + Math.cos(t) * 100, y: 160 + Math.sin(t) * 100 };
-        }),
-      ];
-    case "square":
-      return [
-        [
-          { x: 70, y: 70 },
-          { x: 250, y: 70 },
-          { x: 250, y: 250 },
-          { x: 70, y: 250 },
-          { x: 70, y: 70 },
-        ],
-      ];
-    case "spiral":
-      return GLYPHS[0]!.drawing;
-    case "zigzag":
-      return [
-        Array.from({ length: 9 }, (_, i) => ({ x: 55 + i * 27, y: i % 2 === 0 ? 110 : 210 })),
-      ];
-  }
-}
 
 function toSvgPath(drawing: Drawing): string[] {
   return normalize(drawing)
@@ -328,19 +395,6 @@ export default function CopyMachinePage() {
       });
   }
 
-  function applyStamp(kind: "circle" | "square" | "spiral" | "zigzag") {
-    if (finished) return;
-    strokesRef.current = stampDrawing(kind);
-    setStrokeCount(strokesRef.current.length);
-    const canvas = canvasRef.current;
-    if (canvas)
-      drawScene(canvas, model, strokesRef.current, {
-        bg: "#111827",
-        model: "#6b7280",
-        ink: "#818cf8",
-      });
-  }
-
   return (
     <GameFrame
       id="copy-machine"
@@ -377,24 +431,12 @@ export default function CopyMachinePage() {
           <p className="text-sm text-[var(--muted-foreground)]">
             {finished
               ? "Lineage complete."
-              : `Draw over the faint model. Generation ${gen + 1} of ${GENERATIONS}. ${strokeCount === 0 ? "Draw with a finger, mouse, or use a stamp." : "Stroke(s) ready."}`}
+              : `Draw over the faint model. Generation ${gen + 1} of ${GENERATIONS}. ${strokeCount === 0 ? "Draw it with a finger or the mouse." : "Stroke(s) ready."}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={undoStroke} disabled={finished || strokeCount === 0}>
             Undo stroke
-          </Button>
-          <Button variant="outline" onClick={() => applyStamp("circle")} disabled={finished}>
-            Stamp: circle
-          </Button>
-          <Button variant="outline" onClick={() => applyStamp("square")} disabled={finished}>
-            Stamp: square
-          </Button>
-          <Button variant="outline" onClick={() => applyStamp("spiral")} disabled={finished}>
-            Stamp: spiral
-          </Button>
-          <Button variant="outline" onClick={() => applyStamp("zigzag")} disabled={finished}>
-            Stamp: zigzag
           </Button>
           <Button onClick={finishCopy} disabled={finished || strokeCount === 0}>
             {gen >= GENERATIONS - 1 ? "Finish lineage" : "This is my copy"}
