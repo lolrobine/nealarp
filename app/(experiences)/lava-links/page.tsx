@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -12,12 +12,170 @@ import {
   isWin,
   LEVELS,
   scoreRun,
+  type HexLevel,
   type HexState,
   type Hop,
 } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const DIR_LABELS = ["E", "W", "NW", "NE", "SW", "SE"];
+
+// Pointy-top hexagons on an odd-row offset grid: odd rows sit half a hex to the
+// right, which is exactly the neighbourhood stepHex() encodes.
+const R = 38;
+const HEX_W = Math.sqrt(3) * R;
+const HEX_H = 2 * R;
+const ROW_STEP = 1.5 * R;
+const PAD = 8;
+const BOARD_W = Math.round(5.5 * HEX_W + PAD * 2);
+const BOARD_H = Math.round(ROW_STEP * 4 + HEX_H + PAD * 2);
+
+function hexCentre(x: number, y: number): { cx: number; cy: number } {
+  return {
+    cx: PAD + HEX_W / 2 + x * HEX_W + (y % 2 ? HEX_W / 2 : 0),
+    cy: PAD + R + y * ROW_STEP,
+  };
+}
+
+function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i += 1) {
+    const a = (Math.PI / 180) * (60 * i - 90);
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function noise(seed: number): number {
+  const v = Math.sin(seed * 12.9898) * 43758.5453;
+  return v - Math.floor(v);
+}
+
+function paintField(
+  ctx: CanvasRenderingContext2D,
+  level: HexLevel,
+  state: HexState,
+  reachable: ReadonlyMap<string, Hop>,
+  won: boolean
+) {
+  ctx.clearRect(0, 0, BOARD_W, BOARD_H);
+
+  // molten floor under everything
+  ctx.fillStyle = "#1c0a06";
+  ctx.fillRect(0, 0, BOARD_W, BOARD_H);
+  for (let i = 0; i < 24; i += 1) {
+    const x = noise(i * 3.1) * BOARD_W;
+    const y = noise(i * 7.7) * BOARD_H;
+    const r = 24 + noise(i * 5.3) * 46;
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, r);
+    glow.addColorStop(0, "rgba(249, 115, 22, 0.32)");
+    glow.addColorStop(1, "rgba(249, 115, 22, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  level.rows.forEach((row, y) => {
+    row.split("").forEach((cell, x) => {
+      const { cx, cy } = hexCentre(x, y);
+      const gone = state.gone.includes(`${x},${y}`);
+      const solid = cell === "#" && !gone;
+      const isPawn = state.x === x && state.y === y;
+      const isGoal = level.goal.x === x && level.goal.y === y;
+      const canHop = reachable.has(`${x},${y}`);
+
+      if (!solid) {
+        // a hole in the chain: lava, with the broken rim left behind
+        hexPath(ctx, cx, cy, R - 2);
+        const lava = ctx.createRadialGradient(cx, cy, 2, cx, cy, R);
+        lava.addColorStop(0, gone ? "#fed7aa" : "#fdba74");
+        lava.addColorStop(0.5, "#ea580c");
+        lava.addColorStop(1, "#7c2d12");
+        ctx.fillStyle = lava;
+        ctx.fill();
+        if (gone) {
+          ctx.strokeStyle = "rgba(68, 24, 12, 0.85)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(30, 10, 6, 0.6)";
+          ctx.lineWidth = 2;
+          for (let c = 0; c < 3; c += 1) {
+            const a = noise(x * 9 + y * 5 + c) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(a) * R * 0.8, cy + Math.sin(a) * R * 0.8);
+            ctx.stroke();
+          }
+        }
+        return;
+      }
+
+      // a standing slab of cooled basalt
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 4;
+      hexPath(ctx, cx, cy, R - 2);
+      const rock = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
+      if (isGoal) {
+        rock.addColorStop(0, "#6ee7b7");
+        rock.addColorStop(1, "#047857");
+      } else {
+        rock.addColorStop(0, "#57534e");
+        rock.addColorStop(1, "#292524");
+      }
+      ctx.fillStyle = rock;
+      ctx.fill();
+      ctx.restore();
+
+      // top bevel so the slab reads as a solid object
+      ctx.strokeStyle = isGoal ? "rgba(209, 250, 229, 0.8)" : "rgba(214, 211, 209, 0.35)";
+      ctx.lineWidth = 2;
+      hexPath(ctx, cx, cy, R - 3);
+      ctx.stroke();
+
+      if (isGoal) {
+        ctx.strokeStyle = "rgba(240, 253, 244, 0.95)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 0.34, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 0.12, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(240, 253, 244, 0.95)";
+        ctx.fill();
+      }
+
+      if (canHop && !won) {
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 4;
+        hexPath(ctx, cx, cy, R - 6);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(251, 191, 36, 0.16)";
+        hexPath(ctx, cx, cy, R - 6);
+        ctx.fill();
+      }
+
+      if (isPawn) {
+        ctx.save();
+        ctx.shadowColor = "rgba(251, 191, 36, 0.9)";
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = "#fbbf24";
+        hexPath(ctx, cx, cy, R * 0.46);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = "#451a03";
+        hexPath(ctx, cx, cy, R * 0.22);
+        ctx.fill();
+      }
+    });
+  });
+}
 
 export default function LavaLinksPage() {
   const record = usePersonalBest("lava-links");
@@ -29,6 +187,28 @@ export default function LavaLinksPage() {
   const state = history[history.length - 1] ?? initialState(level);
   const moves = history.length - 1;
   const won = isWin(level, state);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  /** Every tile you could legally land on, with the cheapest hop that gets there. */
+  const reachable = useMemo(() => {
+    const found = new Map<string, Hop>();
+    if (won) return found;
+    for (const dir of [0, 1, 2, 3, 4, 5]) {
+      for (const steps of [1, 2] as const) {
+        const target = hopTarget(level, state, { dir, steps });
+        if (!target) continue;
+        const key = `${target[0]},${target[1]}`;
+        if (!found.has(key)) found.set(key, { dir, steps });
+      }
+    }
+    return found;
+  }, [level, state, won]);
+
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    paintField(ctx, level, state, reachable, won);
+  }, [level, state, reachable, won]);
 
   function selectLevel(index: number) {
     const target = LEVELS[index] ?? LEVELS[0]!;
@@ -79,81 +259,54 @@ export default function LavaLinksPage() {
           ))}
         </div>
 
-        <div
-          className="board mx-auto grid gap-1.5 p-3"
-          style={{ width: "min(92vw, 380px)" }}
-          role="group"
-          aria-label={`${level.name}. You are at ${state.x + 1},${state.y + 1}. Goal at ${level.goal.x + 1},${level.goal.y + 1}.`}
-        >
-          {level.rows.map((row, y) => (
-            <div key={y} className="flex gap-1" style={{ marginLeft: y % 2 ? "10%" : 0 }}>
-              {row.split("").map((cell, x) => {
+        <div className="board relative mx-auto p-3" style={{ width: `min(92vw, ${BOARD_W}px)` }}>
+          <canvas
+            ref={canvasRef}
+            width={BOARD_W}
+            height={BOARD_H}
+            aria-hidden="true"
+            className="block h-auto w-full"
+          />
+          <div
+            className="absolute inset-3"
+            role="group"
+            aria-label={`${level.name}. You are at ${state.x + 1},${state.y + 1}. Goal at ${level.goal.x + 1},${level.goal.y + 1}.`}
+          >
+            {level.rows.map((row, y) =>
+              row.split("").map((cell, x) => {
                 const gone = state.gone.includes(`${x},${y}`);
                 const isPawn = state.x === x && state.y === y;
                 const isGoal = level.goal.x === x && level.goal.y === y;
-                const reachable =
-                  !won &&
-                  !isPawn &&
-                  [0, 1, 2, 3, 4, 5].some((dir) =>
-                    ([1, 2] as const).some((steps) => {
-                      const t = hopTarget(level, state, { dir, steps });
-                      return t && t[0] === x && t[1] === y;
-                    })
-                  );
+                const hop = reachable.get(`${x},${y}`);
+                const { cx, cy } = hexCentre(x, y);
+                const what = gone ? "crumbled" : cell === "#" ? "slab" : "lava";
                 return (
                   <button
-                    key={x}
+                    key={`${x}-${y}`}
                     type="button"
-                    disabled={!reachable}
-                    onClick={() => {
-                      for (const dir of [0, 1, 2, 3, 4, 5]) {
-                        for (const steps of [1, 2] as const) {
-                          const t = hopTarget(level, state, { dir, steps });
-                          if (t && t[0] === x && t[1] === y) {
-                            doHop({ dir, steps });
-                            return;
-                          }
-                        }
-                      }
+                    disabled={!hop || won}
+                    onClick={() => hop && doHop(hop)}
+                    aria-label={`${x + 1},${y + 1} ${what}${isGoal ? " goal" : ""}${
+                      isPawn ? " you are here" : ""
+                    }${hop ? ` (hop ${hop.steps} ${DIR_LABELS[hop.dir]} to land here)` : ""}`}
+                    className="absolute rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 disabled:cursor-default"
+                    style={{
+                      left: `${((cx - HEX_W / 2) / BOARD_W) * 100}%`,
+                      top: `${((cy - R * 0.86) / BOARD_H) * 100}%`,
+                      width: `${(HEX_W / BOARD_W) * 100}%`,
+                      height: `${((R * 1.72) / BOARD_H) * 100}%`,
                     }}
-                    aria-label={`${x + 1},${y + 1} ${gone ? "crumbled" : cell === "#" ? "tile" : "lava"}${
-                      isGoal ? " goal" : ""
-                    }${reachable ? " (hop here)" : ""}`}
-                    className={`h-10 w-10 rounded-full text-xs font-bold ${
-                      isPawn
-                        ? "bg-amber-500 text-white"
-                        : gone || cell === "."
-                          ? "bg-orange-900/70 text-transparent"
-                          : isGoal
-                            ? "bg-emerald-400 text-emerald-950"
-                            : reachable
-                              ? "bg-[var(--secondary)] border-2 border-amber-400"
-                              : "bg-[var(--secondary)]"
-                    }`}
-                  >
-                    {isPawn ? "◆" : isGoal ? "★" : ""}
-                  </button>
+                  />
                 );
-              })}
-            </div>
-          ))}
+              })
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {[0, 1, 2, 3, 4, 5].map((dir) =>
-            ([1, 2] as const).map((steps) => (
-              <Button
-                key={`${dir}-${steps}`}
-                variant="secondary"
-                disabled={won}
-                onClick={() => doHop({ dir, steps })}
-                aria-label={`Hop ${steps} tile${steps > 1 ? "s" : ""} ${DIR_LABELS[dir]}`}
-              >
-                {steps === 2 ? "⤤" : "→"} {DIR_LABELS[dir]} {steps}
-              </Button>
-            ))
-          )}
-        </div>
+        <p className="text-center text-sm text-[var(--muted-foreground)]">
+          Tap a <strong className="text-amber-500">glowing slab</strong> to hop onto it. On a
+          keyboard, Tab steps through only the legal landings — press Enter to jump.
+        </p>
 
         <p className="text-center text-sm text-[var(--muted-foreground)]">
           Moves: <strong>{moves}</strong> / par {level.par}
