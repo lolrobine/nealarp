@@ -4,18 +4,30 @@ export type SpaceObject = {
   emoji: string;
   category: string;
   description: string;
+  /** Path to a picture of this object. Every one of these is AI-generated
+   *  imagery, not a photograph — see public/experiences/size-of-space/objects/
+   *  README.md. Objects without a picture fall back to a drawn disc. */
+  image?: string;
 };
 
 // Sizes in meters (diameter or characteristic length)
 export const spaceObjects: SpaceObject[] = [
   // Everyday objects for scale
-  { name: "Human", size: 1.7, emoji: "🧍", category: "earth", description: "Average human height" },
+  {
+    name: "Human",
+    size: 1.7,
+    emoji: "🧍",
+    category: "earth",
+    description: "Average human height",
+    image: "/experiences/size-of-space/objects/human.jpg",
+  },
   {
     name: "Blue Whale",
     size: 30,
     emoji: "🐋",
     category: "earth",
     description: "Largest animal on Earth",
+    image: "/experiences/size-of-space/objects/blue-whale.jpg",
   },
   {
     name: "Statue of Liberty",
@@ -23,6 +35,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🗽",
     category: "earth",
     description: "Ground to torch",
+    image: "/experiences/size-of-space/objects/statue-of-liberty.jpg",
   },
   {
     name: "Big Ben",
@@ -37,6 +50,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🗼",
     category: "earth",
     description: "Iconic Paris landmark",
+    image: "/experiences/size-of-space/objects/eiffel-tower.jpg",
   },
 
   // Earth features
@@ -46,6 +60,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🛰️",
     category: "earth",
     description: "Largest human-made object in space",
+    image: "/experiences/size-of-space/objects/iss.jpg",
   },
   {
     name: "Mount Everest",
@@ -53,6 +68,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🏔️",
     category: "earth",
     description: "Tallest mountain on Earth",
+    image: "/experiences/size-of-space/objects/mount-everest.jpg",
   },
   {
     name: "Moon",
@@ -60,6 +76,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌙",
     category: "solar",
     description: "Earth's only natural satellite",
+    image: "/experiences/size-of-space/objects/moon.jpg",
   },
   {
     name: "Earth",
@@ -67,6 +84,7 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🌍",
     category: "solar",
     description: "Our home planet",
+    image: "/experiences/size-of-space/objects/earth.jpg",
   },
 
   // Solar system
@@ -76,8 +94,16 @@ export const spaceObjects: SpaceObject[] = [
     emoji: "🪐",
     category: "solar",
     description: "Largest planet in our solar system",
+    image: "/experiences/size-of-space/objects/jupiter.jpg",
   },
-  { name: "Sun", size: 1_392_700_000, emoji: "☀️", category: "solar", description: "Our star" },
+  {
+    name: "Sun",
+    size: 1_392_700_000,
+    emoji: "☀️",
+    category: "solar",
+    description: "Our star",
+    image: "/experiences/size-of-space/objects/sun.jpg",
+  },
 
   // Stars
   {

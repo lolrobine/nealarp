@@ -2,8 +2,88 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { GameIcon } from "@/lib/components/GameIcon";
-import { spaceObjects, categories, formatSize } from "./data";
+import { getAssetUrl } from "@/lib/utils/assets";
+import { spaceObjects, categories, formatSize, type SpaceObject } from "./data";
+
+const STAGE_H = 300;
+/** Below this the smaller object would be sub-pixel, so we pin it to a floor
+ *  height and say so rather than pretending the drawing is to scale. */
+const MIN_DRAWN = 4;
+
+function ObjectFigure({ object, height }: { object: SpaceObject; height: number }) {
+  if (!object.image) {
+    return (
+      <div
+        className="rounded-full bg-gradient-to-br from-slate-400 to-slate-700"
+        style={{ height, width: height }}
+        aria-hidden="true"
+      />
+    );
+  }
+  return (
+    <Image
+      src={getAssetUrl(object.image)}
+      alt=""
+      width={512}
+      height={512}
+      className="object-contain"
+      style={{ height, width: height }}
+    />
+  );
+}
+
+/** The two objects drawn side by side at their true size ratio. */
+function ScaleStage({ base, other }: { base: SpaceObject; other: SpaceObject }) {
+  const bigger = base.size >= other.size ? base : other;
+  const smaller = base.size >= other.size ? other : base;
+  const ratio = bigger.size / smaller.size;
+  const trueSmall = STAGE_H / ratio;
+  const pinned = trueSmall < MIN_DRAWN;
+  const smallH = pinned ? MIN_DRAWN : trueSmall;
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-black/40 p-4">
+      <div
+        className="flex items-end justify-center gap-8 border-b border-[var(--border)] pb-2"
+        style={{ minHeight: STAGE_H + 16 }}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <ObjectFigure object={smaller} height={smallH} />
+          <span className="text-center text-xs text-[var(--muted-foreground)]">
+            {smaller.name}
+            <br />
+            {formatSize(smaller.size)}
+          </span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <ObjectFigure object={bigger} height={STAGE_H} />
+          <span className="text-center text-xs text-[var(--muted-foreground)]">
+            {bigger.name}
+            <br />
+            {formatSize(bigger.size)}
+          </span>
+        </div>
+      </div>
+      <p className="mt-3 text-center text-sm" role="status">
+        <strong>{bigger.name}</strong> is{" "}
+        <strong className="text-[var(--primary)]">
+          {ratio >= 1000 ? ratio.toExponential(2) : ratio.toFixed(1)}×
+        </strong>{" "}
+        the size of {smaller.name}.
+      </p>
+      <p className="mt-1 text-center text-xs text-[var(--muted-foreground)]">
+        {pinned
+          ? `Drawn to scale would make ${smaller.name} about ${trueSmall.toFixed(
+              4
+            )} pixels tall here, so it is pinned to ${MIN_DRAWN} pixels — the picture understates the gap.`
+          : "Both drawn to scale against each other."}{" "}
+        Object pictures are AI-generated illustrations, not photographs.
+      </p>
+    </div>
+  );
+}
 
 export default function SizeOfSpacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -143,6 +223,9 @@ export default function SizeOfSpacePage() {
     };
   }, [journeyActive, filteredObjects, logMin, logMax]);
 
+  const stageBase = spaceObjects.find((o) => o.name === baseObject);
+  const stageOther = spaceObjects.find((o) => o.name === selectedItem);
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 py-12 max-w-5xl">
@@ -187,6 +270,10 @@ export default function SizeOfSpacePage() {
               ))}
             </select>
           </div>
+
+          {stageBase && stageOther && stageBase.name !== stageOther.name && (
+            <ScaleStage base={stageBase} other={stageOther} />
+          )}
 
           {comparisonMode && (
             <p className="text-xs text-[var(--muted-foreground)]">
@@ -320,7 +407,20 @@ export default function SizeOfSpacePage() {
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--primary)]/50 transition-all">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{obj.emoji}</span>
+                      {obj.image ? (
+                        <Image
+                          src={getAssetUrl(obj.image)}
+                          alt=""
+                          width={96}
+                          height={96}
+                          className="h-9 w-9 rounded-md bg-black/40 object-contain"
+                        />
+                      ) : (
+                        <span
+                          className="h-9 w-9 rounded-md bg-gradient-to-br from-slate-500 to-slate-800"
+                          aria-hidden="true"
+                        />
+                      )}
                       <span className="font-semibold">{obj.name}</span>
                     </div>
                     <div className="text-right">
