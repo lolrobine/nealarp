@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
@@ -32,6 +32,50 @@ export default function CurrentCourierPage() {
 
   const neighbours = (node: NodeId): NodeId[] =>
     map.edges.filter((e) => e.a === node || e.b === node).map((e) => (e.a === node ? e.b : e.a));
+
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef(false);
+
+  /** Which junction sits under the pointer, or null between the streets. */
+  function nodeAt(clientX: number, clientY: number): NodeId | null {
+    const rect = gridRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0 || rect.height === 0) return null;
+    const col = Math.floor(((clientX - rect.left) / rect.width) * mapCols);
+    const row = Math.floor(((clientY - rect.top) / rect.height) * mapRows);
+    if (col < 0 || row < 0 || col >= mapCols || row >= mapRows) return null;
+    const node = `${String.fromCharCode(65 + col)}${row + 1}`;
+    return map.nodes.includes(node) ? node : null;
+  }
+
+  /** Dragging draws: forward onto a neighbour, backward to rub a leg out. */
+  function extendTo(node: NodeId) {
+    setRoute((prev) => {
+      if (prev.length === 0) return [node];
+      const last = prev[prev.length - 1]!;
+      if (node === last) return prev;
+      if (prev.length > 1 && node === prev[prev.length - 2]) return prev.slice(0, -1);
+      if (!neighbours(last).includes(node)) return prev;
+      return [...prev, node];
+    });
+  }
+
+  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    const node = nodeAt(event.clientX, event.clientY);
+    if (!node) return;
+    draggingRef.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    tapNode(node);
+  }
+
+  function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!draggingRef.current) return;
+    const node = nodeAt(event.clientX, event.clientY);
+    if (node) extendTo(node);
+  }
+
+  function endDrag() {
+    draggingRef.current = false;
+  }
 
   function tapNode(node: NodeId) {
     if (route.length === 0) {
@@ -91,6 +135,23 @@ export default function CurrentCourierPage() {
               preserveAspectRatio="none"
               aria-hidden="true"
             >
+              {/* Casing first: a dark kerb under every street gives the map depth. */}
+              {map.edges.map((edge) => {
+                const a = nodeCentre(edge.a);
+                const b = nodeCentre(edge.b);
+                return (
+                  <path
+                    key={`kerb-${edge.a}-${edge.b}`}
+                    d={`M ${a.x} ${a.y} L ${b.x} ${b.y}`}
+                    stroke="var(--foreground)"
+                    strokeOpacity={0.22}
+                    strokeWidth={13}
+                    strokeLinecap="round"
+                    fill="none"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              })}
               {/* Every street, so an empty map reads as a city rather than loose dots. */}
               {map.edges.map((edge) => {
                 const a = nodeCentre(edge.a);
@@ -109,7 +170,24 @@ export default function CurrentCourierPage() {
                   />
                 );
               })}
-              {/* The route the courier has drawn so far. */}
+              {/* The route the courier has drawn so far, with a glow under it. */}
+              {route.length > 1 && (
+                <polyline
+                  points={route
+                    .map((n) => {
+                      const c = nodeCentre(n);
+                      return `${c.x},${c.y}`;
+                    })
+                    .join(" ")}
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeOpacity={0.28}
+                  strokeWidth={16}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
               {route.length > 1 && (
                 <polyline
                   points={route
@@ -128,10 +206,15 @@ export default function CurrentCourierPage() {
               )}
             </svg>
             <div
-              className="relative grid"
+              ref={gridRef}
+              className="relative grid touch-none"
               style={{ gridTemplateColumns: `repeat(${mapCols}, 1fr)` }}
               role="group"
               aria-label="Delivery map"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
             >
               {mapCells.map((node) => {
                 const exists = map.nodes.includes(node);
@@ -143,25 +226,36 @@ export default function CurrentCourierPage() {
                     type="button"
                     role="gridcell"
                     disabled={!exists}
-                    onClick={() => tapNode(node)}
+                    // Pointers are handled by the container so a drag draws one
+                    // continuous route; detail === 0 means Enter or Space.
+                    onClick={(event) => {
+                      if (event.detail === 0) tapNode(node);
+                    }}
                     aria-label={`${node}${isStop ? " stop" : ""}${index >= 0 ? ` route step ${index + 1}` : ""}`}
-                    className={`m-0.5 flex aspect-square items-center justify-center rounded-full border text-xs font-mono transition-colors ${
+                    className={`m-0.5 flex aspect-square items-center justify-center rounded-full border-2 font-mono text-[11px] font-semibold transition-colors ${
+                      isStop && exists ? "ring-2 ring-amber-400 ring-offset-0" : ""
+                    } ${
                       !exists
                         ? "border-transparent"
                         : index >= 0
-                          ? "bg-indigo-500 text-white border-indigo-600"
+                          ? "border-indigo-300 bg-indigo-500 text-white shadow-lg"
                           : isStop
-                            ? "bg-amber-300 border-amber-500 text-amber-950"
-                            : "bg-[var(--secondary)] border-[var(--border)]"
+                            ? "border-amber-500 bg-amber-300 text-amber-950"
+                            : "border-[var(--border)] bg-[var(--secondary)]"
                     }`}
                   >
-                    {exists ? node : ""}
+                    {!exists ? "" : index >= 0 ? index + 1 : node}
                   </button>
                 );
               })}
             </div>
           </div>
         </div>
+
+        <p className="text-center text-sm text-[var(--muted-foreground)]">
+          Drag across the junctions to draw a route, or Tab to one and press Enter. Drag back over
+          the last junction to rub that leg out.
+        </p>
 
         <p className="text-center text-sm text-[var(--muted-foreground)]" aria-live="polite">
           Stops: {map.stops.join(", ")} · Route length: {length ?? 0} / par {map.par} ·{" "}
