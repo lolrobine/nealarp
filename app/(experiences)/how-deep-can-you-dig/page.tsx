@@ -33,20 +33,25 @@ export default function Dig() {
         <p>
           {unlocked + 1} / {DIG_SITES.length} discoveries
         </p>
-        <label className="block">
-          Jump to a discovered depth{" "}
-          <select
-            className="block w-full mt-2 rounded border p-2 bg-[var(--background)]"
-            value={selected}
-            onChange={(e) => progress.save({ unlocked, selected: Number(e.target.value) })}
-          >
-            {DIG_SITES.slice(0, unlocked + 1).map((s, i) => (
-              <option key={s.depth} value={i}>
-                {s.depth.toLocaleString("en-US")} km · {s.name}
-              </option>
-            ))}
-          </select>
+        <label className="block" htmlFor="dig-jump">
+          Jump to a discovered depth
         </label>
+        <select
+          id="dig-jump"
+          className="block w-full mt-2 rounded border p-2 bg-[var(--background)]"
+          value={selected}
+          onChange={(e) => {
+            setFrom(selected);
+            progress.save({ unlocked, selected: Number(e.target.value) });
+            playback.play(700);
+          }}
+        >
+          {DIG_SITES.slice(0, unlocked + 1).map((s, i) => (
+            <option key={s.depth} value={i}>
+              {s.depth.toLocaleString("en-US")} km · {s.name}
+            </option>
+          ))}
+        </select>
         <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
           <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-3">
             <svg
@@ -103,7 +108,9 @@ export default function Dig() {
             </p>
           </div>
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-widest">Your discoveries · tap to explore</p>
+            <p className="text-xs uppercase tracking-widest">
+              Your discoveries · choose one to explore
+            </p>
             {DIG_SITES.slice(0, unlocked + 1).map((s, i) => (
               <button
                 key={s.depth}
