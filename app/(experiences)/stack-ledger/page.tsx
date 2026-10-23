@@ -34,16 +34,21 @@ const SPEEDS = [
 /** Visual grid: row 0 is the sky, the floor is below. */
 const ROWS = WIN_HEIGHT + 3;
 
+const isStackSpeed = (v: unknown): v is string => SPEEDS.some((s) => s.id === v);
+const isFlag = (v: unknown): v is boolean => typeof v === "boolean";
+
 export default function StackLedgerPage() {
   const record = usePersonalBest("stack-ledger");
   const reducedMotion = usePrefersReducedMotion();
   const [speedId, setSpeedId] = useLocalStorage<string>(
     "nealarp:settings:v1:stack-ledger:speed",
-    reducedMotion ? "still" : "normal"
+    reducedMotion ? "still" : "normal",
+    isStackSpeed
   );
   const [practice, setPractice] = useLocalStorage<boolean>(
     "nealarp:settings:v1:stack-ledger:practice",
-    false
+    false,
+    isFlag
   );
   const [state, setState] = useState<StackState>(() => newRunSafe());
   const [topple, setTopple] = useState<{ col: number; row: number; key: number }[]>([]);

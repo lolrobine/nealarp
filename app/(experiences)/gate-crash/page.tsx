@@ -31,6 +31,9 @@ function gateShape(gate: Gate): string {
   return gate.shape === "circle" ? "●" : gate.shape === "square" ? "■" : "▲";
 }
 
+const isGateSpeed = (v: unknown): v is string => PREVIEW_MS.some((p) => p.id === v);
+const isFlag = (v: unknown): v is boolean => typeof v === "boolean";
+
 export default function GateCrashPage() {
   const record = usePersonalBest("gate-crash");
   const [seed] = useState(() => `gate-${Date.now()}`);
@@ -40,11 +43,13 @@ export default function GateCrashPage() {
   const [feedback, setFeedback] = useState("");
   const [speedId, setSpeedId] = useLocalStorage<string>(
     "nealarp:settings:v1:gate-crash:speed",
-    "normal"
+    "normal",
+    isGateSpeed
   );
   const [showRuleAlways, setShowRuleAlways] = useLocalStorage<boolean>(
     "nealarp:settings:v1:gate-crash:rule",
-    false
+    false,
+    isFlag
   );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

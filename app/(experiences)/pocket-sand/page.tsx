@@ -44,6 +44,11 @@ const BRUSHES = [
   { id: "2", label: "Wide" },
 ];
 
+const isSandSpeed = (v: unknown): v is string => SPEEDS.some((s) => s.id === v);
+const isBrush = (v: unknown): v is string => BRUSHES.some((b) => b.id === v);
+/** Anything outside this set becomes a cell the simulation never moves. */
+const isMaterial = (v: unknown): v is number => MATERIALS.some((m) => m.id === v);
+
 export default function PocketSandPage() {
   const record = usePersonalBest("pocket-sand");
   const reducedMotion = usePrefersReducedMotion();
@@ -57,15 +62,18 @@ export default function PocketSandPage() {
   const [running, setRunning] = useState(!reducedMotion);
   const [speedId, setSpeedId] = useLocalStorage<string>(
     "nealarp:settings:v1:pocket-sand:speed",
-    "normal"
+    "normal",
+    isSandSpeed
   );
   const [brushId, setBrushId] = useLocalStorage<string>(
     "nealarp:settings:v1:pocket-sand:brush",
-    "1"
+    "1",
+    isBrush
   );
   const [material, setMaterial] = useLocalStorage<number>(
     "nealarp:settings:v1:pocket-sand:material",
-    SAND
+    SAND,
+    isMaterial
   );
   const [goalIndex, setGoalIndex] = useState(0);
   const [score, setScore] = useState(0);
