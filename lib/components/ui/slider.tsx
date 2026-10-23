@@ -24,10 +24,15 @@ export const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
           ref={ref}
           id={inputId}
           type="range"
-          className={cn(
-            "w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]",
-            className
-          )}
+          /*
+           * No appearance-none here. Switching it off hands you the track and
+           * the thumb, and this project never styled ::-webkit-slider-thumb,
+           * so the thumb was simply not drawn and accent-color stopped
+           * applying as well. Native rendering plus accent-color is what the
+           * sliders on the other screens already use, and it keeps a visible
+           * handle. Height comes from the min-height rule in globals.css.
+           */
+          className={cn("w-full cursor-pointer accent-[var(--primary)]", className)}
           {...props}
         />
       </div>
