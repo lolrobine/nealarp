@@ -301,7 +301,7 @@ export default function SpendMoneyPage() {
                             setShowResetConfirm(false);
                             setShowReceipt(false);
                           }}
-                          className="flex-1 py-2 bg-red-500 text-white rounded-lg text-sm font-medium"
+                          className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-medium"
                         >
                           Yes, reset
                         </button>

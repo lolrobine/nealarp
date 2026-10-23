@@ -206,7 +206,7 @@ export default function PasswordGamePage() {
                 <div className="flex items-start gap-3">
                   <div
                     className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                      rule.passed ? "bg-green-500 text-white" : "bg-red-500/20 text-red-400"
+                      rule.passed ? "bg-green-700 text-white" : "bg-red-500/20 text-red-400"
                     }`}
                   >
                     <Picto name={rule.passed ? "check" : "cross"} size={16} />

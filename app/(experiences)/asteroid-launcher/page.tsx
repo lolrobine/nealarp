@@ -327,7 +327,7 @@ export default function AsteroidLauncherPage() {
                             )}
                           </div>
                           {count > 0 && (
-                            <span className="absolute top-1 right-1 text-[9px] bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold pointer-events-none">
+                            <span className="absolute top-1 right-1 text-[9px] bg-red-700 text-white rounded-full px-1.5 py-0.5 font-bold pointer-events-none">
                               {count}
                             </span>
                           )}

@@ -152,7 +152,7 @@ export default function WhichIsMore() {
           >
             <span
               aria-hidden="true"
-              className="mr-3 rounded-full border border-white/40 px-2 py-1 text-xs"
+              className="mr-3 rounded-full border border-[var(--primary-foreground)]/40 px-2 py-1 text-xs"
             >
               1
             </span>
@@ -167,7 +167,7 @@ export default function WhichIsMore() {
           >
             <span
               aria-hidden="true"
-              className="mr-3 rounded-full border border-white/40 px-2 py-1 text-xs"
+              className="mr-3 rounded-full border border-[var(--primary-foreground)]/40 px-2 py-1 text-xs"
             >
               2
             </span>

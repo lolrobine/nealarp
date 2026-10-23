@@ -239,7 +239,7 @@ export default function CurrentCourierPage() {
                       !exists
                         ? "border-transparent"
                         : index >= 0
-                          ? "border-indigo-300 bg-indigo-500 text-white shadow-lg"
+                          ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-lg"
                           : isStop
                             ? "border-amber-500 bg-amber-300 text-amber-950"
                             : "border-[var(--border)] bg-[var(--secondary)]"

@@ -84,13 +84,13 @@ export default function BlockTalkPage() {
                 aria-label={`${cell}${isPlaced ? " placed" : ""}`}
                 className={`flex aspect-square items-center justify-center rounded-md border text-xs font-mono ${
                   showTarget && isTarget
-                    ? "bg-indigo-500 text-white border-indigo-600"
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]"
                     : isMiss
                       ? "bg-rose-300 border-rose-500 text-rose-900"
                       : isExtra
                         ? "bg-amber-300 border-amber-500 text-amber-900"
                         : isPlaced
-                          ? "bg-indigo-400 text-white border-indigo-500"
+                          ? "bg-[var(--primary)]/30 text-[var(--foreground)] border-[var(--primary)]"
                           : "bg-[var(--secondary)] border-[var(--border)]"
                 }`}
               >

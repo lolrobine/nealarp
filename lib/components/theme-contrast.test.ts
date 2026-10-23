@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -65,5 +65,49 @@ describe("palette contrast", () => {
       ];
       expect(new Set(surfaces).size, `${scope} reuses a surface colour`).toBe(3);
     }
+  });
+});
+
+/**
+ * The tokens above are only half the story. A screen can bypass them
+ * entirely by hardcoding a Tailwind palette colour, and the mid-range
+ * shades are the trap: bg-indigo-500 with white text reads as obviously
+ * "primary coloured" and comes to 4.47:1, under the 4.5 AA needs. That
+ * exact pair was rejected for the token palette and was still sitting in
+ * Block Talk and Current Courier, which had never been looked at because
+ * they do not use the token.
+ *
+ * Shades 300 to 500 are light enough that white text on them fails, so
+ * any class string pairing the two is wrong whatever the hue. Dark shades
+ * are not matched: a fixed dark scene like Deep Sea's ocean or Gravity
+ * Golf's starfield is entitled to white text on bg-slate-950.
+ */
+describe("no screen hardcodes white text onto a light palette colour", () => {
+  const GAMES = join(process.cwd(), "app/(experiences)");
+  const LIGHT_BACKGROUND = /\bbg-(?:[a-z]+)-(?:300|400|500)\b/;
+  /** Class strings arrive as plain or template literals; both are one line. */
+  const LITERAL = /"([^"\n]*)"|`([^`\n]*)`/g;
+
+  function sourceFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(path);
+      if (!entry.name.endsWith(".tsx") || entry.name.includes(".test.")) return [];
+      return [path];
+    });
+  }
+
+  it("pairs white text only with backgrounds dark enough to carry it", () => {
+    const offenders: string[] = [];
+    for (const file of sourceFiles(GAMES)) {
+      const source = readFileSync(file, "utf8");
+      for (const match of source.matchAll(LITERAL)) {
+        const classes = match[1] ?? match[2] ?? "";
+        if (!classes.includes("text-white") || !LIGHT_BACKGROUND.test(classes)) continue;
+        const shade = LIGHT_BACKGROUND.exec(classes)?.[0];
+        offenders.push(`${file.replace(GAMES, "")}: text-white on ${shade}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
