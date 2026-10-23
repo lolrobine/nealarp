@@ -74,6 +74,10 @@ it("validates, restores and completes all form approvals", () => {
   fireEvent.change(screen.getByLabelText(/Enter your first name/), { target: { value: "1" } });
   fireEvent.click(screen.getByRole("button", { name: "Request approval" }));
   expect(screen.getByRole("alert").textContent).toContain("cannot approve");
+  // A rejection that lingers while the player types the fix reads as if the
+  // new answer were being refused too.
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Ad" } });
+  expect(screen.queryByRole("alert")).toBeNull();
   for (let i = 0; i < 3; i++) {
     fireEvent.change(screen.getByRole("textbox"), { target: { value: FORM_SOLUTION[i] } });
     fireEvent.click(screen.getByRole("button", { name: "Request approval" }));
@@ -87,6 +91,8 @@ it("validates, restores and completes all form approvals", () => {
   }
   expect(screen.getByRole("heading", { name: "Permit granted!" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Reset form and saved answers" }));
+  expect(screen.getByText("10 / 10 approvals")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Yes, start again" }));
   expect(screen.getByText("0 / 10 approvals")).toBeTruthy();
 });
 it("can finish the form when a previously working store starts rejecting writes", () => {
@@ -163,6 +169,7 @@ it("unlocks all discoveries, restores the journey and resets it", () => {
   render(<Dig />);
   expect(screen.getByText("8 / 8 discoveries")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Reset journey and saved discoveries" }));
+  fireEvent.click(screen.getByRole("button", { name: "Yes, start over" }));
   expect(screen.getByText("1 / 8 discoveries")).toBeTruthy();
 });
 

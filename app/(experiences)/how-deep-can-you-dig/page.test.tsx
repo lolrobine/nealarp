@@ -73,6 +73,7 @@ describe("how-deep-can-you-dig", () => {
     fireEvent.click(digButton());
     fireEvent.click(digButton());
     fireEvent.click(screen.getByRole("button", { name: /Reset journey/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Yes, start over" }));
 
     expect(screen.getByText(`1 / ${DIG_SITES.length} discoveries`)).toBeTruthy();
     expect(within(jumpBox()).getAllByRole("option")).toHaveLength(1);

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { usePlayback } from "@/lib/hooks/usePlayback";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
+import { ConfirmButton } from "@/lib/components/games/ConfirmButton";
 import { GameFrame } from "@/lib/components/games/GameFrame";
 import { useSavedProgress } from "@/lib/hooks/useSavedProgress";
 import { DIG_SITES, INITIAL_DIG, isDigProgress } from "./data";
@@ -160,16 +161,18 @@ export default function Dig() {
           >
             Dig to next discovery
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
+          <ConfirmButton
+            question="Forget every depth you have discovered so far?"
+            confirmLabel="Yes, start over"
+            cancelLabel="Keep my discoveries"
+            onConfirm={() => {
               progress.clear();
               setFrom(0);
               playback.reset();
             }}
           >
             Reset journey and saved discoveries
-          </Button>
+          </ConfirmButton>
         </div>
         <p role="status">
           {done

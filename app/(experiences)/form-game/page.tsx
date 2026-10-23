@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/lib/components/ui/button";
+import { ConfirmButton } from "@/lib/components/games/ConfirmButton";
 import { Card } from "@/lib/components/ui/card";
 import { GameFrame } from "@/lib/components/games/GameFrame";
 import { useSavedProgress } from "@/lib/hooks/useSavedProgress";
@@ -13,6 +14,9 @@ export default function FormGame() {
   const [hint, setHint] = useState(false);
   const [reviewed, setReviewed] = useState<number | null>(null);
   const [error, setError] = useState("");
+  // Remounting the alert on every rejection is what makes a second identical
+  // rejection speak again; an unchanged live region stays silent.
+  const [attempt, setAttempt] = useState(0);
   function reset() {
     progress.clear();
     setReviewed(null);
@@ -67,6 +71,7 @@ export default function FormGame() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!validateAnswer(step, input, answers)) {
+                setAttempt((a) => a + 1);
                 setError(
                   "The department cannot approve this answer. Check the requirement or ask for a hint."
                 );
@@ -87,11 +92,18 @@ export default function FormGame() {
               className="w-full rounded-lg border p-3 bg-[var(--background)]"
               value={input}
               maxLength={200}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setError("");
+              }}
               aria-describedby="form-help"
             />
             <div id="form-help">{hint && <p>{PROMPTS[step]![1]}</p>}</div>
-            <p role="alert">{error}</p>
+            {error && (
+              <p role="alert" key={attempt} className="text-red-700 dark:text-red-400">
+                {error}
+              </p>
+            )}
             <div className="flex flex-wrap gap-3">
               <Button type="submit">Request approval</Button>
               <Button type="button" variant="secondary" onClick={() => setHint((h) => !h)}>
@@ -115,9 +127,14 @@ export default function FormGame() {
             </ol>
           </details>
         )}
-        <Button variant="secondary" onClick={reset}>
+        <ConfirmButton
+          question={`Throw away ${step === 1 ? "your one approval" : `all ${step} approvals`} and start the form again?`}
+          confirmLabel="Yes, start again"
+          cancelLabel="Keep my answers"
+          onConfirm={reset}
+        >
           Reset form and saved answers
-        </Button>
+        </ConfirmButton>
         {progress.unavailable && (
           <p role="status">
             Storage is unavailable. You can finish this session, but it may not be restored after a
