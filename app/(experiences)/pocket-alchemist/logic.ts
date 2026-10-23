@@ -85,7 +85,6 @@ export const CONCEPTS: Concept[] = [
     vector: { x: 0.15, y: -0.55 },
     blurb: "Glass keeping sprouts warm.",
   },
-  { id: "kite", name: "Kite", vector: { x: -0.05, y: 0.55 }, blurb: "Air, briefly held." },
 ];
 
 export function blend(a: Vec, b: Vec): Vec {
@@ -110,6 +109,13 @@ export function mix(ingA: Ingredient, ingB: Ingredient): Concept {
   return best;
 }
 
+/**
+ * Bottles that make a perfect shelf, which the page states in those words.
+ * Deliberately fewer than the atlas holds: the shelf is a goal, not a
+ * completion bar. The test file checks it stays reachable.
+ */
+export const PERFECT_SHELF = 12;
+
 export function discoveryScore(discovered: number): number {
-  return Math.max(0, Math.min(100, Math.round((discovered / 12) * 100)));
+  return Math.max(0, Math.min(100, Math.round((discovered / PERFECT_SHELF) * 100)));
 }
