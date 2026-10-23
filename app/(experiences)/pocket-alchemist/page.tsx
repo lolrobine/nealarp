@@ -35,7 +35,7 @@ export default function PocketAlchemistPage() {
       intro="Mix any two of twelve ingredients. Each hides a trait vector — the blend lands near a concept, and geometry does the inventing. Inspired by Little Alchemy 2; no recipe is copied."
     >
       <Card className="p-6 space-y-4">
-        <div className="flex flex-wrap justify-center gap-2" role="list" aria-label="Ingredients">
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Ingredients">
           {INGREDIENTS.map((ingredient) => (
             <Button
               key={ingredient.id}

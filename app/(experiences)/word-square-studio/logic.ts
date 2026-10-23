@@ -7,7 +7,12 @@ export type SquareLevel = {
 };
 
 /** Each level is a true word square: reading the rows down equals reading the columns across.
- * Squares were found by exhaustive search over a common-word list and rechecked here. */
+ *
+ * The distractors are deliberately tempting (mostly anagrams of a real answer), but they must
+ * never complete a *second* valid square, or the game would reject a correct solution. Three
+ * levels used to do exactly that - "arm" finished pea/ear/arm, "ten" finished oat/are/ten and
+ * "rear" finished star/tare/area/rear. `only one square per bank` in logic.test.ts brute-forces
+ * every ordering of every bank and fails if a new distractor reopens that hole. */
 export const SQUARES: SquareLevel[] = [
   {
     id: "sap",
@@ -31,13 +36,13 @@ export const SQUARES: SquareLevel[] = [
     id: "pea",
     size: 3,
     rows: ["pea", "ear", "art"],
-    distractors: ["arm", "eat"],
+    distractors: ["tar", "eat"],
   },
   {
     id: "ash",
     size: 3,
     rows: ["oat", "ash", "the"],
-    distractors: ["ten", "are"],
+    distractors: ["has", "are"],
   },
   {
     id: "pan",
@@ -61,7 +66,7 @@ export const SQUARES: SquareLevel[] = [
     id: "star",
     size: 4,
     rows: ["star", "tare", "area", "read"],
-    distractors: ["rear", "late"],
+    distractors: ["rate", "late"],
   },
   {
     id: "toga",
@@ -84,18 +89,18 @@ export function bankWords(level: SquareLevel): string[] {
   return [...level.rows, ...level.distractors];
 }
 
-export type RowFeedback = { rowOk: boolean[]; solved: boolean; solvedViaTranspose: boolean };
+export type RowFeedback = { rowOk: boolean[]; solved: boolean };
 
-/** A row counts as correct when it matches the target square (or its mirror reading). */
+/** A row counts as correct when it matches the target square.
+ *
+ * There is no separate "mirror reading" to accept: a true word square *is* its own transpose,
+ * so reading it down the columns returns the very same rows in the very same order. The older
+ * mirror branch here could never fire, and the test that covered it could never fail. */
 export function evaluateRows(level: SquareLevel, placed: (string | null)[]): RowFeedback {
   const target = level.rows;
-  const mirror = transposeRows(level.rows);
   const norm = (s: string | null) => (s ?? "").trim().toLowerCase();
   const rowOk = placed.map((word, i) => norm(word) === target[i]);
-  const viaTarget = rowOk.every(Boolean) && placed.length === level.size;
-  const viaMirror =
-    placed.every((word, i) => norm(word) === mirror[i]) && placed.length === level.size;
-  return { rowOk, solved: viaTarget || viaMirror, solvedViaTranspose: viaMirror && !viaTarget };
+  return { rowOk, solved: rowOk.every(Boolean) && placed.length === level.size };
 }
 
 export function scoreSquare(wrongChecks: number, hints: number): number {

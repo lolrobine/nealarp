@@ -40,6 +40,7 @@ export default function WordSquareStudioPage() {
     setPlaced(next);
     setBank((b) => [...b.filter((w) => w !== selected), ...(previous ? [previous] : [])]);
     setSelected(null);
+    setResult(null);
   }
 
   function removeRow(rowIndex: number) {
@@ -49,6 +50,38 @@ export default function WordSquareStudioPage() {
     next[rowIndex] = null;
     setPlaced(next);
     setBank((b) => [...b, word]);
+    setResult(null);
+  }
+
+  /** The hint used to merely *select* rows[0]. If that word already sat in a row, placing it
+   * again filtered a word out of the bank that was never there, and the same word ended up in
+   * two rows at once. Putting it straight into row 1 keeps bank + board a clean partition. */
+  function revealFirstWord() {
+    const word = level.rows[0];
+    if (!word || result?.solved) return;
+    setHints((h) => h + 1);
+    const next = [...placed];
+    const displaced = next[0];
+    const alreadyPlaced = next.indexOf(word);
+    if (alreadyPlaced >= 0) next[alreadyPlaced] = null;
+    next[0] = word;
+    setPlaced(next);
+    setBank((b) => [
+      ...b.filter((w) => w !== word),
+      ...(displaced && displaced !== word ? [displaced] : []),
+    ]);
+    setSelected(null);
+    setResult(null);
+  }
+
+  /** Colour alone must not carry the verdict, so it is spelled out beside the word for sighted
+   * players and inside the label for screen readers, which previously got no per-row feedback. */
+  function rowLabel(index: number, word: string | null): string {
+    if (!word) {
+      return `Row ${index + 1}: empty. ${selected ? `Place ${selected}.` : "Select a word first."}`;
+    }
+    const verdict = feedback ? (feedback[index] ? " Matches." : " Does not match yet.") : "";
+    return `Row ${index + 1}: ${word}.${verdict} Activate to return it to the bank.`;
   }
 
   function check() {
@@ -88,21 +121,22 @@ export default function WordSquareStudioPage() {
               </span>
               <Button
                 variant={feedback?.[i] ? "default" : "secondary"}
-                className="h-12 flex-1 justify-start text-lg font-mono uppercase tracking-widest"
+                className="h-12 flex-1 justify-between gap-3 text-lg font-mono uppercase tracking-widest"
                 onClick={() => (word ? removeRow(i) : placeWord(i))}
-                aria-label={
-                  word
-                    ? `Row ${i + 1}: ${word}. Activate to return it to the bank.`
-                    : `Row ${i + 1}: empty. ${selected ? `Place ${selected}.` : "Select a word first."}`
-                }
+                aria-label={rowLabel(i, word)}
               >
-                {word ?? "\u00a0"}
+                <span>{word ?? "\u00a0"}</span>
+                {feedback ? (
+                  <span className="font-sans text-xs normal-case tracking-normal">
+                    {feedback[i] ? "\u2713 match" : "\u2717 no match"}
+                  </span>
+                ) : null}
               </Button>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2" role="list" aria-label="Word bank">
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Word bank">
           {bank.map((word) => (
             <Button
               key={word}
@@ -120,14 +154,7 @@ export default function WordSquareStudioPage() {
           <Button onClick={check} disabled={placed.some((w) => !w) || result?.solved === true}>
             Check square
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setHints((h) => h + 1);
-              setSelected(level.rows[0] ?? null);
-            }}
-            disabled={result?.solved === true}
-          >
+          <Button variant="outline" onClick={revealFirstWord} disabled={result?.solved === true}>
             Reveal first word
           </Button>
         </div>

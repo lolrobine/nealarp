@@ -211,7 +211,7 @@
   {
     "id": "word-square-studio",
     "title": "Word Square Studio",
-    "description": "Fill letter grids where every row and every column must read as a word.",
+    "description": "Order the given words into a square that reads the same down as across.",
     "category": "game",
     "icon": "/experiences/word-square-studio/icon.svg",
     "thumbnail": "/experiences/word-square-studio/realistic.webp",
