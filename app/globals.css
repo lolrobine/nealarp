@@ -235,5 +235,69 @@ input[type="checkbox"]:disabled {
  * track stays as thin as accent-color draws it.
  */
 input[type="range"] {
-  min-height: 24px;
+  /* Target height first: a range input is only as tall as its box, and
+     several screens had set that to 4px for a hairline look, which is fine
+     with a mouse and close to unusable with a thumb. */
+  min-height: 26px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Relying on the browser's own handle turned out not to be enough, so the
+   track and the thumb are both drawn here. Switching the appearance off also
+   switches accent-color off, which is why the colour is named again below.
+   --slider-thumb lets a screen with its own palette override just the knob;
+   Deep Sea does that to stay blue against its black panel. */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  /* Centres a 24px knob on a 10px track: (10 - 24) / 2. */
+  margin-top: -7px;
+  border-radius: 999px;
+  background: var(--slider-thumb, var(--primary));
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+input[type="range"]::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--slider-thumb, var(--primary));
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -25,14 +25,11 @@ export const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
           id={inputId}
           type="range"
           /*
-           * No appearance-none here. Switching it off hands you the track and
-           * the thumb, and this project never styled ::-webkit-slider-thumb,
-           * so the thumb was simply not drawn and accent-color stopped
-           * applying as well. Native rendering plus accent-color is what the
-           * sliders on the other screens already use, and it keeps a visible
-           * handle. Height comes from the min-height rule in globals.css.
+           * Track, thumb, focus ring and target height all come from the
+           * input[type="range"] rules in globals.css, so every slider in the
+           * project looks the same without each screen restyling one.
            */
-          className={cn("w-full cursor-pointer accent-[var(--primary)]", className)}
+          className={cn("w-full", className)}
           {...props}
         />
       </div>

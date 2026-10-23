@@ -253,7 +253,10 @@ export default function DeepSeaPage() {
               max={MAX_DEPTH}
               value={currentDepth}
               onChange={(e) => jumpToDepth(Number(e.target.value))}
-              className="w-full accent-blue-400 mt-1"
+              className="w-full mt-1"
+              // accent-color no longer applies now that the thumb is drawn by
+              // hand; this keeps the knob blue against the black panel.
+              style={{ "--slider-thumb": "#60a5fa" } as React.CSSProperties}
             />
             <div className="flex justify-between text-[9px] text-white/40 mt-1">
               <span>0m</span>
