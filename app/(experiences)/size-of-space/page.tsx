@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { getAssetUrl } from "@/lib/utils/assets";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { spaceObjects, categories, formatSize, type SpaceObject } from "./data";
 
 const STAGE_H = 300;
@@ -121,6 +122,7 @@ export default function SizeOfSpacePage() {
   const [zoom, setZoom] = useState(0);
   const [zoomCenter, setZoomCenter] = useState(0.5);
   const [journeyActive, setJourneyActive] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const journeyRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -198,6 +200,33 @@ export default function SizeOfSpacePage() {
       if (journeyRef.current) cancelAnimationFrame(journeyRef.current);
       return;
     }
+    /*
+     * Reduced motion gets the same tour without the travelling: one object
+     * at a time, held still, instead of a continuous pan with a zoom pulse
+     * looping forever. A requestAnimationFrame loop is invisible to the
+     * reduced-motion rule in globals.css, which only reaches CSS, so this
+     * branches by hand. The first step runs on a zero timeout because a
+     * synchronous setState in an effect body is a cascading render.
+     */
+    if (prefersReducedMotion) {
+      if (filteredObjects.length === 0) return;
+      const span = logMax - logMin;
+      let index = 0;
+      const step = () => {
+        const object = filteredObjects[index % filteredObjects.length];
+        index++;
+        if (!object) return;
+        setSelectedItem(object.name);
+        setZoomCenter(span > 0 ? (Math.log10(object.size) - logMin) / span : 0.5);
+        setZoom(2);
+      };
+      const first = setTimeout(step, 0);
+      const timer = setInterval(step, 2200);
+      return () => {
+        clearTimeout(first);
+        clearInterval(timer);
+      };
+    }
     const start = performance.now();
     const duration = 20000; // 20s journey
     const animate = (now: number) => {
@@ -223,7 +252,7 @@ export default function SizeOfSpacePage() {
     return () => {
       if (journeyRef.current) cancelAnimationFrame(journeyRef.current);
     };
-  }, [journeyActive, filteredObjects, logMin, logMax]);
+  }, [journeyActive, filteredObjects, logMin, logMax, prefersReducedMotion]);
 
   const stageBase = spaceObjects.find((o) => o.name === baseObject);
   const stageOther = spaceObjects.find((o) => o.name === selectedItem);
