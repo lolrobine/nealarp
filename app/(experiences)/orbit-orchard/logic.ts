@@ -57,6 +57,9 @@ export function launch(angleRad: number, power: number, origin: Body): Body {
 }
 
 export function scoreRun(collected: number, total: number): number {
+  // A level with no rings would divide by zero, and NaN travels straight
+  // through Math.min and Math.max to be saved as a personal best.
+  if (!Number.isFinite(total) || total <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((collected / total) * 100)));
 }
 

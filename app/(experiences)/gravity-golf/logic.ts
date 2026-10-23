@@ -134,5 +134,7 @@ export function simulateFlight(level: GolfLevel, angle: number, power: number): 
   return { path, outcome: "timeout" };
 }
 export function golfScore(shots: number) {
-  return Math.max(0, 100 - (shots - 1) * 10);
+  // Clamped at both ends: every other score in the project is, and an
+  // unclamped top means a hypothetical zero-shot hole pays 110.
+  return Math.max(0, Math.min(100, 100 - (shots - 1) * 10));
 }

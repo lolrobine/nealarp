@@ -51,5 +51,7 @@ export function comparePatterns(target: Pattern, placed: Pattern): Overlap {
 }
 
 export function scoreBlockTalk(overlapPct: number): number {
-  return Math.max(0, Math.min(100, overlapPct));
+  // comparePatterns already rounds, but the band is this function's promise,
+  // so it rounds too rather than trusting its caller.
+  return Math.max(0, Math.min(100, Math.round(overlapPct)));
 }
