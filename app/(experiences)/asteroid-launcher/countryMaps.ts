@@ -479,3 +479,12 @@ export function pctToLatLngCountry(xPct: number, yPct: number, bounds: CountryMa
 export function isInBounds(lat: number, lng: number, bounds: CountryMapDef["bounds"]) {
   return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
 }
+
+export const clampPct = (value: number) => Math.max(0, Math.min(100, value));
+
+/** Spoken form of a coordinate, for crosshair labels and live regions. */
+export function describeLatLng(lat: number, lng: number): string {
+  const ns = lat >= 0 ? "north" : "south";
+  const ew = lng >= 0 ? "east" : "west";
+  return `${Math.abs(lat).toFixed(0)} degrees ${ns}, ${Math.abs(lng).toFixed(0)} degrees ${ew}`;
+}

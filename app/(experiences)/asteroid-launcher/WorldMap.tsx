@@ -6,6 +6,7 @@ import { ImpactBurst } from "./ImpactBurst";
 import { motion, useAnimationControls } from "framer-motion";
 import { getAssetUrl } from "@/lib/utils/assets";
 import type { ImpactResult } from "./data";
+import { clampPct, describeLatLng } from "./countryMaps";
 
 export type MapImpact = {
   id: string;
@@ -32,6 +33,12 @@ interface Props {
 
 function pctToLatLng(xPct: number, yPct: number) {
   return { lng: (xPct / 100) * 360 - 180, lat: 90 - (yPct / 100) * 180 };
+}
+
+/** Spoken form of a crosshair position, for the button label and the live region. */
+function describeAim({ xPct, yPct }: { xPct: number; yPct: number }): string {
+  const { lat, lng } = pctToLatLng(xPct, yPct);
+  return describeLatLng(lat, lng);
 }
 
 function getVibratePattern(magnitude: number): number[] {
@@ -76,6 +83,9 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, panX: 0, panY: 0 });
+  /** Where the keyboard is aiming. Starts at the centre of the map. */
+  const [aim, setAim] = useState({ xPct: 50, yPct: 50 });
+  const [aiming, setAiming] = useState(false);
 
   const shakeControls = useAnimationControls();
 
@@ -358,21 +368,68 @@ export function WorldMap({ impacts, onMapClick, selectedIds, onSelect, shakeEven
               {hoverPos.lat.toFixed(1)}°, {hoverPos.lng.toFixed(1)}°
             </div>
           )}
+
+          {aiming && (
+            <div
+              className="pointer-events-none absolute z-30"
+              style={{ left: `${aim.xPct}%`, top: `${aim.yPct}%` }}
+            >
+              <div className="relative h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.7)]">
+                <span className="absolute left-1/2 top-1/2 h-3.5 w-px -translate-x-1/2 -translate-y-1/2 bg-white" />
+                <span className="absolute left-1/2 top-1/2 h-px w-3.5 -translate-x-1/2 -translate-y-1/2 bg-white" />
+              </div>
+              <div className="absolute left-4 top-3 whitespace-nowrap rounded bg-black/80 px-2 py-1 text-[10px] text-white">
+                {pctToLatLng(aim.xPct, aim.yPct).lat.toFixed(1)}°,{" "}
+                {pctToLatLng(aim.xPct, aim.yPct).lng.toFixed(1)}°
+              </div>
+            </div>
+          )}
         </div>
 
-        <div
-          className="absolute inset-0 z-10"
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-crosshair bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ring)]"
+          aria-label={`Launch site: ${describeAim(aim)}. Arrow keys move the crosshair, hold Shift for fine steps, Enter launches an asteroid.`}
+          onFocus={() => setAiming(true)}
+          onBlur={() => setAiming(false)}
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 1 : 5;
+            const moves: Record<string, [number, number]> = {
+              ArrowLeft: [-step, 0],
+              ArrowRight: [step, 0],
+              ArrowUp: [0, -step],
+              ArrowDown: [0, step],
+            };
+            const move = moves[e.key];
+            if (!move) return;
+            e.preventDefault();
+            setAiming(true);
+            setAim((current) => ({
+              xPct: clampPct(current.xPct + move[0]),
+              yPct: clampPct(current.yPct + move[1]),
+            }));
+          }}
           onClick={(e) => {
             if (isDragging) return;
+            // detail === 0 means Enter or Space, where there is no pointer to read a position
+            // from. Without this branch the keyboard would always launch at the top-left.
+            if (e.detail === 0) {
+              const { lat, lng } = pctToLatLng(aim.xPct, aim.yPct);
+              onMapClick(lat, lng);
+              return;
+            }
             const rect = containerRef.current!.getBoundingClientRect();
             const xPct = ((e.clientX - rect.left - pan.x) / zoom / rect.width) * 100;
             const yPct = ((e.clientY - rect.top - pan.y) / zoom / rect.height) * 100;
             if (xPct < 0 || xPct > 100 || yPct < 0 || yPct > 100) return;
+            setAim({ xPct, yPct });
             const { lat, lng } = pctToLatLng(xPct, yPct);
             onMapClick(lat, lng);
           }}
-          aria-hidden
         />
+        <p className="sr-only" aria-live="polite">
+          {aiming ? `Crosshair at ${describeAim(aim)}` : ""}
+        </p>
       </motion.div>
     </div>
   );

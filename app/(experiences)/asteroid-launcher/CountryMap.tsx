@@ -6,7 +6,13 @@ import { motion, useAnimationControls } from "framer-motion";
 import { getAssetUrl } from "@/lib/utils/assets";
 import type { MapImpact, ShakeEvent } from "./WorldMap";
 import type { CountryMapDef } from "./countryMaps";
-import { pctToLatLngCountry, latLngToPct, isInBounds } from "./countryMaps";
+import {
+  pctToLatLngCountry,
+  latLngToPct,
+  isInBounds,
+  clampPct,
+  describeLatLng,
+} from "./countryMaps";
 
 interface Props {
   country: CountryMapDef;
@@ -65,6 +71,10 @@ export function CountryMap({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, panX: 0, panY: 0 });
   const [imgError, setImgError] = useState(false);
+  /** Where the keyboard is aiming, as a percentage of the country frame. */
+  const [aim, setAim] = useState({ xPct: 50, yPct: 50 });
+  const [aiming, setAiming] = useState(false);
+  const aimAt = pctToLatLngCountry(aim.xPct, aim.yPct, country.bounds);
 
   const shakeControls = useAnimationControls();
 
@@ -313,21 +323,66 @@ export function CountryMap({
               {hoverPos.lat.toFixed(1)}°, {hoverPos.lng.toFixed(1)}°
             </div>
           )}
+
+          {aiming && (
+            <div
+              className="pointer-events-none absolute z-30"
+              style={{ left: `${aim.xPct}%`, top: `${aim.yPct}%` }}
+            >
+              <div className="relative h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.7)]">
+                <span className="absolute left-1/2 top-1/2 h-3.5 w-px -translate-x-1/2 -translate-y-1/2 bg-white" />
+                <span className="absolute left-1/2 top-1/2 h-px w-3.5 -translate-x-1/2 -translate-y-1/2 bg-white" />
+              </div>
+              <div className="absolute left-4 top-3 whitespace-nowrap rounded bg-black/80 px-2 py-1 text-[10px] text-white">
+                {aimAt.lat.toFixed(1)}°, {aimAt.lng.toFixed(1)}°
+              </div>
+            </div>
+          )}
         </div>
 
-        <div
-          className="absolute inset-0 z-10"
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-crosshair bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ring)]"
+          aria-label={`Launch site in ${country.name}: ${describeLatLng(aimAt.lat, aimAt.lng)}. Arrow keys move the crosshair, hold Shift for fine steps, Enter launches an asteroid.`}
+          onFocus={() => setAiming(true)}
+          onBlur={() => setAiming(false)}
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 1 : 5;
+            const moves: Record<string, [number, number]> = {
+              ArrowLeft: [-step, 0],
+              ArrowRight: [step, 0],
+              ArrowUp: [0, -step],
+              ArrowDown: [0, step],
+            };
+            const move = moves[e.key];
+            if (!move) return;
+            e.preventDefault();
+            setAiming(true);
+            setAim((current) => ({
+              xPct: clampPct(current.xPct + move[0]),
+              yPct: clampPct(current.yPct + move[1]),
+            }));
+          }}
           onClick={(e) => {
             if (isDragging) return;
+            // detail === 0 means Enter or Space: no pointer position exists, so the crosshair
+            // is the only sensible target.
+            if (e.detail === 0) {
+              onMapClick(aimAt.lat, aimAt.lng);
+              return;
+            }
             const rect = containerRef.current!.getBoundingClientRect();
             const xPct = ((e.clientX - rect.left - pan.x) / zoom / rect.width) * 100;
             const yPct = ((e.clientY - rect.top - pan.y) / zoom / rect.height) * 100;
             if (xPct < 0 || xPct > 100 || yPct < 0 || yPct > 100) return;
+            setAim({ xPct, yPct });
             const { lat, lng } = pctToLatLngCountry(xPct, yPct, country.bounds);
             onMapClick(lat, lng);
           }}
-          aria-hidden
         />
+        <p className="sr-only" aria-live="polite">
+          {aiming ? `Crosshair at ${describeLatLng(aimAt.lat, aimAt.lng)}` : ""}
+        </p>
       </motion.div>
     </div>
   );

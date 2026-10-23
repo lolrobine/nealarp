@@ -421,6 +421,7 @@ export default function AsteroidLauncherPage() {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleSelectImpact(impact.id)}
+                        aria-label={`Compare impact ${idx + 1}`}
                         className="shrink-0"
                       />
                       <button
