@@ -71,6 +71,8 @@ export default function DeepSeaPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioRef = useRef<{ ctx: AudioContext; gain: GainNode; osc: OscillatorNode } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  /** The deepest point the dive has actually reached, which is what discovery depends on. */
+  const deepestReached = useRef(0);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -169,12 +171,19 @@ export default function DeepSeaPage() {
 
         setCurrentDepth(depth);
 
-        // Track discovered creatures — only update if new found
+        // Discovery follows the deepest point reached, not wherever this frame happened to
+        // sample. Checking the instantaneous depth against a 150 m band meant a fast flick,
+        // the End key, a zone button or the depth slider skipped straight past creatures and
+        // never counted them - and the counter can only be repaired by crawling back through
+        // each band by hand. Reduced motion made it worse: jumpToDepth switches to an instant
+        // jump there, so those players lost finds everyone else got.
+        if (depth > deepestReached.current) deepestReached.current = depth;
+        const reached = deepestReached.current;
         setDiscoveredCreatures((prev) => {
           let changed = false;
           const next = new Set(prev);
           sortedCreatures.forEach((creature) => {
-            if (Math.abs(depth - creature.depth) < 150 && !next.has(creature.name)) {
+            if (creature.depth <= reached + 150 && !next.has(creature.name)) {
               next.add(creature.name);
               changed = true;
             }
@@ -443,7 +452,9 @@ export default function DeepSeaPage() {
                     discoveredCreatures.has(c.name) ? "bg-emerald-400" : "bg-white/40"
                   }`}
                   style={{ top: `${(c.depth / MAX_DEPTH) * 100}%` }}
-                  title={`${c.name} @ ${c.depth}m`}
+                  title={`${c.name} @ ${c.depth}m — ${
+                    discoveredCreatures.has(c.name) ? "found" : "not found yet"
+                  }`}
                 />
               ))}
             </div>
