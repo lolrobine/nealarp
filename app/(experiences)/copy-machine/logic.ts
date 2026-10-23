@@ -1,3 +1,6 @@
+/** Copies in one lineage; the catalogue copy promises five. */
+export const GENERATIONS = 5;
+
 export type Pt = { x: number; y: number };
 export type Stroke = Pt[];
 export type Drawing = Stroke[];

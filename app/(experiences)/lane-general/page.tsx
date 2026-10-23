@@ -14,6 +14,7 @@ import {
   type FightResult,
   type Lineup,
   type Unit,
+  DRAFT_SIZE,
 } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
@@ -37,7 +38,7 @@ export default function LaneGeneralPage() {
     if (fight) return;
     if (picked.some((u) => u.id === unit.id)) {
       setPicked(picked.filter((u) => u.id !== unit.id));
-    } else if (picked.length < 3) {
+    } else if (picked.length < DRAFT_SIZE) {
       setPicked([...picked, unit]);
     }
   }

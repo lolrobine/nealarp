@@ -10,6 +10,9 @@ export type Ecosystem = { plants: number; herbivores: number; predators: number;
  * is enough to save it, and there are many such interventions; both claims
  * are proved by the solver in logic.test.ts.
  */
+/** Rounds the player must survive; the catalogue copy promises twelve. */
+export const TARGET_ROUNDS = 12;
+
 export const INITIAL_ECOSYSTEM: Ecosystem = { plants: 12, herbivores: 19, predators: 3, round: 0 };
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 /** Deliberately fictional turn model. All rates are gameplay assumptions, not biological estimates. */

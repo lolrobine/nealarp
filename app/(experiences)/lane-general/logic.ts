@@ -5,6 +5,9 @@ import { seededRandom } from "@/lib/games/daily";
  * the resolver is pure, and the same line-ups always produce the same outcome
  * (inspired by Super Auto Pets; original units and numbers). */
 
+/** Units each side drafts; the catalogue copy promises three. */
+export const DRAFT_SIZE = 3;
+
 export type Unit = {
   id: string;
   name: string;
@@ -101,7 +104,7 @@ export function resolveFight(player: Lineup, enemy: Lineup): FightResult {
 export function enemyLineup(seed: string, round: number): Lineup {
   const random = seededRandom(`${seed}:lane-general:${round}`);
   const picks: Unit[] = [];
-  while (picks.length < 3) {
+  while (picks.length < DRAFT_SIZE) {
     const unit = UNITS[Math.floor(random() * UNITS.length)]!;
     if (!picks.some((p) => p.id === unit.id)) picks.push(unit);
   }

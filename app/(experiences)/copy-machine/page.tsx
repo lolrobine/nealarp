@@ -5,7 +5,7 @@ import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { Button } from "@/lib/components/ui/button";
 import { Card } from "@/lib/components/ui/card";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
-import { copyScore, normalize, stabilityScore, type Drawing, type Pt } from "./logic";
+import { GENERATIONS, copyScore, normalize, stabilityScore, type Drawing, type Pt } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 const GLYPHS: { name: string; drawing: Drawing }[] = [
@@ -179,8 +179,6 @@ const GLYPHS: { name: string; drawing: Drawing }[] = [
     ],
   },
 ];
-
-const GENERATIONS = 5;
 
 function toSvgPath(drawing: Drawing): string[] {
   return normalize(drawing)

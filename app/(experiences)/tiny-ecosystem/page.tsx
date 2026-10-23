@@ -5,7 +5,14 @@ import { Button } from "@/lib/components/ui/button";
 import { GameFrame, PersonalBest } from "@/lib/components/games/GameFrame";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { Habitat, habitatTool, type HabitatKind } from "./Habitat";
-import { INITIAL_ECOSYSTEM, ecosystemStep, isAlive, ecosystemScore, type Ecosystem } from "./logic";
+import {
+  INITIAL_ECOSYSTEM,
+  TARGET_ROUNDS,
+  ecosystemStep,
+  isAlive,
+  ecosystemScore,
+  type Ecosystem,
+} from "./logic";
 export default function TinyEcosystem() {
   const [state, setState] = useState<Ecosystem>(INITIAL_ECOSYSTEM);
   const [actions, setActions] = useState(2);
@@ -14,7 +21,7 @@ export default function TinyEcosystem() {
   const [message, setMessage] = useState("");
   const [habitatVersion, setHabitatVersion] = useState(0);
   const record = usePersonalBest("tiny-ecosystem:survival");
-  const done = !isAlive(state) || state.round >= 12;
+  const done = !isAlive(state) || state.round >= TARGET_ROUNDS;
   function adjust(key: "plants" | "herbivores" | "predators", amount: number) {
     if (actions <= 0 || done) return false;
     const max = key === "plants" ? 120 : key === "herbivores" ? 30 : 12;
@@ -44,12 +51,12 @@ export default function TinyEcosystem() {
     setStarted(true);
     setMessage(
       isAlive(next)
-        ? next.round === 12
+        ? next.round === TARGET_ROUNDS
           ? "Twelve rounds of balance!"
           : "A new round begins. You have two interventions."
         : "A population was lost. The experiment has ended."
     );
-    if (!isAlive(next) || next.round === 12) record.save(ecosystemScore(next));
+    if (!isAlive(next) || next.round === TARGET_ROUNDS) record.save(ecosystemScore(next));
   }
   return (
     <GameFrame
@@ -59,9 +66,9 @@ export default function TinyEcosystem() {
     >
       <Card className="p-6 space-y-5">
         <p>
-          Keep all three populations at or above 1 for 12 rounds. You may make up to two
-          interventions before advancing each round. Adding, removing, or planting costs one action.
-          There is no timer.
+          Keep all three populations at or above 1 for {TARGET_ROUNDS} rounds. You may make up to
+          two interventions before advancing each round. Adding, removing, or planting costs one
+          action. There is no timer.
         </p>
         <p>
           Round {state.round} / 12 · Interventions left: {actions}

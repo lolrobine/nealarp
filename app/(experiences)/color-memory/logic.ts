@@ -1,3 +1,6 @@
+/** Rounds in one color-memory run; the catalogue copy promises five. */
+export const ROUNDS = 5;
+
 import { seededRandom } from "@/lib/games/daily";
 export type RGB = [number, number, number];
 export const PALETTE: RGB[] = [

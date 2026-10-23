@@ -16,6 +16,7 @@ import {
   EMPTY_HISTORY,
   isColorHistory,
   type RGB,
+  ROUNDS,
 } from "./logic";
 
 export default function ColorMemory() {
@@ -59,9 +60,9 @@ export default function ColorMemory() {
   function submit() {
     const next = [...scores, colorScore(target, guess)];
     setScores(next);
-    setPhase(round === 4 ? "done" : "result");
-    if (round === 4) {
-      const finalScore = next.reduce((a, b) => a + b, 0) / 5;
+    setPhase(round === ROUNDS - 1 ? "done" : "result");
+    if (round === ROUNDS - 1) {
+      const finalScore = next.reduce((a, b) => a + b, 0) / ROUNDS;
       record.save(finalScore);
       if (!dailyDay) history.save({ scores: [...history.value.scores, finalScore].slice(-10) });
     }
