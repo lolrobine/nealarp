@@ -119,7 +119,7 @@ export default function ColorMemory() {
               : phase === "guess"
                 ? "Recreate the color below."
                 : phase === "done"
-                  ? `Final score: ${(scores.reduce((a, b) => a + b, 0) / 5).toFixed(1)} / 100`
+                  ? `Final score: ${(scores.reduce((a, b) => a + b, 0) / ROUNDS).toFixed(1)} / 100`
                   : ""}
         </div>
         {(phase === "look" || phase === "blank") && (
