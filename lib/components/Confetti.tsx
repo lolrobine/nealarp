@@ -20,7 +20,7 @@ export function Confetti({ active }: { active: boolean }) {
 
 function ConfettiBurst() {
   const [pieces, setPieces] = useState<ConfettiPiece[]>(() => {
-    const colors = ["#6366f1", "#22c55e", "#06b6d4", "#f59e0b", "#ef4444"];
+    const colors = ["#818cf8", "#22c55e", "#06b6d4", "#f59e0b", "#ef4444"];
     return Array.from({ length: 30 }, (_, id) => ({
       id,
       x: Math.random() * 100,

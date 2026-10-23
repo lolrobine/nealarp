@@ -28,8 +28,12 @@
   --foreground: #f5f5f5;
   --card: #141414;
   --card-foreground: #f5f5f5;
-  --primary: #5b5bd6;
-  --primary-foreground: #ffffff;
+  /* Dark mode flips the pairing instead of reusing the light one: a deep
+     indigo on a near-black page is hard to pick out, so the accent goes
+     bright and the label on it goes dark. 6.01:1 for the label, 6.64:1 for
+     the same colour used as a focus ring against the page. */
+  --primary: #818cf8;
+  --primary-foreground: #171717;
   --secondary: #242424;
   --secondary-foreground: #f5f5f5;
   --muted: #1e1e1e;
@@ -38,7 +42,7 @@
   --accent-foreground: #f5f5f5;
   --destructive: #ef4444;
   --border: #262626;
-  --ring: #5b5bd6;
+  --ring: #818cf8;
 }
 
 * {

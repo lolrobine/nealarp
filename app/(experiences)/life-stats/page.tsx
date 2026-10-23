@@ -145,7 +145,7 @@ export default function LifeStatsPage() {
     toShow.forEach((stat) => {
       const val = stat.getValue(ageMs);
       const formatted = stat.format(val);
-      ctx.fillStyle = "#5b5bd6";
+      ctx.fillStyle = "#818cf8";
       ctx.font = "20px sans-serif";
       ctx.fillText(`${stat.label}:`, 40, y);
       ctx.fillStyle = "#ffffff";
@@ -196,7 +196,7 @@ export default function LifeStatsPage() {
               <motion.button
                 onClick={handleCalculate}
                 disabled={!birthday}
-                className="px-8 py-3 bg-[var(--primary)] text-white rounded-lg font-medium disabled:opacity-50"
+                className="px-8 py-3 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg font-medium disabled:opacity-50"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -215,7 +215,7 @@ export default function LifeStatsPage() {
                 aria-pressed={activeCategory === "all"}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                   activeCategory === "all"
-                    ? "bg-[var(--primary)] text-white"
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                     : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                 }`}
               >
@@ -228,7 +228,7 @@ export default function LifeStatsPage() {
                   aria-pressed={activeCategory === cat.id}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                     activeCategory === cat.id
-                      ? "bg-[var(--primary)] text-white"
+                      ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                       : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                   }`}
                 >
@@ -279,7 +279,7 @@ export default function LifeStatsPage() {
             <div className="mt-6 flex justify-center gap-3 flex-wrap">
               <button
                 onClick={handleShare}
-                className="px-6 py-2.5 bg-[var(--primary)] text-white rounded-full text-sm font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                className="px-6 py-2.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-full text-sm font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
                 {copied ? (
                   <>

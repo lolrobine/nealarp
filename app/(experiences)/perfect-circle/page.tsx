@@ -1,11 +1,20 @@
 "use client";
 
+import { cssVar } from "@/lib/utils/cssVar";
 import { useRef, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { Confetti } from "@/lib/components/Confetti";
 import { useStoredValue } from "@/lib/hooks/useSavedProgress";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+
+/** Hex from the theme plus an alpha channel, for the faint guide strokes. */
+function withAlpha(hex: string, alpha: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1]!, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
 
 type GameState = "idle" | "drawing" | "scored";
 type Point = { x: number; y: number };
@@ -261,13 +270,13 @@ export default function PerfectCirclePage() {
       if (ghost && pts.length === 0 && showGhost) {
         ctx.beginPath();
         ctx.arc(ghost.centerX, ghost.centerY, ghost.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(99, 102, 241, 0.25)";
+        ctx.strokeStyle = withAlpha(cssVar("--primary", "#5b5bd6"), 0.25);
         ctx.lineWidth = 2;
         ctx.setLineDash([8, 6]);
         ctx.stroke();
         ctx.setLineDash([]);
         // Label
-        ctx.fillStyle = "rgba(99, 102, 241, 0.5)";
+        ctx.fillStyle = withAlpha(cssVar("--primary", "#5b5bd6"), 0.5);
         ctx.font = "12px monospace";
         ctx.fillText(`Best ${bestScore}%`, ghost.centerX + ghost.radius + 6, ghost.centerY);
       }
@@ -283,7 +292,9 @@ export default function PerfectCirclePage() {
       if (isComplete) {
         ctx.closePath();
       }
-      ctx.strokeStyle = isComplete ? "#5b5bd6" : "#818cf8";
+      ctx.strokeStyle = isComplete
+        ? cssVar("--primary", "#5b5bd6")
+        : withAlpha(cssVar("--primary", "#5b5bd6"), 0.65);
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
@@ -544,7 +555,7 @@ export default function PerfectCirclePage() {
           <div className="text-center flex gap-3 justify-center flex-wrap">
             <motion.button
               onClick={handleReset}
-              className="px-8 py-3 bg-[var(--primary)] text-white rounded-xl font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+              className="px-8 py-3 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Try again"

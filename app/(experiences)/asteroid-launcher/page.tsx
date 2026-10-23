@@ -184,13 +184,13 @@ export default function AsteroidLauncherPage() {
           <div className="inline-flex rounded-full border bg-[var(--card)] p-1">
             <button
               onClick={() => setMapMode("world")}
-              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "world" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "world" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--secondary)]"}`}
             >
               <Picto name="globe" /> World
             </button>
             <button
               onClick={() => setMapMode("countries")}
-              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "countries" ? "bg-[var(--primary)] text-white" : "hover:bg-[var(--secondary)]"}`}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium ${mapMode === "countries" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--secondary)]"}`}
             >
               <Picto name="map" /> Countries ({countries.length})
             </button>
@@ -529,7 +529,7 @@ export default function AsteroidLauncherPage() {
                   <button
                     key={l.id}
                     onClick={() => setLocation(l.id)}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] border ${location === l.id ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
+                    className={`px-2 py-1.5 rounded-lg text-[11px] border ${location === l.id ? "bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                   >
                     <Picto name={l.icon} size={14} /> {l.name}
                   </button>

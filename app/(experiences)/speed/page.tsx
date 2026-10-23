@@ -265,7 +265,7 @@ export default function SpeedPage() {
                   setRaceActive(true);
                 }}
                 disabled={raceActive || prefersReducedMotion}
-                className="px-4 py-1.5 rounded-full text-sm font-medium bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                className="px-4 py-1.5 rounded-full text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
                 {raceActive ? (
                   "Racing..."
@@ -375,7 +375,7 @@ export default function SpeedPage() {
             aria-pressed={selectedCategory === "all"}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
               selectedCategory === "all"
-                ? "bg-[var(--primary)] text-white"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                 : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             }`}
             whileHover={{ scale: 1.05 }}
@@ -390,7 +390,7 @@ export default function SpeedPage() {
               aria-pressed={selectedCategory === cat.id}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                 selectedCategory === cat.id
-                  ? "bg-[var(--primary)] text-white"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                   : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               }`}
               whileHover={{ scale: 1.05 }}
@@ -423,7 +423,7 @@ export default function SpeedPage() {
                       <Picto name={CATEGORY_PICTO[item.category] ?? "nature"} size={24} />
                       <span className="font-semibold">{item.name}</span>
                       {isInCompare && (
-                        <span className="text-[10px] bg-[var(--primary)] text-white px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] bg-[var(--primary)] text-[var(--primary-foreground)] px-1.5 py-0.5 rounded-full">
                           COMPARE
                         </span>
                       )}
@@ -446,7 +446,7 @@ export default function SpeedPage() {
                         aria-pressed={isInCompare}
                         className={`min-h-[24px] rounded-full px-2 py-1 text-[10px] transition-colors ${
                           isInCompare
-                            ? "bg-[var(--primary)] text-white"
+                            ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                             : "bg-[var(--secondary)] hover:bg-[var(--muted)]"
                         }`}
                       >

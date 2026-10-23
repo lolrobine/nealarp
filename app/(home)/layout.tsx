@@ -13,7 +13,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
       </header>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-20 focus:left-4 bg-[var(--primary)] text-white px-4 py-2 rounded z-[60]"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-20 focus:left-4 bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded z-[60]"
       >
         Skip to content
       </a>

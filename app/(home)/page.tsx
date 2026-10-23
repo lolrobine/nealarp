@@ -261,7 +261,7 @@ export default function Home() {
                 aria-pressed={activeCategory === cat.id}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                   activeCategory === cat.id
-                    ? "bg-[var(--primary)] text-white"
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                     : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                 }`}
               >

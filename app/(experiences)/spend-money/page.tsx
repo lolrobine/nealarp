@@ -181,7 +181,7 @@ export default function SpendMoneyPage() {
             aria-pressed={activeCategory === "all"}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
               activeCategory === "all"
-                ? "bg-[var(--primary)] text-white"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                 : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             }`}
             whileHover={{ scale: 1.05 }}
@@ -196,7 +196,7 @@ export default function SpendMoneyPage() {
               aria-pressed={activeCategory === cat.id}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                 activeCategory === cat.id
-                  ? "bg-[var(--primary)] text-white"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                   : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               }`}
               whileHover={{ scale: 1.05 }}
@@ -219,7 +219,7 @@ export default function SpendMoneyPage() {
           <div className="fixed bottom-4 right-4 z-50">
             <motion.button
               onClick={() => setShowReceipt(!showReceipt)}
-              className="bg-[var(--primary)] text-white px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2"
+              className="bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

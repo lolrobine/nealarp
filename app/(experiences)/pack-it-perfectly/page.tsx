@@ -197,7 +197,7 @@ function PackingBoard({ level, index }: { level: PackingLevel; index: number }) 
                       : undefined
                 }
                 aria-label={`Row ${y + 1}, column ${x + 1}, ${id ? `piece ${id}` : "empty"}`}
-                className={`aspect-square rounded border-2 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] ${id ? "bg-[var(--primary)] text-white" : "bg-[var(--secondary)]"}`}
+                className={`aspect-square rounded border-2 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] ${id ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "bg-[var(--secondary)]"}`}
                 onClick={() => place(x, y)}
               >
                 {id ?? "·"}

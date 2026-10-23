@@ -19,7 +19,7 @@ export default async function Image() {
     >
       <div style={{ fontSize: 72, fontWeight: 800 }}>Life Stats</div>
       <div style={{ fontSize: 28, marginTop: 16, color: "#a3a3a3" }}>Your life in numbers</div>
-      <div style={{ fontSize: 18, marginTop: 20, color: "#5b5bd6" }}>Nealarp</div>
+      <div style={{ fontSize: 18, marginTop: 20, color: "#818cf8" }}>Nealarp</div>
     </div>,
     { ...size }
   );

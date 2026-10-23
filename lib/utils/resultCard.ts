@@ -10,7 +10,7 @@ export async function downloadResultCard({ title, mode, score }: ResultCard) {
   gradient.addColorStop(1, "#312e81");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 1200, 630);
-  context.strokeStyle = "#6366f1";
+  context.strokeStyle = "#818cf8";
   context.lineWidth = 2;
   context.strokeRect(30, 30, 1140, 570);
   context.fillStyle = "#a5b4fc";

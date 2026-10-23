@@ -37,7 +37,7 @@ export default async function Image() {
       {/* Plain shapes, not emoji: Satori rasterises emoji by fetching them from a
           CDN, which makes the build depend on the network. These are pure CSS. */}
       <div style={{ display: "flex", gap: 20, marginTop: 44 }}>
-        {["#6ee7b7", "#22d3ee", "#38bdf8", "#6366f1"].map((colour) => (
+        {["#6ee7b7", "#22d3ee", "#38bdf8", "#818cf8"].map((colour) => (
           <div
             key={colour}
             style={{ width: 28, height: 28, borderRadius: 999, background: colour }}

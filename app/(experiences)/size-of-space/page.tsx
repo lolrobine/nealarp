@@ -171,7 +171,7 @@ export default function SizeOfSpacePage() {
       // Dot
       ctx.beginPath();
       ctx.arc(x, y, isBase ? 8 : isSelected ? 6 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = isBase ? "#5b5bd6" : isSelected ? "#22c55e" : "rgba(255,255,255,0.6)";
+      ctx.fillStyle = isBase ? "#818cf8" : isSelected ? "#22c55e" : "rgba(255,255,255,0.6)";
       ctx.fill();
 
       // Label for base and selected
@@ -295,7 +295,7 @@ export default function SizeOfSpacePage() {
                 <button
                   onClick={() => setJourneyActive(!journeyActive)}
                   aria-pressed={journeyActive}
-                  className={`min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium border ${journeyActive ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
+                  className={`min-h-6 inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium border ${journeyActive ? "bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]" : "bg-[var(--secondary)] border-[var(--border)]"}`}
                 >
                   {journeyActive ? (
                     <>
@@ -369,7 +369,7 @@ export default function SizeOfSpacePage() {
             aria-pressed={selectedCategory === "all"}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
               selectedCategory === "all"
-                ? "bg-[var(--primary)] text-white"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                 : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             }`}
           >
@@ -382,7 +382,7 @@ export default function SizeOfSpacePage() {
               aria-pressed={selectedCategory === cat.id}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                 selectedCategory === cat.id
-                  ? "bg-[var(--primary)] text-white"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                   : "bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               }`}
             >

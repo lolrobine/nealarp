@@ -142,7 +142,7 @@ function ItemCardComponent({ item }: ItemCardProps) {
           <button
             onClick={handleCustomSubmit}
             aria-label={`Confirm quantity for ${item.name}`}
-            className="text-xs px-2 py-1 bg-[var(--primary)] text-white rounded-md"
+            className="text-xs px-2 py-1 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-md"
           >
             Go
           </button>

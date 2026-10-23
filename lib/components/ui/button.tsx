@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  default: "bg-[var(--primary)] text-white hover:opacity-90",
+  default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90",
   secondary: "bg-[var(--secondary)] text-[var(--foreground)] hover:bg-[var(--muted)]",
   outline: "border border-[var(--border)] bg-transparent hover:bg-[var(--secondary)]",
   ghost: "bg-transparent hover:bg-[var(--secondary)]",
