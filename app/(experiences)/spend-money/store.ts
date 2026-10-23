@@ -9,9 +9,12 @@ function calculateSpent(purchases: Record<string, number>): number {
   let total = 0;
   for (const [id, qty] of Object.entries(purchases)) {
     const price = priceMap.get(id);
-    if (!price) continue;
-    // Guard against overflow / invalid qty
-    const safeQty = Math.max(0, Math.min(qty, Number.MAX_SAFE_INTEGER));
+    if (price === undefined) continue;
+    // Guard against overflow and against a tampered or corrupt stored
+    // quantity. NaN used to survive both Math.min and Math.max and poison the
+    // total, which then tripped the Infinity guard below and reported the
+    // player as having spent everything.
+    const safeQty = Number.isFinite(qty) ? Math.max(0, Math.min(qty, Number.MAX_SAFE_INTEGER)) : 0;
     total += safeQty * price;
     // Prevent Infinity
     if (!Number.isFinite(total)) return Number.MAX_SAFE_INTEGER;

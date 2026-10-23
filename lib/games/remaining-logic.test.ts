@@ -121,8 +121,19 @@ describe("golf physics", () => {
   });
 });
 describe("ecosystem", () => {
-  it("supports a complete twelve-turn survival path", () => {
+  it("collapses without a player, which is the point of the opening position", () => {
     let state = INITIAL_ECOSYSTEM;
+    let survived = 0;
+    for (let i = 0; i < 12; i++) {
+      const next = ecosystemStep(state);
+      if (!isAlive(next)) break;
+      state = next;
+      survived++;
+    }
+    expect(survived).toBeLessThan(12);
+  });
+  it("supports a complete twelve-turn survival path once the player plants", () => {
+    let state = { ...INITIAL_ECOSYSTEM, plants: INITIAL_ECOSYSTEM.plants + 10 };
     for (let i = 0; i < 12; i++) {
       state = ecosystemStep(state);
       expect(isAlive(state)).toBe(true);

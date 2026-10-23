@@ -143,7 +143,11 @@ export const creatures: Creature[] = [
 export const sortedCreatures = [...creatures].sort((a, b) => a.depth - b.depth);
 
 export function getZone(depth: number) {
-  return zones.find((z) => depth >= z.minDepth && depth < z.maxDepth) || zones[zones.length - 1]!;
+  // Anything at or above the surface belongs to the top zone. Without this the
+  // find() misses and the fallback hands back the *deepest* zone, so a depth of
+  // -5 used to report itself as the Hadal Zone.
+  if (!Number.isFinite(depth) || depth <= zones[0]!.minDepth) return zones[0]!;
+  return zones.find((z) => depth >= z.minDepth && depth < z.maxDepth) ?? zones[zones.length - 1]!;
 }
 
 export function getBackgroundColor(depth: number): string {

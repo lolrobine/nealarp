@@ -135,6 +135,9 @@ it("launches a winning golf shot and stores its level record", () => {
 });
 it("survives twelve ecosystem rounds and restarts", () => {
   render(<TinyEcosystem />);
+  // The run starts overgrazed and dies in round 6 untouched, so spend an
+  // intervention before advancing. See tiny-ecosystem/logic.test.ts.
+  fireEvent.click(screen.getByRole("button", { name: "Add 10 plants" }));
   for (let i = 0; i < 12; i++)
     fireEvent.click(screen.getByRole("button", { name: "Advance round" }));
   expect(screen.getByRole("status").textContent).toContain("Twelve rounds of balance!");
