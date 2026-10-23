@@ -206,7 +206,9 @@ export default function PasswordGamePage() {
                 <div className="flex items-start gap-3">
                   <div
                     className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                      rule.passed ? "bg-green-700 text-white" : "bg-red-500/20 text-red-400"
+                      rule.passed
+                        ? "bg-green-700 text-white"
+                        : "bg-red-500/20 text-red-700 dark:text-red-400"
                     }`}
                   >
                     <Picto name={rule.passed ? "check" : "cross"} size={16} />
@@ -219,7 +221,9 @@ export default function PasswordGamePage() {
                     </div>
                     <p
                       className={`text-sm font-medium ${
-                        rule.passed ? "text-green-400" : "text-[var(--foreground)]"
+                        rule.passed
+                          ? "text-green-700 dark:text-green-400"
+                          : "text-[var(--foreground)]"
                       }`}
                     >
                       {rule.text}
@@ -248,7 +252,9 @@ export default function PasswordGamePage() {
             >
               <Picto name="trophy" size={40} />
             </motion.div>
-            <h2 className="text-3xl font-bold text-green-400 mb-2">Congratulations!</h2>
+            <h2 className="text-3xl font-bold text-green-700 dark:text-green-400 mb-2">
+              Congratulations!
+            </h2>
             <p className="text-[var(--muted-foreground)]">
               You have successfully chosen a password in{" "}
               <span className="text-[var(--primary)] font-bold">{charCount}</span> characters.

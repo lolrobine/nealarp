@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -106,6 +106,44 @@ describe("no screen hardcodes white text onto a light palette colour", () => {
         if (!classes.includes("text-white") || !LIGHT_BACKGROUND.test(classes)) continue;
         const shade = LIGHT_BACKGROUND.exec(classes)?.[0];
         offenders.push(`${file.replace(GAMES, "")}: text-white on ${shade}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  /** The sister mistake, and the one that actually shipped: a light tint used as *text*.
+   * `text-green-400` reads at 1.74:1 on a white card - the password-game rule list was
+   * effectively blank in light mode - and `text-red-400` at 2.77:1 is no better. Shades 300
+   * and 400 are dark-mode colours; in light mode they need a `dark:` prefix and a darker
+   * default beside them. Only panels that stay dark in *both* themes may use them bare. */
+  const DARK_IN_BOTH_THEMES = [
+    "/asteroid-launcher/page.tsx", // impact readout on a near-black map
+    "/asteroid-launcher/WorldMap.tsx",
+    "/deep-sea/page.tsx", // the whole dive column is deep water
+    "/one-small-change/page.tsx", // bg-slate-950 experiment panel
+  ];
+  const LIGHT_TINT_AS_TEXT = /^text-[a-z]+-(?:300|400)$/;
+
+  /** Variants stack, so `dark:` can sit anywhere in the prefix chain: `dark:hover:text-red-400`
+   * is fine, `hover:text-red-400` is not. Splitting on ":" is the only honest way to tell. */
+  function isBareLightTint(token: string): boolean {
+    const parts = token.split(":");
+    const utility = parts.pop() ?? "";
+    return LIGHT_TINT_AS_TEXT.test(utility) && !parts.includes("dark");
+  }
+
+  it("keeps shade-300 and shade-400 text out of the light theme", () => {
+    const roots = [GAMES, join(process.cwd(), "lib/components")];
+    const offenders: string[] = [];
+    for (const file of roots.flatMap(sourceFiles)) {
+      if (DARK_IN_BOTH_THEMES.some((allowed) => file.endsWith(allowed.replaceAll("/", sep))))
+        continue;
+      for (const match of readFileSync(file, "utf8").matchAll(LITERAL)) {
+        const classes = match[1] ?? match[2] ?? "";
+        for (const token of classes.split(/\s+/)) {
+          if (isBareLightTint(token))
+            offenders.push(`${file.replace(process.cwd(), "")}: ${token}`);
+        }
       }
     }
     expect(offenders).toEqual([]);

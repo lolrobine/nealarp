@@ -84,7 +84,7 @@ function ItemCardComponent({ item }: ItemCardProps) {
               onClick={handleSell}
               disabled={quantity === 0}
               aria-label={`Sell one ${item.name}`}
-              className="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+              className="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >

@@ -1,4 +1,4 @@
-const CACHE_NAME = "nealarp-v2-18";
+const CACHE_NAME = "nealarp-v2-19";
 const BASE_PATH = new URL(".", self.location).pathname.replace(/\/$/, "") || "";
 const ASSETS = [`${BASE_PATH}/`, `${BASE_PATH}/manifest.webmanifest`];
 

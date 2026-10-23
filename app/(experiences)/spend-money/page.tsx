@@ -287,7 +287,7 @@ export default function SpendMoneyPage() {
                   {!showResetConfirm ? (
                     <button
                       onClick={() => setShowResetConfirm(true)}
-                      className="w-full py-2 bg-red-500/10 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                      className="w-full py-2 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
                     >
                       Reset Everything
                     </button>

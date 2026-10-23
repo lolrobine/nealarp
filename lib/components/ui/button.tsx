@@ -16,7 +16,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   secondary: "bg-[var(--secondary)] text-[var(--foreground)] hover:bg-[var(--muted)]",
   outline: "border border-[var(--border)] bg-transparent hover:bg-[var(--secondary)]",
   ghost: "bg-transparent hover:bg-[var(--secondary)]",
-  destructive: "bg-red-500/10 text-red-400 hover:bg-red-500/20",
+  destructive: "bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
