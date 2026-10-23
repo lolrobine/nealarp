@@ -6,12 +6,14 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { GameIcon } from "@/lib/components/GameIcon";
 import { BirthdaySelect } from "./BirthdaySelect";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { lifeStats, statCategories } from "./calculator";
 
 function AnimatedNumber({ value, format }: { value: number; format: (v: number) => string }) {
   const [displayed, setDisplayed] = useState(value);
   const prevValue = useRef(value);
   const rafRef = useRef<number | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const start = prevValue.current;
@@ -20,6 +22,15 @@ function AnimatedNumber({ value, format }: { value: number; format: (v: number) 
     const startTime = Date.now();
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+    // The count-up is decoration; the number it lands on is the point. A
+    // requestAnimationFrame loop is invisible to the reduced-motion rule in
+    // globals.css, which can only reach CSS animations, so this has to opt
+    // out by hand or a screen full of odometers keeps spinning.
+    if (prefersReducedMotion) {
+      prevValue.current = end;
+      return;
+    }
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -45,9 +56,9 @@ function AnimatedNumber({ value, format }: { value: number; format: (v: number) 
         rafRef.current = null;
       }
     };
-  }, [value]);
+  }, [value, prefersReducedMotion]);
 
-  return <>{format(Math.round(displayed))}</>;
+  return <>{format(Math.round(prefersReducedMotion ? value : displayed))}</>;
 }
 
 function parseLocalDate(dateStr: string): number {
