@@ -1,20 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { Slider } from "@/lib/components/ui/slider";
 import { usePlayback } from "@/lib/hooks/usePlayback";
 import { GameFrame } from "@/lib/components/games/GameFrame";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { bounceExperiment, type BounceResult } from "./logic";
+
+const points = (r: BounceResult) =>
+  r.samples.map((s) => `${40 + (s.time / 8) * 520},${250 - (s.height / 5) * 210}`).join(" ");
+
 export default function OneSmallChange() {
   const [elasticity, setElasticity] = useState(0.8);
   const [result, setResult] = useState<{ coefficient: number; trial: BounceResult } | null>(null);
   const playback = usePlayback();
   const [scrub, setScrub] = useState(0);
+  const stillMode = usePrefersReducedMotion();
   const frame = Math.min(480, Math.round(playback.progress * 480));
-  const baseline = bounceExperiment(0.65);
-  const points = (r: BounceResult) =>
-    r.samples.map((s) => `${40 + (s.time / 8) * 520},${250 - (s.height / 5) * 210}`).join(" ");
+  // The reference run and both curves used to be recomputed on every render,
+  // which during playback means once per animation frame for eight seconds.
+  const baseline = useMemo(() => bounceExperiment(0.65), []);
+  const baselinePoints = useMemo(() => points(baseline), [baseline]);
+  const trialPoints = useMemo(() => (result ? points(result.trial) : ""), [result]);
   return (
     <GameFrame
       id="one-small-change"
@@ -87,20 +95,28 @@ export default function OneSmallChange() {
                 fill="#a78bfa"
               />
             </svg>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => (playback.running ? playback.pause() : playback.resume())}
-              >
-                {playback.running ? "Pause playback" : "Play / resume"}
-              </Button>
-              <Button variant="secondary" onClick={() => playback.play(8000)}>
-                Replay drop
-              </Button>
-              <Button variant="ghost" onClick={playback.reset}>
-                Show final state
-              </Button>
-            </div>
+            {stillMode ? (
+              <p className="text-sm text-slate-300">
+                Your system asks for reduced motion, so the drop is not animated: both balls are
+                shown at their final state. The timeline below steps through every instant of the
+                experiment.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => (playback.running ? playback.pause() : playback.resume())}
+                >
+                  {playback.running ? "Pause playback" : "Play / resume"}
+                </Button>
+                <Button variant="secondary" onClick={() => playback.play(8000)}>
+                  Replay drop
+                </Button>
+                <Button variant="ghost" onClick={playback.reset}>
+                  Show final state
+                </Button>
+              </div>
+            )}
             <Slider
               label="Experiment timeline"
               valueText={`${(playback.progress * 8).toFixed(2)} s`}
@@ -115,9 +131,7 @@ export default function OneSmallChange() {
             />
             <p className="text-xs text-slate-400">
               Drag the timeline to inspect any instant.{" "}
-              {scrub > 0 && !playback.running
-                ? "Timeline paused for inspection."
-                : "Reduced-motion mode starts at the final state."}
+              {scrub > 0 && !playback.running ? "Timeline paused for inspection." : ""}
             </p>
           </div>
         )}
@@ -140,7 +154,7 @@ export default function OneSmallChange() {
           <text x="540" y="280" fill="currentColor" fontSize="14">
             8 s
           </text>
-          <polyline points={points(baseline)} fill="none" stroke="currentColor" strokeWidth="2" />
+          <polyline points={baselinePoints} fill="none" stroke="currentColor" strokeWidth="2" />
           {result && (
             <path
               d={`M${40 + playback.progress * 520} 30V250`}
@@ -150,7 +164,7 @@ export default function OneSmallChange() {
           )}
           {result && (
             <polyline
-              points={points(result.trial)}
+              points={trialPoints}
               fill="none"
               stroke="var(--primary)"
               strokeWidth="3"
