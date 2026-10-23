@@ -421,7 +421,17 @@ export default function SpeedPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <Picto name={CATEGORY_PICTO[item.category] ?? "nature"} size={24} />
-                      <span className="font-semibold">{item.name}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(isSelected ? null : item.name);
+                        }}
+                        aria-expanded={isSelected}
+                        className="font-semibold text-left"
+                      >
+                        {item.name}
+                      </button>
                       {isInCompare && (
                         <span className="text-[10px] bg-[var(--primary)] text-[var(--primary-foreground)] px-1.5 py-0.5 rounded-full">
                           COMPARE

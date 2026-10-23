@@ -309,6 +309,12 @@ export default function DeepSeaPage() {
                     marginLeft: i % 2 === 0 ? "0" : "30%",
                   }}
                   onClick={() => setSelectedCreature(creature)}
+                  onKeyDown={(e) => {
+                    // The focusable control is the card inside, and its own key handler only
+                    // expands it - it never synthesises a click, so the detail dialog used to
+                    // be mouse-only. The event still bubbles here, which is all this needs.
+                    if (e.key === "Enter" || e.key === " ") setSelectedCreature(creature);
+                  }}
                 >
                   <CreatureCard creature={creature} isVisible={true} />
                 </div>

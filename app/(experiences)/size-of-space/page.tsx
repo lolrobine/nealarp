@@ -443,10 +443,12 @@ export default function SizeOfSpacePage() {
             const isSelected = selectedItem === obj.name;
 
             return (
-              <div
+              <button
+                type="button"
                 key={obj.name}
                 onClick={() => setSelectedItem(isSelected ? null : obj.name)}
-                className="cursor-pointer"
+                aria-expanded={isSelected}
+                className="w-full cursor-pointer text-left"
               >
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--primary)]/50 transition-all">
                   <div className="flex items-center justify-between mb-2">
@@ -516,14 +518,14 @@ export default function SizeOfSpacePage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
 
         {/* Info */}
         <div className="mt-12 text-center text-sm text-[var(--muted-foreground)]">
-          <p>Click on any object to learn more! Toggle comparison mode to see relative sizes.</p>
+          <p>Choose any object to learn more. Toggle comparison mode to see relative sizes.</p>
         </div>
       </div>
     </div>
