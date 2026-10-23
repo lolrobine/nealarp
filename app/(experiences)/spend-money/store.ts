@@ -22,6 +22,23 @@ function calculateSpent(purchases: Record<string, number>): number {
   return total;
 }
 
+// Persisted quantities come straight from localStorage, so they can be
+// anything: a string, NaN, a negative number, or the id of an item that no
+// longer exists in the catalogue. An unusable quantity used to survive the
+// round trip and render as "xNaN" on a card that nothing could clear, because
+// sell() compares NaN and every comparison is false.
+function sanitizePurchases(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+  const clean: Record<string, number> = {};
+  for (const [id, qty] of Object.entries(raw as Record<string, unknown>)) {
+    if (!priceMap.has(id)) continue;
+    const n = typeof qty === "number" ? Math.floor(qty) : Number.NaN;
+    if (!Number.isFinite(n) || n < 1) continue;
+    clean[id] = Math.min(n, Number.MAX_SAFE_INTEGER);
+  }
+  return clean;
+}
+
 interface SpendMoneyState {
   totalMoney: number;
   purchases: Record<string, number>;
@@ -62,7 +79,13 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
       sell: (itemId: string, _price: number) => {
         const { purchases } = get();
         const currentQty = purchases[itemId] || 0;
-        if (currentQty <= 0) return;
+        if (!Number.isFinite(currentQty) || currentQty <= 0) {
+          if (!(itemId in purchases)) return;
+          const cleared = { ...purchases };
+          delete cleared[itemId];
+          set({ purchases: cleared, spent: calculateSpent(cleared) });
+          return;
+        }
 
         const newPurchases = { ...purchases };
         if (currentQty <= 1) {
@@ -82,7 +105,7 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
         // Sanitize quantity
         let q = Math.floor(quantity);
         if (!Number.isFinite(q) || q < 0) q = 0;
-        if (q > 1_000_000_000) q = 1_000_000_000; // cap to prevent overflow
+        if (q > Number.MAX_SAFE_INTEGER) q = Number.MAX_SAFE_INTEGER;
 
         const currentQty = purchases[itemId] || 0;
         const spent = calculateSpent(purchases);
@@ -91,6 +114,11 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
 
         // Check affordability for increase
         if (q > currentQty) {
+          if (!Number.isFinite(price) || price <= 0) return;
+          // The affordability clamp is what keeps the arithmetic in range: the
+          // most anyone can hold is totalMoney / price, far below
+          // MAX_SAFE_INTEGER for every price in the catalogue. A flat quantity
+          // cap on top of it only made "MAX" stop short on cheap items.
           const maxAffordableQty = Math.floor((totalMoney - spentWithoutThis) / price);
           if (q > maxAffordableQty) {
             q = Math.max(currentQty, maxAffordableQty);
@@ -127,7 +155,8 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Recalculate spent from purchases to fix desync
-          state.spent = calculateSpent(state.purchases || {});
+          state.purchases = sanitizePurchases(state.purchases);
+          state.spent = calculateSpent(state.purchases);
         }
       },
       version: 1,
@@ -135,11 +164,12 @@ export const useSpendMoneyStore = create<SpendMoneyState>()(
       migrate: (persisted: unknown, _version: number) => {
         // Drop old spent field, keep only purchases
         if (persisted && typeof persisted === "object" && "purchases" in persisted) {
-          const p = persisted as { purchases?: Record<string, number> };
+          const p = persisted as { purchases?: unknown };
+          const purchases = sanitizePurchases(p.purchases);
           return {
             totalMoney: 1_000_000_000_000,
-            purchases: p.purchases || {},
-            spent: calculateSpent(p.purchases || {}),
+            purchases,
+            spent: calculateSpent(purchases),
           } as SpendMoneyState;
         }
         return persisted as SpendMoneyState;
