@@ -1,5 +1,16 @@
 export type Ecosystem = { plants: number; herbivores: number; predators: number; round: number };
-export const INITIAL_ECOSYSTEM: Ecosystem = { plants: 60, herbivores: 9, predators: 2, round: 0 };
+/**
+ * An overgrazed start: too many herbivores for the standing plants.
+ *
+ * It used to begin at 60/9/2, which is a stable point — the system rode out
+ * all twelve rounds on its own, so the score measured nothing but a player's
+ * willingness to keep clicking, while the catalogue promised a balancing act.
+ * From 12/19/3 the plants are eaten faster than they regrow and the run
+ * collapses in round 6 if nobody steps in. A single well-chosen intervention
+ * is enough to save it, and there are many such interventions; both claims
+ * are proved by the solver in logic.test.ts.
+ */
+export const INITIAL_ECOSYSTEM: Ecosystem = { plants: 12, herbivores: 19, predators: 3, round: 0 };
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 /** Deliberately fictional turn model. All rates are gameplay assumptions, not biological estimates. */
 export function ecosystemStep(s: Ecosystem): Ecosystem {

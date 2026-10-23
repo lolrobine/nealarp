@@ -60,9 +60,11 @@ export function validateAnswer(step: number, input: string, answers: string[]): 
     case 7:
       return s.toLowerCase() === "this form is not a sandwich";
     case 8:
-      return s === "TIMREP";
+      // Case-insensitive on purpose: the prompt asks you to reverse a word, it
+      // does not ask you to guess that the answer wants capitals.
+      return s.toUpperCase() === "TIMREP";
     case 9:
-      return s === "I authorize this authorization";
+      return s.toLowerCase() === "i authorize this authorization";
     default:
       return false;
   }
