@@ -240,17 +240,20 @@ export default function DeepSeaPage() {
       {isMounted && (
         <div className="fixed top-20 left-4 z-40 flex flex-col gap-3">
           <div className="bg-black/70 backdrop-blur-sm border border-white/10 rounded-xl p-3 w-48">
-            <label className="text-[10px] text-white/60 uppercase tracking-wider">
+            <label
+              htmlFor="deep-sea-depth"
+              className="text-[10px] text-white/60 uppercase tracking-wider"
+            >
               Jump to depth
             </label>
             <input
+              id="deep-sea-depth"
               type="range"
               min={0}
               max={MAX_DEPTH}
               value={currentDepth}
               onChange={(e) => jumpToDepth(Number(e.target.value))}
-              className="w-full accent-blue-400 h-1 mt-1"
-              aria-label="Jump to depth"
+              className="w-full accent-blue-400 mt-1"
             />
             <div className="flex justify-between text-[9px] text-white/40 mt-1">
               <span>0m</span>

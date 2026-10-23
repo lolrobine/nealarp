@@ -225,3 +225,15 @@ input[type="checkbox"]:disabled {
   background: linear-gradient(90deg, var(--ring), #22d3ee);
   transition: width 400ms ease;
 }
+
+/*
+ * A range input is only as tall as its box, and several screens had set that
+ * to 4px for a hairline look. That leaves a 4px-high target: fine with a
+ * mouse, close to unusable with a thumb, and under the 24px minimum we hold
+ * every other control to. min-height clamps the used height regardless of the
+ * height the utility class asks for, so the target grows while the native
+ * track stays as thin as accent-color draws it.
+ */
+input[type="range"] {
+  min-height: 24px;
+}

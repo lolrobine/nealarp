@@ -329,32 +329,37 @@ export default function SizeOfSpacePage() {
             />
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] text-[var(--muted-foreground)]">
+                <label htmlFor="sos-zoom" className="text-[10px] text-[var(--muted-foreground)]">
                   Zoom {zoom.toFixed(1)}x
                 </label>
                 <input
+                  id="sos-zoom"
                   type="range"
                   min="0"
                   max="4"
                   step="0.1"
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className="w-full accent-[var(--primary)] h-1"
+                  className="w-full accent-[var(--primary)]"
                   disabled={journeyActive}
                 />
               </div>
               <div className="flex-1">
-                <label className="text-[10px] text-[var(--muted-foreground)]">
+                <label
+                  htmlFor="sos-position"
+                  className="text-[10px] text-[var(--muted-foreground)]"
+                >
                   Position {(zoomCenter * 100).toFixed(0)}%
                 </label>
                 <input
+                  id="sos-position"
                   type="range"
                   min="0"
                   max="1"
                   step="0.01"
                   value={zoomCenter}
                   onChange={(e) => setZoomCenter(parseFloat(e.target.value))}
-                  className="w-full accent-[var(--primary)] h-1"
+                  className="w-full accent-[var(--primary)]"
                   disabled={journeyActive}
                 />
               </div>
