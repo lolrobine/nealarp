@@ -11,6 +11,8 @@ import { CLUES } from "./data";
 import { isCorrect, scoreClues } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
+const MAX_HINTS = 2;
+
 export default function ClueSchoolPage() {
   const record = usePersonalBest("clue-school");
   const [clueIndex, setClueIndex] = useState(0);
@@ -19,6 +21,9 @@ export default function ClueSchoolPage() {
   const [wrong, setWrong] = useState(0);
   const [hints, setHints] = useState(0);
   const [solved, setSolved] = useState(false);
+  // Which clues are already behind you. Without this the strip is eight
+  // identical numbers and a second visit has no idea where it left off.
+  const [cleared, setCleared] = useState<number[]>([]);
 
   function selectClue(index: number) {
     setClueIndex(index);
@@ -33,6 +38,7 @@ export default function ClueSchoolPage() {
     if (solved || !guess.trim()) return;
     if (isCorrect(level, guess)) {
       setSolved(true);
+      setCleared((list) => (list.includes(clueIndex) ? list : [...list, clueIndex]));
       record.save(scoreClues(wrong, hints));
     } else {
       setWrong((n) => n + 1);
@@ -53,8 +59,10 @@ export default function ClueSchoolPage() {
               variant={i === clueIndex ? "default" : "outline"}
               onClick={() => selectClue(i)}
               aria-pressed={i === clueIndex}
+              aria-label={`Clue ${i + 1}${cleared.includes(i) ? ", solved" : ""}`}
             >
               Clue {i + 1}
+              {cleared.includes(i) ? " ✓" : ""}
             </Button>
           ))}
         </ChoiceStrip>
@@ -82,9 +90,11 @@ export default function ClueSchoolPage() {
             type="button"
             variant="outline"
             onClick={() => setHints((h) => h + 1)}
-            disabled={hints >= 2 || solved}
+            disabled={hints >= MAX_HINTS || solved}
           >
-            Hint {hints + 1}/2
+            {hints >= MAX_HINTS
+              ? `Hints used ${MAX_HINTS}/${MAX_HINTS}`
+              : `Hint ${hints + 1}/${MAX_HINTS}`}
           </Button>
         </form>
 
@@ -98,7 +108,7 @@ export default function ClueSchoolPage() {
             Device: <strong>{level.device}</strong>
           </p>
         )}
-        {hints >= 2 && !solved && <p className="text-sm">{level.annotation}</p>}
+        {hints >= MAX_HINTS && !solved && <p className="text-sm">{level.annotation}</p>}
 
         {solved && (
           <WinScreen

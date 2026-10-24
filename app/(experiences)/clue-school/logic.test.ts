@@ -58,3 +58,56 @@ describe("guessing and scoring", () => {
     expect(scoreClues(30, 10)).toBe(0);
   });
 });
+
+/**
+ * A cryptic clue is a promise: the enumeration counts the answer, the fodder of
+ * an anagram holds exactly the answer's letters, and a hidden word is really
+ * hidden in the surface. A clue that breaks one of those is unsolvable by
+ * reasoning, and the only way to find out is to check the letters.
+ */
+describe("the clues are fair", () => {
+  const letters = (text: string) => text.toUpperCase().replace(/[^A-Z]/g, "");
+  const sorted = (text: string) => [...letters(text)].sort().join("");
+
+  it("gives every clue a unique id and answer", () => {
+    expect(new Set(CLUES.map((c) => c.id)).size).toBe(CLUES.length);
+    expect(new Set(CLUES.map((c) => c.answer)).size).toBe(CLUES.length);
+  });
+
+  it("counts the answer correctly in the enumeration", () => {
+    for (const clue of CLUES) {
+      const stated = Number(clue.enumeration.replace(/[^0-9]/g, ""));
+      expect(stated, `${clue.id} enumeration`).toBe(letters(clue.answer).length);
+    }
+  });
+
+  it("hides the answer in the surface of every hidden-word clue", () => {
+    const hidden = CLUES.filter((c) => c.device === "hidden");
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const clue of hidden) {
+      expect(letters(clue.clue), `${clue.id} surface`).toContain(letters(clue.answer));
+    }
+  });
+
+  it("gives every anagram fodder exactly the answer's letters", () => {
+    const anagrams = CLUES.filter((c) => c.device === "anagram");
+    expect(anagrams.length).toBeGreaterThan(0);
+    for (const clue of anagrams) {
+      // The fodder is the quoted phrase in the surface.
+      const quoted = /"([^"]+)"/.exec(clue.clue);
+      expect(quoted, `${clue.id} should quote its fodder`).not.toBeNull();
+      expect(sorted(quoted![1]!), `${clue.id} fodder`).toBe(sorted(clue.answer));
+      expect(letters(quoted![1]!), `${clue.id} fodder is not the answer itself`).not.toBe(
+        letters(clue.answer)
+      );
+    }
+  });
+
+  it("explains every clue in its annotation and names a device", () => {
+    for (const clue of CLUES) {
+      expect(clue.annotation.length, clue.id).toBeGreaterThan(30);
+      expect(clue.device.length, clue.id).toBeGreaterThan(3);
+      expect(clue.annotation.toUpperCase(), clue.id).toContain(letters(clue.answer));
+    }
+  });
+});
