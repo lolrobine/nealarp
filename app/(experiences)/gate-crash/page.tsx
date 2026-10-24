@@ -74,6 +74,10 @@ export default function GateCrashPage() {
     if (index === correct) {
       const nextStreak = streak + 1;
       setStreak(nextStreak);
+      // Bank it straight away. The run only ends on a wrong pick, so a player
+      // who reached a perfect ten and stopped there used to have to throw a
+      // round away on purpose before the score was ever recorded.
+      record.save(scoreStreak(nextStreak));
       setFeedback(`Correct — ${round.gates[index] ? gateLabel(round.gates[index]!) : ""} matched.`);
       setRoundNumber((n) => n + 1);
       setPhase("preview");
