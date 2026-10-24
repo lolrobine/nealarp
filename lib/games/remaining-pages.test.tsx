@@ -151,6 +151,14 @@ it("survives twelve ecosystem rounds and restarts", () => {
   fireEvent.click(screen.getByRole("button", { name: "Restart ecosystem" }));
   expect(screen.getByText(/Round 0 \/ 12/)).toBeTruthy();
 });
+it("tells the ecosystem player which opening moves the solver proved", () => {
+  render(<TinyEcosystem />);
+  expect(screen.getByText(/Four different opening moves all survive/)).toBeTruthy();
+  expect(screen.getByText(/collapses in round 6/)).toBeTruthy();
+  expect(
+    screen.getByText(/plant ten, add a herbivore, remove a herbivore, or remove a predator/)
+  ).toBeTruthy();
+});
 it("runs and resets a one-parameter experiment", () => {
   render(<OneSmallChange />);
   fireEvent.click(screen.getByRole("button", { name: "Run experiment" }));

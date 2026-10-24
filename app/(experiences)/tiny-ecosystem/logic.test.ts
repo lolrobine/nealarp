@@ -10,10 +10,14 @@ import {
 
 const MAXIMUM = { plants: 120, herbivores: 30, predators: 12 } as const;
 type Species = keyof typeof MAXIMUM;
-/** The moves the page offers: planting adds ten, everything else moves by one. */
+/**
+ * The moves the page offers, and only those. Planting adds ten; herbivores and
+ * predators move by one in either direction. There is deliberately no way to
+ * remove a plant, and an earlier version of this list included one — so the
+ * solver was proving things about a board the player cannot reach.
+ */
 const MOVES: [Species, number][] = [
   ["plants", 10],
-  ["plants", -1],
   ["herbivores", 1],
   ["herbivores", -1],
   ["predators", 1],
@@ -90,6 +94,18 @@ describe("the opening position is a problem to solve", () => {
   it("can be rescued by a single well-chosen intervention", () => {
     const rescues = MOVES.filter((move) => play(new Map([[0, [move]]])) === 12);
     expect(rescues.length).toBeGreaterThan(0);
+  });
+
+  /** These four are named in How to beat it, so they are named here too. */
+  it("is saved by four of the five opening moves, in both directions on herbivores", () => {
+    const rescues = MOVES.filter((move) => play(new Map([[0, [move]]])) === 12).map(
+      ([species, amount]) => `${species} ${amount > 0 ? "+" : ""}${amount}`
+    );
+    expect(rescues).toEqual(["plants +10", "herbivores +1", "herbivores -1", "predators -1"]);
+  });
+
+  it("is not saved by adding a predator to an already overgrazed start", () => {
+    expect(play(new Map([[0, [["predators", 1]]]]))).toBeLessThan(12);
   });
 
   it("has many rescues rather than one, so it forgives an imperfect read", () => {

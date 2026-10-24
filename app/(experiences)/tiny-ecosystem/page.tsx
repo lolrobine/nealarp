@@ -13,6 +13,7 @@ import {
   ecosystemScore,
   type Ecosystem,
 } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 export default function TinyEcosystem() {
   const [state, setState] = useState<Ecosystem>(INITIAL_ECOSYSTEM);
   const [actions, setActions] = useState(2);
@@ -163,6 +164,29 @@ export default function TinyEcosystem() {
           </p>
         </details>
       </Card>
+
+      <HowToBeat summary="Four different opening moves all survive">
+        <ExampleStep n={1}>
+          The start is overgrazed on purpose: nineteen herbivores on twelve plants. Press Advance
+          round and nothing else and the run collapses in round 6 — half marks.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Plants lose 0.55 for every herbivore, and predators only grow while there are at least
+          three herbivores for each of them. Both pressures point at the same number, which is why
+          the herd can be fixed from either side: adding a herbivore keeps the predators fed,
+          removing one eases the grazing.
+        </ExampleStep>
+        <ExampleStep n={3}>
+          Of the five moves on the board, four save all twelve rounds when played before the very
+          first Advance: plant ten, add a herbivore, remove a herbivore, or remove a predator.
+          Adding a predator is the one that does not.
+        </ExampleStep>
+        <ExampleResult>
+          Plant ten, then advance twelve times without touching anything else: 12 / 12 rounds, score
+          100.
+        </ExampleResult>
+      </HowToBeat>
+
       <PersonalBest record={record} />
     </GameFrame>
   );
