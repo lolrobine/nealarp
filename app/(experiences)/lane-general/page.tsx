@@ -27,7 +27,7 @@ const TRAIT_TEXT: Record<Unit["trait"], string> = {
 
 export default function LaneGeneralPage() {
   const record = usePersonalBest("lane-general");
-  const [seed] = useState(() => `lane-general:${Date.now()}`);
+  const [seed, setSeed] = useState(() => `lane-general:${Date.now()}`);
   const [picked, setPicked] = useState<Unit[]>([]);
   const [round, setRound] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -43,8 +43,32 @@ export default function LaneGeneralPage() {
     }
   }
 
+  /**
+   * Lane order decides the fight — the resolver walks the lanes in order and
+   * How to beat it tells players to reorder. Before this there was no way to
+   * see the order, let alone change it, short of dropping units and picking
+   * them again in the right sequence.
+   */
+  function moveUnit(index: number, delta: number) {
+    const target = index + delta;
+    if (fight || target < 0 || target >= picked.length) return;
+    const next = [...picked];
+    const a = next[index]!;
+    next[index] = next[target]!;
+    next[target] = a;
+    setPicked(next);
+  }
+
+  function restart() {
+    setSeed(`lane-general:${Date.now()}`);
+    setPicked([]);
+    setRound(0);
+    setStreak(0);
+    setFight(null);
+  }
+
   function battle() {
-    if (picked.length !== 3 || fight) return;
+    if (picked.length !== DRAFT_SIZE || fight) return;
     const lineup = picked as Lineup;
     const enemy = enemyLineup(seed, round);
     const result = resolveFight(lineup, enemy);
@@ -62,9 +86,6 @@ export default function LaneGeneralPage() {
     setRound(round + 1);
     setPicked([]);
     setFight(null);
-    if (round + 1 >= ROUNDS) {
-      // finished
-    }
   }
 
   return (
@@ -75,7 +96,7 @@ export default function LaneGeneralPage() {
     >
       <Card className="p-6 space-y-4">
         <p className="text-center text-sm text-[var(--muted-foreground)]">
-          Round {Math.min(round + 1, ROUNDS)} of {ROUNDS} · Streak {streak}
+          Round {Math.min(round + 1, ROUNDS)} of {ROUNDS} · Rounds won {streak} of {ROUNDS}
         </p>
 
         <div>
@@ -87,7 +108,7 @@ export default function LaneGeneralPage() {
                 <button
                   key={unit.id}
                   type="button"
-                  disabled={Boolean(fight) || (!isPicked && picked.length >= 3)}
+                  disabled={Boolean(fight) || (!isPicked && picked.length >= DRAFT_SIZE)}
                   onClick={() => toggleUnit(unit)}
                   aria-pressed={isPicked}
                   className={`rounded-lg border p-3 text-left ${
@@ -95,7 +116,8 @@ export default function LaneGeneralPage() {
                   }`}
                 >
                   <p className="font-bold">
-                    {unit.name} · ⚔ {unit.attack} · ♥ {unit.health}
+                    {unit.name} · Atk {unit.attack} · HP {unit.health}
+                    {isPicked ? ` · Lane ${picked.findIndex((u) => u.id === unit.id) + 1}` : ""}
                   </p>
                   <p className="text-xs text-[var(--muted-foreground)]">{TRAIT_TEXT[unit.trait]}</p>
                 </button>
@@ -104,9 +126,49 @@ export default function LaneGeneralPage() {
           </div>
         </div>
 
+        {picked.length > 0 && (
+          <div>
+            <h2 className="font-bold">Lane order (front fights first)</h2>
+            <ol className="mt-2 space-y-2" aria-label="Lane order">
+              {picked.map((unit, i) => (
+                <li
+                  key={unit.id}
+                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] p-2"
+                >
+                  <span className="text-sm font-bold">Lane {i + 1}</span>
+                  <span className="grow text-sm">
+                    {unit.name} · Atk {unit.attack} · HP {unit.health}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => moveUnit(i, -1)}
+                    disabled={i === 0 || Boolean(fight)}
+                    aria-label={`Move ${unit.name} one lane forward`}
+                    className="h-9 w-9 rounded-lg border border-[var(--border)] disabled:opacity-40"
+                  >
+                    &uarr;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveUnit(i, 1)}
+                    disabled={i === picked.length - 1 || Boolean(fight)}
+                    aria-label={`Move ${unit.name} one lane back`}
+                    className="h-9 w-9 rounded-lg border border-[var(--border)] disabled:opacity-40"
+                  >
+                    &darr;
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
         <div className="flex justify-center gap-2">
-          <Button onClick={battle} disabled={picked.length !== 3 || Boolean(fight) || finished}>
-            Fight round {round + 1}
+          <Button
+            onClick={battle}
+            disabled={picked.length !== DRAFT_SIZE || Boolean(fight) || finished}
+          >
+            {finished ? "Campaign over" : `Fight round ${round + 1}`}
           </Button>
           <Button variant="outline" onClick={() => setPicked([])} disabled={Boolean(fight)}>
             Redraft
@@ -122,7 +184,10 @@ export default function LaneGeneralPage() {
                   ? "Defeat."
                   : "Draw."}
             </p>
-            <ol className="mt-2 list-decimal pl-5 text-sm text-[var(--muted-foreground)]">
+            <ol
+              className="mt-2 list-decimal pl-5 text-sm text-[var(--muted-foreground)]"
+              aria-label="Fight log"
+            >
               {fight.steps.map((step, i) => (
                 <li key={i}>
                   {step.attacker} hits {step.target} for {step.damage} → {step.targetHealthLeft} ♥
@@ -140,8 +205,10 @@ export default function LaneGeneralPage() {
           <WinScreen
             headline="Campaign over"
             score={scoreStreak(streak, ROUNDS)}
-            detail={`Best streak: ${streak} of ${ROUNDS} rounds.`}
-          />
+            detail={`Rounds won: ${streak} of ${ROUNDS}.`}
+          >
+            <Button onClick={restart}>New campaign</Button>
+          </WinScreen>
         )}
       </Card>
 
