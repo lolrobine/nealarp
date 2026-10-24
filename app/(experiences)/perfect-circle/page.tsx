@@ -70,6 +70,8 @@ export default function PerfectCirclePage() {
   } | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showGhost] = useState(true);
+  const penRef = useRef<Point | null>(null);
+  const [penVisible, setPenVisible] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const lastPointsRef = useRef<Point[]>([]);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -90,7 +92,8 @@ export default function PerfectCirclePage() {
     (
       pts: Point[],
       isComplete: boolean = false,
-      ghost: { centerX: number; centerY: number; radius: number } | null = null
+      ghost: { centerX: number; centerY: number; radius: number } | null = null,
+      pen: Point | null = null
     ) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -126,6 +129,22 @@ export default function PerfectCirclePage() {
         ctx.fillStyle = withAlpha(cssVar("--primary", "#5b5bd6"), 0.5);
         ctx.font = "12px monospace";
         ctx.fillText(`Best ${bestScore}%`, ghost.centerX + ghost.radius + 6, ghost.centerY);
+      }
+
+      // Keyboard pen: without a crosshair the arrow keys would move something
+      // invisible.
+      if (pen) {
+        ctx.strokeStyle = cssVar("--primary", "#5b5bd6");
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pen.x, pen.y, 7, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pen.x - 12, pen.y);
+        ctx.lineTo(pen.x + 12, pen.y);
+        ctx.moveTo(pen.x, pen.y - 12);
+        ctx.lineTo(pen.x, pen.y + 12);
+        ctx.stroke();
       }
 
       if (pts.length === 0) return;
@@ -199,33 +218,24 @@ export default function PerfectCirclePage() {
     (isComplete = false) => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        drawCanvas(pointsRef.current, isComplete, bestCircle);
+        drawCanvas(pointsRef.current, isComplete, bestCircle, penRef.current);
         rafRef.current = null;
       });
     },
     [drawCanvas, bestCircle]
   );
 
-  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const point = getCanvasPoint(e);
-    if (!point) return;
-
+  const beginStroke = (point: Point) => {
     isDrawingRef.current = true;
     setGameState("drawing");
     pointsRef.current = [point];
     setPointCount(1);
     setScore(null);
     setLastResult(null);
-    drawCanvas([point], false, null);
+    drawCanvas([point], false, null, penRef.current);
   };
 
-  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (!isDrawingRef.current) return;
-    const point = getCanvasPoint(e);
-    if (!point) return;
-
+  const extendStroke = (point: Point) => {
     pointsRef.current.push(point);
     // Update count occasionally to avoid too many React renders
     if (pointsRef.current.length % 5 === 0) {
@@ -234,8 +244,7 @@ export default function PerfectCirclePage() {
     scheduleDraw(false);
   };
 
-  const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+  const finishStroke = () => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
     setPointCount(pointsRef.current.length);
@@ -259,7 +268,29 @@ export default function PerfectCirclePage() {
         setTimeout(() => setShowConfetti(false), 4000);
       }
     }
-    drawCanvas(pts, true, null);
+    drawCanvas(pts, true, null, penRef.current);
+  };
+
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const point = getCanvasPoint(e);
+    if (!point) return;
+    penRef.current = null;
+    setPenVisible(false);
+    beginStroke(point);
+  };
+
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!isDrawingRef.current) return;
+    const point = getCanvasPoint(e);
+    if (!point) return;
+    extendStroke(point);
+  };
+
+  const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    finishStroke();
   };
 
   const handleReset = () => {
@@ -268,7 +299,7 @@ export default function PerfectCirclePage() {
     setScore(null);
     setGameState("idle");
     setLastResult(null);
-    drawCanvas([], false, bestCircle);
+    drawCanvas([], false, bestCircle, penRef.current);
   };
 
   const handleExport = () => {
@@ -279,6 +310,81 @@ export default function PerfectCirclePage() {
     a.href = url;
     a.download = `perfect-circle-${score ?? 0}pct.png`;
     a.click();
+  };
+
+  /**
+   * The keyboard route. A freehand circle is motor control, and there is no
+   * way to hand a keyboard the same wrist — but the grader only ever looks at
+   * how far each sampled point sits from the fitted circle, so a pen stepped
+   * around with the arrow keys is graded by exactly the same rule a slowly
+   * dragged mouse is. Enter puts the pen down and lifts it again.
+   */
+  const KEY_STEP = 6;
+
+  const movePen = (dx: number, dy: number) => {
+    const canvas = canvasRef.current;
+    const width = canvas?.width ?? canvasSize.width;
+    const height = canvas?.height ?? canvasSize.height;
+    const from = penRef.current ?? { x: width / 2, y: height / 2 - Math.min(width, height) * 0.3 };
+    const next = {
+      x: Math.max(0, Math.min(width, from.x + dx)),
+      y: Math.max(0, Math.min(height, from.y + dy)),
+    };
+    penRef.current = next;
+    setPenVisible(true);
+    if (isDrawingRef.current) {
+      extendStroke(next);
+      setPointCount(pointsRef.current.length);
+    } else {
+      drawCanvas(pointsRef.current, gameState === "scored", bestCircle, next);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const steps: Record<string, [number, number]> = {
+      ArrowUp: [0, -KEY_STEP],
+      ArrowDown: [0, KEY_STEP],
+      ArrowLeft: [-KEY_STEP, 0],
+      ArrowRight: [KEY_STEP, 0],
+    };
+    const step = steps[e.key];
+    if (step) {
+      e.preventDefault();
+      movePen(step[0], step[1]);
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (isDrawingRef.current) {
+        finishStroke();
+        return;
+      }
+      const canvas = canvasRef.current;
+      const width = canvas?.width ?? canvasSize.width;
+      const height = canvas?.height ?? canvasSize.height;
+      const start = penRef.current ?? {
+        x: width / 2,
+        y: height / 2 - Math.min(width, height) * 0.3,
+      };
+      penRef.current = start;
+      setPenVisible(true);
+      beginStroke(start);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleReset();
+    }
+  };
+
+  const handleCanvasFocus = () => {
+    if (penRef.current || gameState !== "idle") return;
+    const canvas = canvasRef.current;
+    const width = canvas?.width ?? canvasSize.width;
+    const height = canvas?.height ?? canvasSize.height;
+    penRef.current = { x: width / 2, y: height / 2 - Math.min(width, height) * 0.3 };
+    setPenVisible(true);
+    drawCanvas(pointsRef.current, false, bestCircle, penRef.current);
   };
 
   const handleReplay = () => {
@@ -346,16 +452,22 @@ export default function PerfectCirclePage() {
             onTouchStart={handleStart}
             onTouchMove={handleMove}
             onTouchEnd={handleEnd}
-            role="img"
-            aria-label="Drawing canvas — draw a circle with your mouse or finger"
+            onKeyDown={handleKeyDown}
+            onFocus={handleCanvasFocus}
+            tabIndex={0}
+            aria-label="Drawing canvas. Drag with a mouse or finger, or press Enter to put the keyboard pen down, move it with the arrow keys and press Enter again to finish the circle."
           />
         </div>
 
         {/* Instructions */}
         {gameState === "idle" && (
-          <p className="text-center text-[var(--muted-foreground)] mb-6">
-            Draw a circle on the canvas above ↑
-          </p>
+          <div className="text-center text-[var(--muted-foreground)] mb-6">
+            <p>Draw a circle on the canvas above ↑</p>
+            <p className="mt-1 text-sm">
+              No mouse? Tab to the canvas, press Enter to put the pen down, steer with the arrow
+              keys, Enter again to finish. Escape clears it.
+            </p>
+          </div>
         )}
 
         {/* Score */}
@@ -418,16 +530,18 @@ export default function PerfectCirclePage() {
             >
               🖼️ Export
             </motion.button>
-            <motion.button
-              onClick={handleReplay}
-              disabled={isReplaying}
-              className="px-6 py-3 bg-[var(--secondary)] rounded-xl font-medium disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Replay drawing"
-            >
-              {isReplaying ? "Replaying..." : "▶️ Replay"}
-            </motion.button>
+            {!prefersReducedMotion && (
+              <motion.button
+                onClick={handleReplay}
+                disabled={isReplaying}
+                className="px-6 py-3 bg-[var(--secondary)] rounded-xl font-medium disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Replay drawing"
+              >
+                {isReplaying ? "Replaying..." : "▶️ Replay"}
+              </motion.button>
+            )}
           </div>
         )}
 
@@ -437,6 +551,7 @@ export default function PerfectCirclePage() {
             <span className="inline-flex items-center gap-2">
               <span className="w-2 h-2 bg-[var(--primary)] rounded-full animate-pulse" />
               Drawing... ({pointCount} points)
+              {penVisible ? " — Enter finishes the circle" : ""}
             </span>
           </div>
         )}

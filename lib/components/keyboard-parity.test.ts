@@ -50,14 +50,13 @@ describe("every pointer target has a keyboard route", () => {
   };
 
   /**
-   * Debt, recorded rather than disguised. These are freehand drawing surfaces: the whole
-   * input is the shape of a stroke, and nobody has designed a keyboard equivalent for them yet.
-   * Listing them keeps the check useful - a new pointer-only element still fails - while being
-   * honest that the catalogue is not fully keyboard-playable today. Fix one and delete its line.
+   * Debt, recorded rather than disguised, and now empty. It used to hold the freehand drawing
+   * surfaces - pass-the-pencil, copy-machine and finally perfect-circle - where the whole input
+   * is the shape of a stroke and no keyboard equivalent had been designed. All three now carry
+   * an arrow-key pen. Keep the list: a new pointer-only element fails this check loudly, and
+   * adding a line here has to be a deliberate, reasoned act rather than a quiet one.
    */
-  const POINTER_ONLY_TODO = [
-    "perfect-circle/page.tsx: <canvas> takes a pointer event with no keyboard route",
-  ];
+  const POINTER_ONLY_TODO: string[] = [];
 
   function sourceFiles(dir: string): string[] {
     return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
