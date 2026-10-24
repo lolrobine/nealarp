@@ -12,6 +12,18 @@ import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/Ho
 
 const MEMORISE_MS = 4000;
 
+/** Every state of a cell has to survive without its colour. */
+export function cellLabel(
+  cell: string,
+  state: { showTarget: boolean; missed: boolean; extra: boolean; placed: boolean }
+): string {
+  if (state.showTarget) return `${cell} filled`;
+  if (state.missed) return `${cell} missed`;
+  if (state.extra) return `${cell} should have stayed empty`;
+  if (state.placed) return `${cell} placed`;
+  return cell;
+}
+
 export default function BlockTalkPage() {
   const record = usePersonalBest("block-talk");
   const reducedMotion = usePrefersReducedMotion();
@@ -19,14 +31,19 @@ export default function BlockTalkPage() {
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<"show" | "build" | "result">("show");
   const [placed, setPlaced] = useState<string[]>([]);
-  const [timerDone, setTimerDone] = useState(reducedMotion);
+  // Deriving this instead of seeding state with it matters: the media query
+  // hook reports its server default on the very first client render, so
+  // useState(reducedMotion) captured false and the opening round flashed at
+  // exactly the people who asked it not to.
+  const [hideRequested, setHideRequested] = useState(false);
+  const timerDone = hideRequested || reducedMotion;
 
   const pattern = generatePattern(seed, round);
   const comparison = phase === "result" ? comparePatterns(pattern, placed) : null;
 
   useEffect(() => {
     if (phase !== "show" || timerDone) return;
-    const timer = setTimeout(() => setTimerDone(true), MEMORISE_MS);
+    const timer = setTimeout(() => setHideRequested(true), MEMORISE_MS);
     return () => clearTimeout(timer);
   }, [phase, timerDone, round]);
 
@@ -38,7 +55,7 @@ export default function BlockTalkPage() {
   function nextRound() {
     setRound(round + 1);
     setPlaced([]);
-    setTimerDone(reducedMotion);
+    setHideRequested(false);
     setPhase("show");
   }
 
@@ -65,7 +82,7 @@ export default function BlockTalkPage() {
         <div
           className="board grid-texture mx-auto grid gap-1 p-3"
           style={{ width: "min(92vw, 380px)", gridTemplateColumns: "repeat(4, 1fr)" }}
-          role="grid"
+          role="group"
           aria-label="A1 to D4 block grid"
         >
           {allCells().map((cell) => {
@@ -78,10 +95,15 @@ export default function BlockTalkPage() {
               <button
                 key={cell}
                 type="button"
-                role="gridcell"
                 onClick={() => toggle(cell)}
+                aria-pressed={phase === "build" ? isPlaced : undefined}
                 disabled={phase !== "build"}
-                aria-label={`${cell}${isPlaced ? " placed" : ""}`}
+                aria-label={cellLabel(cell, {
+                  showTarget: showTarget && isTarget,
+                  missed: !!isMiss,
+                  extra: !!isExtra,
+                  placed: isPlaced,
+                })}
                 className={`flex aspect-square items-center justify-center rounded-md border text-xs font-mono ${
                   showTarget && isTarget
                     ? "bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]"
@@ -94,7 +116,12 @@ export default function BlockTalkPage() {
                           : "bg-[var(--secondary)] border-[var(--border)]"
                 }`}
               >
-                {cell}
+                <span>{cell}</span>
+                {(isMiss || isExtra) && (
+                  <span aria-hidden="true" className="ml-1 text-[10px] font-bold uppercase">
+                    {isMiss ? "miss" : "extra"}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -104,7 +131,7 @@ export default function BlockTalkPage() {
           <div className="flex justify-center gap-2">
             <Button
               variant={timerDone ? "default" : "outline"}
-              onClick={() => setTimerDone(true)}
+              onClick={() => setHideRequested(true)}
               disabled={timerDone}
             >
               Hide now
@@ -115,7 +142,16 @@ export default function BlockTalkPage() {
 
         {phase === "build" && (
           <div className="flex justify-center gap-2">
-            <Button onClick={() => setPhase("result")} disabled={placed.length === 0}>
+            <Button
+              onClick={() => {
+                // Banked on reveal. "Save score" used to sit next to "Next
+                // pattern" on the result screen, and picking the wrong one
+                // threw the round away.
+                record.save(scoreBlockTalk(comparePatterns(pattern, placed).overlapPct));
+                setPhase("result");
+              }}
+              disabled={placed.length === 0}
+            >
               Reveal
             </Button>
             <Button variant="outline" onClick={() => setPlaced([])}>
@@ -135,9 +171,6 @@ export default function BlockTalkPage() {
               </>
             }
           >
-            <Button onClick={() => record.save(scoreBlockTalk(comparison.overlapPct))}>
-              Save score
-            </Button>
             <Button variant="outline" onClick={nextRound}>
               Next pattern
             </Button>
