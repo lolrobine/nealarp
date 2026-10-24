@@ -9,7 +9,16 @@ import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { buildRun, dailySeed, ROUNDS, scoreRound, scoreRun, type RoundScore } from "./logic";
 import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
-type Stroke = { x: number; y: number }[];
+type Point = { x: number; y: number };
+type Stroke = Point[];
+
+const CANVAS_W = 640;
+const CANVAS_H = 360;
+/** Arrow-key travel per press, and the finer step Shift gives. */
+const STEP = 12;
+const FINE_STEP = 4;
+
+const clamp = (value: number, max: number) => Math.max(0, Math.min(max, value));
 
 export default function PassThePencilPage() {
   const record = usePersonalBest("pass-the-pencil");
@@ -23,12 +32,59 @@ export default function PassThePencilPage() {
   const [match, setMatch] = useState(3);
   const [effort, setEffort] = useState(3);
   const [scores, setScores] = useState<RoundScore[]>([]);
+  // The pointer route draws wherever the pointer is. The keyboard route needs a
+  // cursor it can see and a pen it can put down, so both live here.
+  const [cursor, setCursor] = useState<Point>({ x: CANVAS_W / 2, y: CANVAS_H / 2 });
+  const cursorRef = useRef<Point>({ x: CANVAS_W / 2, y: CANVAS_H / 2 });
+  const [penDown, setPenDown] = useState(false);
+  const penDownRef = useRef(false);
+  // Nothing on screen used to say whether the sheet had anything on it, and
+  // "Done drawing" was happy to submit a blank one.
+  const [strokeCount, setStrokeCount] = useState(0);
 
   const round = rounds[roundIndex] ?? rounds[0]!;
   const finished = scores.length >= ROUNDS;
 
+  /** Record the segment first, then paint it: the record is what the game is
+   * about, and a canvas context is not always there to paint on. */
+  function drawSegment(from: Point, to: Point) {
+    const strokes = strokesRef.current;
+    const current = strokes[strokes.length - 1];
+    if (current) current.push(to);
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  }
+
+  function moveCursor(dx: number, dy: number) {
+    const from = cursorRef.current;
+    const to = { x: clamp(from.x + dx, CANVAS_W), y: clamp(from.y + dy, CANVAS_H) };
+    cursorRef.current = to;
+    setCursor(to);
+    if (penDownRef.current) drawSegment(from, to);
+  }
+
+  function togglePen() {
+    const next = !penDownRef.current;
+    penDownRef.current = next;
+    setPenDown(next);
+    if (next) {
+      strokesRef.current.push([{ ...cursorRef.current }]);
+      setStrokeCount(strokesRef.current.length);
+    }
+  }
+
   function clearCanvas() {
     strokesRef.current = [];
+    penDownRef.current = false;
+    setPenDown(false);
+    setStrokeCount(0);
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx && canvasRef.current) {
       ctx.fillStyle = "#fffdf7";
@@ -47,6 +103,7 @@ export default function PassThePencilPage() {
     if (e.type === "pointerdown") {
       drawingRef.current = true;
       strokes.push([{ x, y }]);
+      setStrokeCount(strokes.length);
     } else if (e.type === "pointermove" && drawingRef.current) {
       const stroke = strokes[strokes.length - 1];
       if (!stroke) return;
@@ -120,27 +177,63 @@ export default function PassThePencilPage() {
 
             {phase === "draw" && (
               <>
-                <canvas
-                  ref={canvasRef}
-                  width={640}
-                  height={360}
-                  className="mx-auto w-full touch-none rounded-xl border border-[var(--border)]"
-                  style={{ maxWidth: 640, cursor: "crosshair", background: "#fffdf7" }}
-                  role="img"
-                  aria-label="Drawing canvas. Drag to draw."
-                  onPointerDown={(e) => {
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    paint(e);
-                  }}
-                  onPointerMove={paint}
-                  onPointerUp={paint}
-                  onPointerLeave={paint}
-                />
-                <div className="flex justify-center gap-2">
+                <div className="relative mx-auto w-full" style={{ maxWidth: CANVAS_W }}>
+                  <canvas
+                    ref={canvasRef}
+                    width={CANVAS_W}
+                    height={CANVAS_H}
+                    tabIndex={0}
+                    className="w-full touch-none rounded-xl border border-[var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                    style={{ cursor: "crosshair", background: "#fffdf7" }}
+                    aria-label="Drawing canvas. Drag to draw, or move the pen with the arrow keys and press Enter to put it down and lift it again."
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      paint(e);
+                    }}
+                    onPointerMove={paint}
+                    onPointerUp={paint}
+                    onPointerLeave={paint}
+                    onKeyDown={(e) => {
+                      const step = e.shiftKey ? FINE_STEP : STEP;
+                      if (e.key === "ArrowUp") moveCursor(0, -step);
+                      else if (e.key === "ArrowDown") moveCursor(0, step);
+                      else if (e.key === "ArrowLeft") moveCursor(-step, 0);
+                      else if (e.key === "ArrowRight") moveCursor(step, 0);
+                      else if (e.key === "Enter" || e.key === " ") togglePen();
+                      else return;
+                      e.preventDefault();
+                    }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${
+                      penDown ? "border-slate-900 bg-slate-900" : "border-slate-900 bg-transparent"
+                    }`}
+                    style={{
+                      left: `${(cursor.x / CANVAS_W) * 100}%`,
+                      top: `${(cursor.y / CANVAS_H) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-center text-xs text-[var(--muted-foreground)]">
+                  Arrow keys move the pen, Shift makes the steps smaller, Enter puts it down and
+                  lifts it.
+                </p>
+                <p className="sr-only" aria-live="polite">
+                  {penDown ? "Pen down" : "Pen up"} at {Math.round(cursor.x)},{" "}
+                  {Math.round(cursor.y)}. {strokeCount} {strokeCount === 1 ? "stroke" : "strokes"}{" "}
+                  drawn.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="text-xs text-[var(--muted-foreground)]">
+                    {strokeCount} {strokeCount === 1 ? "stroke" : "strokes"} on the sheet
+                  </span>
                   <Button variant="outline" onClick={clearCanvas}>
                     Clear drawing
                   </Button>
-                  <Button onClick={() => setPhase("rate")}>Done drawing</Button>
+                  <Button onClick={() => setPhase("rate")} disabled={strokeCount === 0}>
+                    Done drawing
+                  </Button>
                 </div>
               </>
             )}
@@ -206,8 +299,8 @@ export default function PassThePencilPage() {
           Draw big, bold landmarks — shape corners survive memory, fine hatching does not.
         </ExampleStep>
         <ExampleStep n={2}>
-          Every second round hides the prompt: your own previous drawing becomes the model. Redraw
-          what you see, not what you remember writing.
+          Every second round hides the prompt and clears the sheet: what you just drew is the model,
+          and only your memory of it comes with you.
         </ExampleStep>
         <ExampleResult>
           Six rounds: match × 12 + effort × 8 per round — faithful redraws keep both near max for

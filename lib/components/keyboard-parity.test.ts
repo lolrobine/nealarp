@@ -50,14 +50,13 @@ describe("every pointer target has a keyboard route", () => {
   };
 
   /**
-   * Debt, recorded rather than disguised. These three are freehand drawing surfaces: the whole
+   * Debt, recorded rather than disguised. These are freehand drawing surfaces: the whole
    * input is the shape of a stroke, and nobody has designed a keyboard equivalent for them yet.
    * Listing them keeps the check useful - a new pointer-only element still fails - while being
    * honest that the catalogue is not fully keyboard-playable today. Fix one and delete its line.
    */
   const POINTER_ONLY_TODO = [
     "copy-machine/page.tsx: <canvas> takes a pointer event with no keyboard route",
-    "pass-the-pencil/page.tsx: <canvas> takes a pointer event with no keyboard route",
     "perfect-circle/page.tsx: <canvas> takes a pointer event with no keyboard route",
   ];
 
