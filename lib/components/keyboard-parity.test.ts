@@ -56,7 +56,6 @@ describe("every pointer target has a keyboard route", () => {
    * honest that the catalogue is not fully keyboard-playable today. Fix one and delete its line.
    */
   const POINTER_ONLY_TODO = [
-    "copy-machine/page.tsx: <canvas> takes a pointer event with no keyboard route",
     "perfect-circle/page.tsx: <canvas> takes a pointer event with no keyboard route",
   ];
 

@@ -284,6 +284,14 @@ async function downloadLineage(lineage: Drawing[], score: number) {
   URL.revokeObjectURL(url);
 }
 
+const CANVAS_UNITS = 320;
+/** Arrow-key travel per press, and the finer step Shift gives. */
+const STEP = 10;
+const FINE_STEP = 3;
+const PALETTE = { bg: "#111827", model: "#6b7280", ink: "#818cf8" };
+
+const clampUnit = (value: number) => Math.max(0, Math.min(CANVAS_UNITS, value));
+
 export default function CopyMachinePage() {
   const record = usePersonalBest("copy-machine");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -295,22 +303,59 @@ export default function CopyMachinePage() {
   const [lineage, setLineage] = useState<Drawing[]>([GLYPHS[0]!.drawing]);
   const [scores, setScores] = useState<number[]>([]);
   const [strokeCount, setStrokeCount] = useState(0);
+  // A keyboard pen: a cursor it can see, and a pen it can put down.
+  const [cursor, setCursor] = useState<Pt>({ x: CANVAS_UNITS / 2, y: CANVAS_UNITS / 2 });
+  const cursorRef = useRef<Pt>({ x: CANVAS_UNITS / 2, y: CANVAS_UNITS / 2 });
+  const [penDown, setPenDown] = useState(false);
+  const penDownRef = useRef(false);
   const finished = gen >= GENERATIONS;
   const stability = finished ? stabilityScore(lineage) : null;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    drawScene(canvas, model, strokesRef.current, {
-      bg: "#111827",
-      model: "#6b7280",
-      ink: "#818cf8",
-    });
+    drawScene(canvas, model, strokesRef.current, PALETTE);
   }, [model, gen, glyphIndex, finished]);
+
+  function repaint() {
+    const canvas = canvasRef.current;
+    if (canvas) drawScene(canvas, model, strokesRef.current, PALETTE);
+  }
+
+  function moveCursor(dx: number, dy: number) {
+    if (finished) return;
+    const from = cursorRef.current;
+    const to = { x: clampUnit(from.x + dx), y: clampUnit(from.y + dy) };
+    cursorRef.current = to;
+    setCursor(to);
+    if (penDownRef.current) {
+      const stroke = strokesRef.current[strokesRef.current.length - 1];
+      if (stroke) stroke.push(to);
+      repaint();
+    }
+  }
+
+  function togglePen() {
+    if (finished) return;
+    const next = !penDownRef.current;
+    penDownRef.current = next;
+    setPenDown(next);
+    if (next) {
+      strokesRef.current.push([{ ...cursorRef.current }]);
+      setStrokeCount(strokesRef.current.length);
+      repaint();
+    }
+  }
+
+  function liftPen() {
+    penDownRef.current = false;
+    setPenDown(false);
+  }
 
   function resetTo(index: number) {
     strokesRef.current = [];
     setStrokeCount(0);
+    liftPen();
     setGlyphIndex(index);
     setModel(GLYPHS[index]!.drawing);
     setLineage([GLYPHS[index]!.drawing]);
@@ -332,11 +377,7 @@ export default function CopyMachinePage() {
     drawingRef.current = true;
     strokesRef.current.push([eventPoint(event)]);
     setStrokeCount(strokesRef.current.length);
-    drawScene(event.currentTarget, model, strokesRef.current, {
-      bg: "#111827",
-      model: "#6b7280",
-      ink: "#818cf8",
-    });
+    drawScene(event.currentTarget, model, strokesRef.current, PALETTE);
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -344,21 +385,13 @@ export default function CopyMachinePage() {
     const stroke = strokesRef.current[strokesRef.current.length - 1];
     if (!stroke) return;
     stroke.push(eventPoint(event));
-    drawScene(event.currentTarget, model, strokesRef.current, {
-      bg: "#111827",
-      model: "#6b7280",
-      ink: "#818cf8",
-    });
+    drawScene(event.currentTarget, model, strokesRef.current, PALETTE);
   }
 
   function onPointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
     drawingRef.current = false;
     setStrokeCount(strokesRef.current.length);
-    drawScene(event.currentTarget, model, strokesRef.current, {
-      bg: "#111827",
-      model: "#6b7280",
-      ink: "#818cf8",
-    });
+    drawScene(event.currentTarget, model, strokesRef.current, PALETTE);
   }
 
   function finishCopy() {
@@ -372,6 +405,7 @@ export default function CopyMachinePage() {
     setLineage(nextLineage);
     strokesRef.current = [];
     setStrokeCount(0);
+    liftPen();
     if (gen + 1 >= GENERATIONS) {
       setGen(GENERATIONS);
       record.save(stabilityScore(nextLineage));
@@ -382,15 +416,13 @@ export default function CopyMachinePage() {
   }
 
   function undoStroke() {
+    // Lift first: with the pen still down, the next key press would carry on
+    // extending whichever stroke the undo uncovered.
+    liftPen();
     strokesRef.current.pop();
     setStrokeCount(strokesRef.current.length);
     const canvas = canvasRef.current;
-    if (canvas)
-      drawScene(canvas, model, strokesRef.current, {
-        bg: "#111827",
-        model: "#6b7280",
-        ink: "#818cf8",
-      });
+    if (canvas) drawScene(canvas, model, strokesRef.current, PALETTE);
   }
 
   return (
@@ -413,23 +445,49 @@ export default function CopyMachinePage() {
           ))}
         </div>
         <div className="flex flex-col items-center gap-3">
-          <canvas
-            ref={canvasRef}
-            width={320}
-            height={320}
-            className="rounded-xl border border-[var(--border)] max-w-full touch-none"
-            style={{ width: 320, height: 320 }}
-            role="img"
-            aria-label={`Drawing canvas. Model is faint gray, your copy is indigo. Generation ${gen + 1} of ${GENERATIONS}.`}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-          />
+          <div className="relative" style={{ width: CANVAS_UNITS, maxWidth: "100%" }}>
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_UNITS}
+              height={CANVAS_UNITS}
+              tabIndex={0}
+              className="rounded-xl border border-[var(--border)] max-w-full touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+              style={{ width: CANVAS_UNITS, height: CANVAS_UNITS }}
+              aria-label={`Drawing canvas. Model is faint gray, your copy is indigo. Generation ${gen + 1} of ${GENERATIONS}. Drag to draw, or move the pen with the arrow keys and press Enter to put it down and lift it again.`}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onKeyDown={(event) => {
+                const step = event.shiftKey ? FINE_STEP : STEP;
+                if (event.key === "ArrowUp") moveCursor(0, -step);
+                else if (event.key === "ArrowDown") moveCursor(0, step);
+                else if (event.key === "ArrowLeft") moveCursor(-step, 0);
+                else if (event.key === "ArrowRight") moveCursor(step, 0);
+                else if (event.key === "Enter" || event.key === " ") togglePen();
+                else return;
+                event.preventDefault();
+              }}
+            />
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-300 ${
+                penDown ? "bg-indigo-300" : "bg-transparent"
+              }`}
+              style={{
+                left: `${(cursor.x / CANVAS_UNITS) * 100}%`,
+                top: `${(cursor.y / CANVAS_UNITS) * 100}%`,
+              }}
+            />
+          </div>
+          <p className="sr-only" aria-live="polite">
+            {penDown ? "Pen down" : "Pen up"} at {Math.round(cursor.x)}, {Math.round(cursor.y)}.{" "}
+            {strokeCount} {strokeCount === 1 ? "stroke" : "strokes"} drawn.
+          </p>
           <p className="text-sm text-[var(--muted-foreground)]">
             {finished
               ? "Lineage complete."
-              : `Draw over the faint model. Generation ${gen + 1} of ${GENERATIONS}. ${strokeCount === 0 ? "Draw it with a finger or the mouse." : "Stroke(s) ready."}`}
+              : `Draw over the faint model. Generation ${gen + 1} of ${GENERATIONS}. ${strokeCount === 0 ? "Draw with a finger, the mouse, or the arrow keys and Enter." : "Stroke(s) ready."}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
