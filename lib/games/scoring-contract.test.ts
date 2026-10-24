@@ -14,6 +14,13 @@ import { scoreRun as stockroomRun } from "@/app/(experiences)/stockroom-six/logi
 import { scoreRun as tinyTownRun } from "@/app/(experiences)/tiny-town-tactics/logic";
 import { roomScore } from "@/app/(experiences)/twin-tilt/logic";
 import { scoreSquare } from "@/app/(experiences)/word-square-studio/logic";
+import {
+  applyPlacement,
+  emptyState,
+  growboxScore,
+  ITEMS as GROWBOX_ITEMS,
+  type ItemId as GrowboxItemId,
+} from "@/app/(experiences)/growbox/logic";
 
 /**
  * Every game in this project reports out of 100, and WinScreen prints the
@@ -95,5 +102,42 @@ describe("every score lands between 0 and 100", () => {
     // NaN survives Math.min and Math.max, so the clamp alone is not a guard.
     expectInBand("orbit-orchard scoreRun(0, 0)", orbitOrchardRun(0, 0));
     expectInBand("orbit-orchard scoreRun(3, 0)", orbitOrchardRun(3, 0));
+  });
+});
+
+/**
+ * Growbox scores a state rather than a number, which is why it sat outside the
+ * tables above. Its state space is small enough to take whole: eight upgrades
+ * means 40320 orders, and every one of them has to land in the band.
+ */
+describe("state-based scorers", () => {
+  it("growbox growboxScore stays a whole number in 0-100 for every placement order", () => {
+    const ids = GROWBOX_ITEMS.map((item) => item.id);
+    const seen = new Set<number>();
+    let orders = 0;
+
+    const walk = (rest: GrowboxItemId[], acc: GrowboxItemId[]) => {
+      if (rest.length === 0) {
+        let state = emptyState();
+        for (const id of acc) state = applyPlacement(state, id);
+        const score = growboxScore(state);
+        expect(Number.isInteger(score), `order ${acc.join(">")} scored ${score}`).toBe(true);
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(100);
+        seen.add(score);
+        orders += 1;
+        return;
+      }
+      for (let i = 0; i < rest.length; i += 1) {
+        walk([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]!]);
+      }
+    };
+    walk(ids, []);
+
+    expect(orders).toBe(40_320);
+    // A scorer that answered the same thing for every order would pass the
+    // band check and tell the player nothing.
+    expect(seen.size).toBeGreaterThan(1);
+    expect(Math.max(...seen)).toBe(100);
   });
 });

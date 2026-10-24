@@ -12,6 +12,8 @@ import {
   growboxScore,
   isFinished,
   ITEMS,
+  MAX_LEVEL,
+  PERFECT_TOTAL,
   totalLevels,
   type ItemId,
 } from "./logic";
@@ -57,8 +59,8 @@ export default function GrowboxPage() {
       <Card className="p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="font-semibold">
-            Total levels: {totalLevels(state)} / 16
-            {finished ? ` · Score ${score.toFixed(1)} / 100` : ""}
+            Total levels: {totalLevels(state)} / {PERFECT_TOTAL}
+            {finished ? ` · Score ${score} / 100` : ""}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={restart}>
@@ -81,7 +83,11 @@ export default function GrowboxPage() {
                       ? "border-amber-500/50 bg-amber-500/10"
                       : "bg-[var(--secondary)] hover:border-[var(--ring)]"
                   }`}
-                  aria-label={`Place ${item.name}${placed ? " (already placed)" : ""}`}
+                  aria-label={
+                    placed
+                      ? `${item.name}, placed, level ${level ?? 0} of ${MAX_LEVEL}`
+                      : `Place ${item.name}. ${item.blurb}`
+                  }
                 >
                   <strong className="block">{item.name}</strong>
                   <span className="block text-xs text-[var(--muted-foreground)]">{item.blurb}</span>
@@ -120,7 +126,7 @@ export default function GrowboxPage() {
                 : "The garden copes"}
           </h2>
           <p aria-live="polite">
-            Final score: {score.toFixed(1)} / 100 · {totalLevels(state)} of 16 levels grown.
+            Final score: {score} / 100 · {totalLevels(state)} of {PERFECT_TOTAL} levels grown.
           </p>
           <p className="text-sm text-[var(--muted-foreground)]">
             {score < 100
