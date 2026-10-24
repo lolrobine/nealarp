@@ -7,6 +7,7 @@ import { RecordExtras } from "@/lib/components/games/RecordExtras";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { average } from "../one-second-off/logic";
 import { TASKS, visualResult } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 export default function TrustYourEyes() {
   const [round, setRound] = useState(0);
@@ -146,6 +147,15 @@ export default function TrustYourEyes() {
                 stroke="var(--primary)"
                 strokeWidth="3"
               />
+              {submitted && (
+                <path
+                  d={`M200 190L${200 + 150 * Math.cos((x * Math.PI) / 180)} ${190 - 150 * Math.sin((x * Math.PI) / 180)}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeDasharray="6 4"
+                />
+              )}
             </>
           )}
         </svg>
@@ -196,7 +206,7 @@ export default function TrustYourEyes() {
               <p>
                 {task.kind === "angle"
                   ? `Your estimate: ${x}°. Correct angle: ${task.target}°.`
-                  : `Your position: ${x.toFixed(1)}%${task.kind === "center" ? ` / ${y.toFixed(1)}%` : ""}. Correct position: 50%${task.kind === "center" ? " / 50%" : ""}.`}{" "}
+                  : `Your position: ${x.toFixed(1)}%${task.kind === "center" ? ` / ${y.toFixed(1)}%` : ""}. Correct position: ${task.target}%${task.kind === "center" ? ` / ${task.target}%` : ""}.`}{" "}
                 Normalized error: {result.errorPercent.toFixed(1)}%.
               </p>
               {done && (
@@ -240,6 +250,28 @@ export default function TrustYourEyes() {
           </p>
         )}
       </Card>
+      <HowToBeat summary="The three rounds are not graded on the same scale">
+        <ExampleStep n={1}>
+          Error is normalised against a different reference each time: the line against its full
+          length, the centre against the rectangle&apos;s diagonal, the angle against 180°. The same
+          ten-unit miss therefore scores 80 on a line round, 85.9 on a centre round and 88.9 on an
+          angle round.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          So the two line rounds are where a session is won or lost. Take your time there, and read
+          the line from both ends — halving by eye tends to drift towards whichever end you looked
+          at first.
+        </ExampleStep>
+        <ExampleStep n={3}>
+          Nothing is timed and nothing is hidden from you except the numeric slider value, so on the
+          centre round you can line the marker up against the rectangle&apos;s corners before
+          committing.
+        </ExampleStep>
+        <ExampleResult>
+          Stay within two units on every round and the session lands above 95 / 100.
+        </ExampleResult>
+      </HowToBeat>
+
       <p className="text-sm text-[var(--muted-foreground)]">
         Scoring: 100 × (1 − 2 × normalized error), minimum 0. Errors use line length, rectangle
         diagonal or 180° as reference. Final score is the mean of six rounds. Relative coordinates

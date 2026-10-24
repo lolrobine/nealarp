@@ -25,3 +25,34 @@ it("scores six estimates, reveals answers, saves and resets the record", () => {
   fireEvent.click(screen.getByRole("button", { name: "Reset personal best" }));
   expect(localStorage.getItem("nealarp:best:v1:trust-your-eyes:session")).toBeNull();
 });
+
+it("draws the guessed angle next to the real one once the round is submitted", () => {
+  const { container } = render(<TrustYourEyes />);
+  // Rounds 1 and 2 are line and centre; round 3 is the first angle task.
+  for (let i = 0; i < 2; i++) {
+    fireEvent.click(screen.getByRole("button", { name: "Submit estimate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next challenge" }));
+  }
+  expect(screen.getByRole("heading", { name: "Estimate the angle" })).toBeTruthy();
+
+  const dashedBefore = container.querySelectorAll("path[stroke-dasharray]").length;
+  fireEvent.click(screen.getByRole("button", { name: "Submit estimate" }));
+  const dashedAfter = container.querySelectorAll("path[stroke-dasharray]").length;
+
+  // The line and centre rounds both reveal the truth on the diagram; the angle
+  // round used to reveal it in words only.
+  expect(dashedBefore).toBe(0);
+  expect(dashedAfter).toBe(1);
+});
+
+it("names the task's own target when revealing a line round", () => {
+  render(<TrustYourEyes />);
+  fireEvent.click(screen.getByRole("button", { name: "Submit estimate" }));
+  expect(screen.getByText(/Correct position: 50%/)).toBeTruthy();
+});
+
+it("warns that the three round types are not graded on one scale", () => {
+  render(<TrustYourEyes />);
+  expect(screen.getByText(/not graded on the same scale/)).toBeTruthy();
+  expect(screen.getByText(/80 on a line round, 85.9 on a centre round and 88.9/)).toBeTruthy();
+});
