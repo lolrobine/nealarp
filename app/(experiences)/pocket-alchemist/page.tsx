@@ -18,12 +18,30 @@ export default function PocketAlchemistPage() {
   const isNew = result ? !discovered.includes(result.id) : false;
 
   function pickIngredient(ingredient: Ingredient) {
+    // aria-pressed promises a toggle, so pressing a chosen ingredient has to
+    // let go of it. Without this a mis-tap could only be undone by mixing it
+    // with something and clicking through the result.
+    if (first?.id === ingredient.id) {
+      setFirst(second);
+      setSecond(null);
+      return;
+    }
+    if (second?.id === ingredient.id) {
+      setSecond(null);
+      return;
+    }
     if (!first) setFirst(ingredient);
-    else if (!second && ingredient.id !== first.id) setSecond(ingredient);
+    else if (!second) setSecond(ingredient);
   }
 
   function keepResult() {
-    if (result && isNew) setDiscovered([...discovered, result.id]);
+    if (result && isNew) {
+      const next = [...discovered, result.id];
+      setDiscovered(next);
+      // Banked on the spot. "Save shelf score" was easy to walk past, and a
+      // shelf nobody saved scored nothing.
+      record.save(discoveryScore(next.length));
+    }
     setFirst(null);
     setSecond(null);
   }
@@ -53,6 +71,7 @@ export default function PocketAlchemistPage() {
         <p className="text-center text-sm text-[var(--muted-foreground)]" aria-live="polite">
           {first ? `Mixing ${first.name}` : "Pick your first ingredient"}
           {second ? ` with ${second.name}` : ""}
+          {first && !second ? " — press it again to put it back" : ""}
         </p>
 
         {result && (
@@ -87,12 +106,9 @@ export default function PocketAlchemistPage() {
           )}
         </div>
 
-        <Button
-          onClick={() => record.save(discoveryScore(discovered.length))}
-          disabled={discovered.length === 0}
-        >
-          Save shelf score
-        </Button>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Every bottling is recorded straight away.
+        </p>
       </Card>
 
       <PersonalBest record={record} />
