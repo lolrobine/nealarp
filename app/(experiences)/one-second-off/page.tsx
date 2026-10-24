@@ -6,6 +6,7 @@ import { Card } from "@/lib/components/ui/card";
 import { RecordExtras } from "@/lib/components/games/RecordExtras";
 import { usePersonalBest } from "@/lib/hooks/usePersonalBest";
 import { average, timingResult } from "./logic";
+import { ExampleResult, ExampleStep, HowToBeat } from "@/lib/components/games/HowToBeat";
 
 type Result = { elapsed: number; errorMs: number; score: number };
 export default function OneSecondOff() {
@@ -171,8 +172,8 @@ export default function OneSecondOff() {
             Next round
           </Button>
         )}
-        <div role="status">
-          {notice}
+        <p role="status">{notice}</p>
+        <div>
           {results.length > 0 && (
             <ul className="space-y-2">
               {results.map((r, i) => (
@@ -193,7 +194,7 @@ export default function OneSecondOff() {
             </ul>
           )}
           {phase === "done" && (
-            <p className="text-xl font-bold mt-4">
+            <p className="text-xl font-bold mt-4" role="status">
               Final score: {average(results.map((r) => r.score)).toFixed(1)} / 100
             </p>
           )}
@@ -219,6 +220,26 @@ export default function OneSecondOff() {
           </p>
         )}
       </Card>
+      <HowToBeat summary="Where the points actually are">
+        <ExampleStep n={1}>
+          The clock runs visibly for one second and then hides. That first second is the only
+          calibration you get, so watch it rather than looking away — count the rest against it.
+        </ExampleStep>
+        <ExampleStep n={2}>
+          Error is measured against the target, not in absolute time, so the same slip is worth
+          wildly different amounts. Half a second out costs 5 points on the 10-second round and 16.7
+          on the 3-second one. Spend your concentration on the short round; the long one forgives.
+        </ExampleStep>
+        <ExampleStep n={3}>
+          Even a bad round pays. A whole second out on the 3-second target still scores 66.7, so
+          finish the session rather than restarting after one miss.
+        </ExampleStep>
+        <ExampleResult>
+          Land within 5 per cent of each target — 3.15 s, 7.35 s, 10.5 s — and every round scores
+          95, for a session mean of 95 / 100.
+        </ExampleResult>
+      </HowToBeat>
+
       <p className="text-sm text-[var(--muted-foreground)]">
         Scoring: 100 × (1 − absolute error / target time), minimum 0; a session uses the mean of its
         rounds. Records stay in this browser. This is a game, not a scientific performance test:

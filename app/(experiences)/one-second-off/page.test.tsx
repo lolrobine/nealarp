@@ -67,3 +67,24 @@ it("shows the measured time on the large pad after a round instead of the target
   fireEvent.click(screen.getByRole("button", { name: "Next round" }));
   expect(screen.getByRole("button", { name: "Timer pad — start" }).textContent).toContain("7.000");
 });
+
+it("keeps the growing round list out of the live region", () => {
+  let now = 0;
+  vi.spyOn(performance, "now").mockImplementation(() => now);
+  render(<OneSecondOff />);
+  fireEvent.click(screen.getByRole("button", { name: "Start timer" }));
+  now = 3000;
+  fireEvent.click(screen.getByRole("button", { name: "Stop timer" }));
+
+  // A role="status" wrapped around the list meant every finished round
+  // re-announced every earlier round.
+  const row = screen.getByText(/Round 1: 3.000 s/);
+  expect(row.closest('[role="status"]')).toBeNull();
+});
+
+it("says what a good score looks like before the first round", () => {
+  render(<OneSecondOff />);
+  expect(screen.getByText(/Where the points actually are/)).toBeTruthy();
+  expect(screen.getByText(/costs 5 points on the 10-second round and 16.7/)).toBeTruthy();
+  expect(screen.getByText(/every round scores 95, for a session mean of 95 \/ 100/)).toBeTruthy();
+});

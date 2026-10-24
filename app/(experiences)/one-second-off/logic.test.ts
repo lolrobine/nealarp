@@ -18,3 +18,25 @@ describe("timing scores", () => {
     expect(average([])).toBe(0);
   });
 });
+
+/**
+ * The numbers printed in How to beat it. Written down here so the panel cannot
+ * drift away from the scoring it describes.
+ */
+describe("the worked example", () => {
+  it("scores 95 for being 5 per cent off, whatever the target", () => {
+    expect(timingResult(3150, 3).score).toBeCloseTo(95, 10);
+    expect(timingResult(7350, 7).score).toBeCloseTo(95, 10);
+    expect(timingResult(10500, 10).score).toBeCloseTo(95, 10);
+    expect(average([95, 95, 95])).toBe(95);
+  });
+
+  it("charges the same half second very differently by target", () => {
+    expect(100 - timingResult(10500, 10).score).toBeCloseTo(5, 10);
+    expect(100 - timingResult(3500, 3).score).toBeCloseTo(16.67, 2);
+  });
+
+  it("still pays something for a whole second out on the short round", () => {
+    expect(timingResult(4000, 3).score).toBeCloseTo(66.67, 2);
+  });
+});
